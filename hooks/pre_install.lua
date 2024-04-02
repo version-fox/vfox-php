@@ -1,3 +1,6 @@
+local util = require('util')
+require('constants')
+
 --- Returns some pre-installed information, such as version number, download address, local files, etc.
 --- If checksum is provided, vfox will automatically check it for you.
 --- @param ctx table
@@ -5,35 +8,42 @@
 --- @return table Version information
 function PLUGIN:PreInstall(ctx)
     local version = ctx.version
+
+    local lists = self:Available({})
+    if version == 'latest' or version == '' then
+        version = lists[1].version
+    end
+
+    local versions = {}
+    for _, value in pairs(lists) do
+        if util.starts_with(value.version, version .. '.') then
+            versions = value
+        end
+        if value.version == version then
+            versions = value
+        end
+        if next(versions) ~= nil then
+            break
+        end
+    end
+    if next(versions) == nil then
+        error('version not found for provided version ' .. version)
+    end
+
+    if RUNTIME.osType == 'windows' then
+        return GetReleaseForWindows(versions)
+    else
+        return GetReleaseForLinux(versions)
+    end
+end
+
+function GetReleaseForWindows(versions)
     return {
-        --- Version number
-        version = "xxx",
-        --- remote URL or local file path [optional]
-        url = "xxx",
-        --- SHA256 checksum [optional]
-        sha256 = "xxx",
-        --- md5 checksum [optional]
-        md5 = "xxx",
-        --- sha1 checksum [optional]
-        sha1 = "xxx",
-        --- sha512 checksum [optional]
-        sha512 = "xx",
-        --- additional need files [optional]
-        addition = {
-            {
-                --- additional file name !
-                name = "xxx",
-                --- remote URL or local file path [optional]
-                url = "xxx",
-                --- SHA256 checksum [optional]
-                sha256 = "xxx",
-                --- md5 checksum [optional]
-                md5 = "xxx",
-                --- sha1 checksum [optional]
-                sha1 = "xxx",
-                --- sha512 checksum [optional]
-                sha512 = "xx",
-            }
-        }
+        version = versions.version,
+        url = WIN_URL .. versions.name,
     }
+end
+
+function GetReleaseForLinux(versions)
+    return {}
 end

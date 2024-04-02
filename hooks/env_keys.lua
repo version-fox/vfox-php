@@ -6,28 +6,15 @@
 function PLUGIN:EnvKeys(ctx)
     --- this variable is same as ctx.sdkInfo['plugin-name'].path
     local mainPath = ctx.path
-    local mainSdkInfo = ctx.main
-    local mpath = mainSdkInfo.path
-    local mversion = mainSdkInfo.version
-    local mname = mainSdkInfo.name
-    local sdkInfo = ctx.sdkInfo['sdk-name']
-    local path = sdkInfo.path
-    local version = sdkInfo.version
-    local name = sdkInfo.name
+    local bin = ""
+    if RUNTIME.osType ~= "windows" then
+        bin = "/bin"
+    end
+
     return {
         {
-            key = "JAVA_HOME",
-            value = mainPath
-        },
-        {
             key = "PATH",
-            value = mainPath .. "/bin"
-        },
-        {
-            key = "PATH",
-            value = mainPath .. "/bin2"
-        },
-
+            value = mainPath .. bin
+        }
     }
-
 end
