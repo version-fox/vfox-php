@@ -1,3 +1,5 @@
+local http = require('http')
+local json = require('json')
 local util = require('util')
 require('constants')
 
@@ -45,5 +47,24 @@ function GetReleaseForWindows(versions)
 end
 
 function GetReleaseForLinux(versions)
-    return {}
+    local resp, err = http.get({
+        url = URL .. "/releases/index.php?json&version=" .. versions.version
+    })
+    local data = json.decode(resp.body)
+
+    local filename, md5, sha256 = "", "", ""
+    for _, s in pairs(data["source"]) do
+        if util.ends_with(s.filename, ".tar.gz") then
+            filename = s.filename
+            md5 = s.md5
+            sha256 = s.sha256
+            break
+        end
+    end
+    return {
+        version = versions.version,
+        url = URL .. "/distributions/" .. filename,
+        sha256 = sha256,
+        md5 = md5
+    }
 end

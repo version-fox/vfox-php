@@ -25,10 +25,12 @@ function GetReleaseListForWindows()
         local versionStr = selection:text()
         if util.filter_windows_version(versionStr) then
             local versions = util.split_string(versionStr, '-')
-            table.insert(result, {
-                version = versions[2],
-                name = versionStr,
-            })
+            if util.compare_versions(versions[2], "5.3.2") >= 0 then
+                table.insert(result, {
+                    version = versions[2],
+                    name = versionStr,
+                })
+            end
         end
     end)
     table.sort(result, function(a, b)
@@ -38,5 +40,23 @@ function GetReleaseListForWindows()
 end
 
 function GetReleaseListForLinux()
-    return {}
+    local resp, err = http.get({
+        url = URL .. '/releases'
+    })
+    local doc = html.parse(resp.body)
+
+    local result = {}
+    doc:find("#layout-content h2"):each(function(i, selection)
+        local versionStr = selection:text()
+        if util.compare_versions(versionStr, "5.3.2") >= 0 then
+            table.insert(result, {
+                version = versionStr,
+            })
+        end
+    end)
+
+    table.sort(result, function(a, b)
+        return util.compare_versions(a.version, b.version) > 0
+    end)
+    return result
 end

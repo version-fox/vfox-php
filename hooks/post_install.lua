@@ -5,16 +5,12 @@ local util = require('util')
 --- such as file operations for the SDK installation directory or compile source code
 --- Currently can be left unimplemented!
 function PLUGIN:PostInstall(ctx)
-    --- ctx.rootPath SDK installation directory
-    local rootPath = ctx.rootPath
     local sdkInfo = ctx.sdkInfo['php']
     local path = sdkInfo.path
-    local version = sdkInfo.version
-    local name = sdkInfo.name
-    local note = sdkInfo.note
     if RUNTIME.osType == 'windows' then
         InstallComposerForWin(path)
     else
+        CompileInstallPHP(path)
     end
 end
 
@@ -46,4 +42,11 @@ function InstallComposerForWin(path)
 
     os.remove(setup)
     util.write_file(path .. '\\composer.bat', '@php "%~dp0composer.phar" %*')
+end
+
+function CompileInstallPHP(path)
+    local code = os.execute(RUNTIME.pluginDirPath .. '/bin/install ' .. path)
+    if code ~= 0 then
+        error('Compilation Failure.')
+    end
 end
