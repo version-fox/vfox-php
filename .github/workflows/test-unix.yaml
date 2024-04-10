@@ -11,9 +11,11 @@ jobs:
     strategy:
       matrix:
         # ref: https://github.com/actions/runner-images
-        os: [ ubuntu-latest, macos-latest, windows-latest]
+        os: [ ubuntu-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
       - name: install vfox (Linux)
         if: runner.os == 'Linux'
         run: |
@@ -30,26 +32,9 @@ jobs:
           echo 'eval "$(vfox activate bash)"' >> ~/.bashrc
           echo 'eval "$(vfox activate zsh)"' >> ~/.zshrc
 
-      - name: install vfox (Windows)
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
-          Invoke-RestMethod -Uri https://get.scoop.sh | Invoke-Expression
-          scoop install vfox
-          vfox -v
-
-      - name: Checkout code
-        uses: actions/checkout@v3
-
       - name: Generate PHP plugin
-        if: runner.os != 'Windows'
         run: |
           zip -r php.zip ./
-      - name: Generate PHP plugin
-        if: runner.os == 'Windows'
-        run: |
-          Compress-Archive -Path .\* -DestinationPath .\php.zip
 
       - name: Install packages
         if: runner.os == 'Linux'
@@ -63,23 +48,10 @@ jobs:
           vfox add -s php.zip
           vfox install php@8.3.3
 
-      #     php -v
-      #     php -m
-      #     composer -V
 
       - name: Test
-        if: runner.os != 'Windows'
         run: |
           vfox use php@8.3.3
-          php -v
-          php -m
-          composer -V
-      - name: Test
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          vfox use -p php@8.3.3
-          Invoke-Expression "$(vfox activate pwsh)"
           php -v
           php -m
           composer -V
