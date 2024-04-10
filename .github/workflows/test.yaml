@@ -24,6 +24,7 @@ jobs:
           vfox -v
           vfox available
           echo 'eval "$(vfox activate bash)"' >> ~/.bashrc
+          source ~/.bashrc
 
       - name: Checkout code
         uses: actions/checkout@v3
@@ -40,7 +41,7 @@ jobs:
           sleep 1
 
       - name: Install packages
-        run: apt-get install -y autoconf build-essential locate libgd-dev libjpeg-dev libpng-dev libonig-dev libzip-dev libxml2-dev openssl
+        run: apt-get install -y autoconf build-essential locate libgd-dev libjpeg-dev libpng-dev libonig-dev libzip-dev libxml2-dev libssl-dev
 
       - name: Install PHP
         run: |
