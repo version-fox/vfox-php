@@ -52,10 +52,7 @@ jobs:
         run: |
           mkdir -p ~/.version-fox/cache/php/v-8.3.3/php-8.3.3/bin
           export __VFOX_SHELL="$$"
+          echo 'eval "$(vfox activate bash)"' >> ~/.bashrc
+          source ~/.bashrc
           vfox use php@$(vfox list php | sed -n 's/-> v//p')
-          echo "PATH:   $PATH"
-          echo '--------------------'
-          vfox env -s bash | tr -d '$'
-          echo '--------------------'
-          eval "$(vfox env -s bash | tr -d '$')"
           echo "PATH:   $PATH"
