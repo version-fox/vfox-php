@@ -56,7 +56,7 @@ jobs:
 
       - name: Install packages
         if: runner.os == 'Linux'
-        run: apt-get install -y curl autoconf build-essential locate libgd-dev libjpeg-dev libpng-dev libonig-dev libzip-dev libxml2-dev libssl-dev libsqlite3-dev libcurl4-openssl-dev libreadline-dev
+        run: sudo apt-get install -y curl autoconf build-essential locate libgd-dev libjpeg-dev libpng-dev libonig-dev libzip-dev libxml2-dev libssl-dev libsqlite3-dev libcurl4-openssl-dev libreadline-dev
       - name: Install packages
         if: runner.os == 'MacOS'
         run: brew install autoconf automake bison freetype gd gettext icu4c krb5 libedit libiconv libjpeg libpng libxml2 libzip pkg-config re2c zlib
@@ -71,9 +71,20 @@ jobs:
       #     composer -V
 
       - name: Test
+        if: runner.os != 'Windows'
         run: |
           vfox use php@8.3.3
           php -v
           php -m
           composer -V
+      - name: Test
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          vfox use -p php@8.3.3
+          Invoke-Expression "$(vfox activate pwsh)"
+          php -v
+          php -m
+          composer -V
+          
           
