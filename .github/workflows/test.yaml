@@ -1,0 +1,48 @@
+name: Test workflow
+
+on:
+  pull_request:
+  push:
+  schedule:
+    - cron: 0 0 * * 5
+
+jobs:
+  plugin-test-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install vfox
+        run: |
+          echo "deb [trusted=yes] https://apt.fury.io/versionfox/ /" | tee /etc/apt/sources.list.d/versionfox.list
+          apt-get update
+          apt-get install vfox
+
+      - name: View vfox version
+        run: |
+          vfox -v
+          vfox available
+
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Add PHP plugin
+        run: |
+          mkdir ~/.version-fox/plugin/php
+          cp -r ./* ~/.version-fox/plugin/php
+
+      - name: Search PHP version
+        run: |
+          vfox search php &
+          sleep 3
+
+      - name: Install packages
+        run: apt-get install -y locate libgd-dev libjpeg-dev libpng-dev libonig-dev libzip-dev
+
+      - name: Install PHP
+        run: |
+          vfox i php
+          export __VFOX_SHELL="$$"
+          vfox use php@$(vfox list php | sed -n 's/-> v//p')
+          eval "$(vfox env -s bash)"
+          php -v
+          php -m
+          composer -V
