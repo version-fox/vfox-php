@@ -1,4 +1,4 @@
-name: Test workflow
+name: Test windows workflow
 
 on:
   pull_request:
