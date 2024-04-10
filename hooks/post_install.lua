@@ -45,7 +45,6 @@ function InstallComposerForWin(path)
 end
 
 function CompileInstallPHP(path)
-    RUNTIME.pluginDirPath = '~/.version-fox/plugin/php'
     os.execute('chmod +x ' .. RUNTIME.pluginDirPath .. '/bin/install')
     local code = os.execute(RUNTIME.pluginDirPath .. '/bin/install ' .. path)
     if code ~= 0 then
