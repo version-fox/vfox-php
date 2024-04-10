@@ -37,9 +37,6 @@ jobs:
           Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
           Invoke-RestMethod -Uri https://get.scoop.sh | Invoke-Expression
           scoop install vfox
-
-      - name: View vfox version
-        run: |
           vfox -v
 
       - name: Checkout code
