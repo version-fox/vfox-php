@@ -33,11 +33,10 @@ jobs:
           cp -r ./* ~/.version-fox/plugin/php
 
       - name: Search PHP version
-        run: |
-          vfox search php &
+        run: vfox search php
 
       - name: Install packages
-        run: apt-get install -y autoconf build-essential locate libgd-dev libjpeg-dev libpng-dev libonig-dev libzip-dev libxml2-dev libssl-dev
+        run: apt-get install -y autoconf build-essential locate libgd-dev libjpeg-dev libpng-dev libonig-dev libzip-dev libxml2-dev libssl-dev libsqlite3-dev
 
       - name: Install PHP
         run: |
