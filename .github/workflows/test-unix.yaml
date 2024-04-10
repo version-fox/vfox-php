@@ -27,7 +27,7 @@ jobs:
       - name: install vfox (MacOS)
         if: runner.os == 'MacOS'
         run: |
-          brew upgrade
+          brew tap version-fox/tap
           brew install vfox
           echo 'eval "$(vfox activate bash)"' >> ~/.bashrc
           echo 'eval "$(vfox activate zsh)"' >> ~/.zshrc
