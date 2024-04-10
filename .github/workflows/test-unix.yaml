@@ -11,7 +11,7 @@ jobs:
     strategy:
       matrix:
         # ref: https://github.com/actions/runner-images
-        os: [ ubuntu-latest, macos-latest]
+        os: [ ubuntu-latest, macos-latest ]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout code
@@ -27,7 +27,6 @@ jobs:
       - name: install vfox (MacOS)
         if: runner.os == 'MacOS'
         run: |
-#          There may be delays
           brew install vfox
           echo 'eval "$(vfox activate bash)"' >> ~/.bashrc
           echo 'eval "$(vfox activate zsh)"' >> ~/.zshrc
