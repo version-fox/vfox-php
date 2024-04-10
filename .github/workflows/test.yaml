@@ -13,9 +13,11 @@ jobs:
     steps:
       - name: Install vfox
         run: |
+          apt-get update
+          apt-get install -y ca-certificates
           echo "deb [trusted=yes] https://apt.fury.io/versionfox/ /" | tee /etc/apt/sources.list.d/versionfox.list
           apt-get update
-          apt-get install ca-certificates vfox
+          apt-get install vfox
 
       - name: View vfox version
         run: |
