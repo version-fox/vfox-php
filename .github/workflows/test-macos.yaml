@@ -2,7 +2,7 @@ name: Test macos workflow
 
 on:
   pull_request:
-  # push:
+  push:
   schedule:
     - cron: 0 0 * * 5
 
@@ -11,7 +11,7 @@ jobs:
     strategy:
       matrix:
         # ref: https://github.com/actions/runner-images
-        os: [ macos-latest ]
+        os: [macos-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout code
@@ -28,17 +28,13 @@ jobs:
       - name: Install packages
         run: brew install autoconf automake bison freetype gd gettext icu4c krb5 libedit libiconv libjpeg libpng libxml2 libzip pkg-config re2c zlib
 
-
       - name: Test
         shell: bash
         run: |
           vfox add -s php.zip
-          vfox install php@8.3.3
-          vfox use -p php@8.3.3
+          vfox install php@latest
+          vfox use -p php@$(vfox list php | sed -n 's/-> v//p')
           eval "$(vfox activate bash)"
           php -v
           php -m
           composer -V
-
-          
-          
