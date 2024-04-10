@@ -9,10 +9,11 @@ on:
 jobs:
   plugin-test-linux:
     runs-on: ubuntu-latest
+    container: ubuntu-latest
     steps:
       - name: Install vfox
         run: |
-          sudo echo "deb [trusted=yes] https://apt.fury.io/versionfox/ /" | tee /etc/apt/sources.list.d/versionfox.list
+          echo "deb [trusted=yes] https://apt.fury.io/versionfox/ /" | tee /etc/apt/sources.list.d/versionfox.list
           apt-get update
           apt-get install vfox
 
