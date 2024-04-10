@@ -8,43 +8,72 @@ on:
 
 jobs:
   plugin-test-linux:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        # ref: https://github.com/actions/runner-images
+        os: [ ubuntu-20.04, macos-13, windows-2022 ]
+    runs-on: ${{ matrix.os }}
     container: ubuntu:latest
     steps:
-      - name: Install vfox
+      - name: install vfox (Linux)
+        if: runner.os == 'Linux'
         run: |
-          apt-get update
-          apt-get install -y ca-certificates
-          echo "deb [trusted=yes] https://apt.fury.io/versionfox/ /" | tee /etc/apt/sources.list.d/versionfox.list
-          apt-get update
-          apt-get install vfox
+          echo "deb [trusted=yes] https://apt.fury.io/versionfox/ /" | sudo tee /etc/apt/sources.list.d/versionfox.list
+          sudo apt-get update
+          sudo apt-get install vfox
+          echo 'eval "$(vfox activate bash)"' >> ~/.bashrc
+
+      - name: install vfox (MacOS)
+        if: runner.os == 'MacOS'
+        run: |
+          brew tap version-fox/tap
+          brew install vfox
+          echo 'eval "$(vfox activate bash)"' >> ~/.bashrc
+          echo 'eval "$(vfox activate zsh)"' >> ~/.zshrc
+
+      - name: install vfox (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+          Invoke-RestMethod -Uri https://get.scoop.sh | Invoke-Expression
+          scoop install vfox
 
       - name: View vfox version
         run: |
           vfox -v
-          vfox available
 
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Add PHP plugin
+      - name: Generate PHP plugin
+        if: runner.os != 'Windows'
         run: |
-          mkdir ~/.version-fox/plugin/php
-          cp -r ./* ~/.version-fox/plugin/php
-
-      - name: Search PHP version
-        run: vfox search php &
+          zip -r php.zip ./
+      - name: Generate PHP plugin
+        if: runner.os == 'Windows'
+        run: |
+          Compress-Archive -Path .\* -DestinationPath .\php.zip
 
       - name: Install packages
+        if: runner.os == 'Linux'
         run: apt-get install -y curl autoconf build-essential locate libgd-dev libjpeg-dev libpng-dev libonig-dev libzip-dev libxml2-dev libssl-dev libsqlite3-dev libcurl4-openssl-dev libreadline-dev
+      - name: Install packages
+        if: runner.os == 'MacOS'
+        run: brew install autoconf automake bison freetype gd gettext icu4c krb5 libedit libiconv libjpeg libpng libxml2 libzip pkg-config re2c zlib
 
-      - name: Install PHP
+      - name: Add PHP And Install Runtime
         run: |
-          vfox i php
-          export __VFOX_SHELL="$$"
-          vfox use php@$(vfox list php | sed -n 's/-> v//p')
-          eval "$(vfox env -s zsh)"
-          export PATH="$(echo $PATH | tr -d '$')"
+          vfox add -s php.zip
+          vfox install php@8.3.3
+
+      #     php -v
+      #     php -m
+      #     composer -V
+
+      - name: Test
+        run: |
           php -v
           php -m
           composer -V
+          
