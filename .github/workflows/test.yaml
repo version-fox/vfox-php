@@ -36,7 +36,7 @@ jobs:
         run: vfox search php &
 
       - name: Install packages
-        run: apt-get install -y autoconf build-essential locate libgd-dev libjpeg-dev libpng-dev libonig-dev libzip-dev libxml2-dev libssl-dev libsqlite3-dev
+        run: apt-get install -y autoconf build-essential locate libgd-dev libjpeg-dev libpng-dev libonig-dev libzip-dev libxml2-dev libssl-dev libsqlite3-dev libcurl4-openssl-dev
 
       - name: Install PHP
         run: |
