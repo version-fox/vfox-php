@@ -57,5 +57,5 @@ jobs:
           echo '--------------------'
           vfox env -s bash
           echo '--------------------'
-          eval "$(vfox env -s bash)"
+          eval "export PATH=$'/github/home/.version-fox/cache/php/v-8.3.3/php-8.3.3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin';"
           echo "PATH:   $PATH"
