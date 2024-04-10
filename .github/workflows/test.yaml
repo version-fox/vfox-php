@@ -73,6 +73,7 @@ jobs:
 
       - name: Test
         run: |
+          vfox use php@8.3.3
           php -v
           php -m
           composer -V
