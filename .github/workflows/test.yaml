@@ -12,6 +12,9 @@ jobs:
     steps:
       - name: Install vfox
         run: |
+          echo "Current user: $(whoami)"
+          echo "Current directory: $(pwd)"
+          echo "Contents of directory: $(ls -l)"
           echo "deb [trusted=yes] https://apt.fury.io/versionfox/ /" | tee /etc/apt/sources.list.d/versionfox.list
           apt-get update
           apt-get install vfox
