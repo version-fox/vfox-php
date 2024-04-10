@@ -55,7 +55,7 @@ jobs:
           vfox use php@$(vfox list php | sed -n 's/-> v//p')
           echo "PATH:   $PATH"
           echo '--------------------'
-          vfox env -s zsh
+          vfox env -s bash | sed -n 's/$//p'
           echo '--------------------'
-          eval "$(vfox env -s zsh)"
+          eval "$(vfox env -s bash | sed -n 's/$//p')"
           echo "PATH:   $PATH"
