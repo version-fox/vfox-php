@@ -1,15 +1,35 @@
-# vfox-plugin-template
-
-This is a [vfox plugin](https://vfox.lhan.me/plugins/create/howto.html) template with CI that package and publish the plugin.
+# vfox-php
+[PHP](https://www.php.net/) plugin for [vfox](https://vfox.lhan.me/).
 
 ## Usage
 
-1. [Generate](https://github.com/version-fox/vfox-plugin-template/generate) a new repository based on this template.
-2. Configure [metadata](https://github.com/version-fox/vfox-plugin-template/blob/main/metadata.lua) information
-3. To develop your plugin further, please read [the plugins create section of the docs](https://vfox.lhan.me/plugins/create/howto.html).
+```shell
+# install plugin
+vfox add php
+
+# install an available version
+vofx search php
+# or specific version 
+vfox install php@8.3.3
+```
 
 
-## How to publish?
+## Prerequirements
 
-1. Push a new tag to the repository which name is `vX.Y.Z` (X.Y.Z is the version number).
-2. The CI will automatically package, then publish [release](https://github.com/version-fox/vfox-plugin-template/releases/tag/v0.0.1) and publish [manifest](https://github.com/version-fox/vfox-plugin-template/releases/tag/manifest).
+
+### macOS
+
+To install PHP on macOS, you'll need a set of packages installed via homebrew.
+
+```shell
+brew install autoconf automake bison freetype gd gettext icu4c krb5 libedit libiconv libjpeg libpng libxml2 libzip pkg-config re2c zlib
+```
+
+There's also a set of optional packages which enable additional extensions to be enabled:
+
+```shell
+brew install gmp libsodium imagemagick
+```
+
+Note that the supported extension are not exhaustive, so you may need edit the [bin/install](./bin/install) script to support additional extension. Feel free to submit a PR for any missing extensions.
+

@@ -36,5 +36,11 @@ NOTE:
 PLUGIN.manifestUrl = "https://github.com/version-fox/vfox-php/releases/download/manifest/manifest.json"
 -- Some things that need user to be attention!
 PLUGIN.notes = {
+    "For macOS user:",
+    "You'll need a set of packages installed via homebrew:",
     "",
+    "brew install autoconf automake bison freetype gd gettext icu4c krb5 libedit libiconv libjpeg libpng libxml2 libzip pkg-config re2c zlib",
+    "",
+    "There's also a set of optional packages which enable additional extensions to be enabled.",
+    "For more detailed, please refer to https://github.com/version-fox/vfox-php/blob/main/README.md"
 }
