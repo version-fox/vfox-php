@@ -53,6 +53,4 @@ jobs:
           mkdir -p ~/.version-fox/cache/php/v-8.3.3/php-8.3.3/bin
           export __VFOX_SHELL="$$"
           vfox use php@$(vfox list php | sed -n 's/-> v//p')
-          echo $PATH
-          eval "$(vfox env -s bash)"
-          echo $PATH
+          vfox env -s bash
