@@ -23,8 +23,6 @@ jobs:
         run: |
           vfox -v
           vfox available
-          echo 'eval "$(vfox activate bash)"' >> ~/.bashrc
-          source ~/.bashrc
 
       - name: Checkout code
         uses: actions/checkout@v3
@@ -36,9 +34,7 @@ jobs:
 
       - name: Search PHP version
         run: |
-          echo $__VFOX_SHELL
           vfox search php &
-          sleep 1
 
       - name: Install packages
         run: apt-get install -y autoconf build-essential locate libgd-dev libjpeg-dev libpng-dev libonig-dev libzip-dev libxml2-dev libssl-dev
