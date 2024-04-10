@@ -7,11 +7,11 @@ on:
     - cron: 0 0 * * 5
 
 jobs:
-  plugin-test-linux:
+  plugin-test-windows:
     strategy:
       matrix:
         # ref: https://github.com/actions/runner-images
-        os: [ windows-latest]
+        os: [windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout code
@@ -32,4 +32,3 @@ jobs:
           php -v
           php -m
           composer -V
-          
