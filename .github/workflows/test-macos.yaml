@@ -1,4 +1,4 @@
-name: Test unix workflow
+name: Test macos workflow
 
 on:
   pull_request:
@@ -7,24 +7,27 @@ on:
     - cron: 0 0 * * 5
 
 jobs:
-  plugin-test-linux:
+  plugin-test-macos:
     strategy:
       matrix:
         # ref: https://github.com/actions/runner-images
         os: [ macos-latest ]
     runs-on: ${{ matrix.os }}
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
       - name: install vfox (MacOS)
         run: |
           brew tap version-fox/tap
           brew install vfox
 
-      - name: Install packages
-        run: brew install autoconf automake bison freetype gd gettext icu4c krb5 libedit libiconv libjpeg libpng libxml2 libzip pkg-config re2c zlib
-
       - name: Generate PHP plugin
         run: |
           zip -r php.zip ./
+
+      - name: Install packages
+        run: brew install autoconf automake bison freetype gd gettext icu4c krb5 libedit libiconv libjpeg libpng libxml2 libzip pkg-config re2c zlib
+
 
       - name: Test
         shell: bash
