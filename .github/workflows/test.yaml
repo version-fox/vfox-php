@@ -9,7 +9,7 @@ on:
 jobs:
   plugin-test-linux:
     runs-on: ubuntu-latest
-    container: ubuntu-latest
+    container: ubuntu:latest
     steps:
       - name: Install vfox
         run: |
