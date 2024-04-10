@@ -38,7 +38,7 @@ jobs:
           sleep 3
 
       - name: Install packages
-        run: apt-get install -y locate libgd-dev libjpeg-dev libpng-dev libonig-dev libzip-dev
+        run: apt-get install -y autoconf locate libgd-dev libjpeg-dev libpng-dev libonig-dev libzip-dev
 
       - name: Install PHP
         run: |
