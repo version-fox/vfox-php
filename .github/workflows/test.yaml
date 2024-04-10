@@ -32,28 +32,19 @@ jobs:
           mkdir ~/.version-fox/plugin/php
           cp -r ./* ~/.version-fox/plugin/php
 
-      # - name: Search PHP version
-      #   run: vfox search php &
+      - name: Search PHP version
+        run: vfox search php &
 
-      # - name: Install packages
-      #   run: apt-get install -y curl autoconf build-essential locate libgd-dev libjpeg-dev libpng-dev libonig-dev libzip-dev libxml2-dev libssl-dev libsqlite3-dev libcurl4-openssl-dev libreadline-dev
+      - name: Install packages
+        run: apt-get install -y curl autoconf build-essential locate libgd-dev libjpeg-dev libpng-dev libonig-dev libzip-dev libxml2-dev libssl-dev libsqlite3-dev libcurl4-openssl-dev libreadline-dev
 
-      # - name: Install PHP
-      #   run: |
-      #     vfox i php
-      #     export __VFOX_SHELL="$$"
-      #     vfox use php@$(vfox list php | sed -n 's/-> v//p')
-      #     eval "$(vfox env -s zsh)"
-      #     php -v
-      #     php -m
-      #     composer -V
-
-      - name: Test
+      - name: Install PHP
         run: |
-          mkdir -p ~/.version-fox/cache/php/v-8.3.3/php-8.3.3/bin
+          vfox i php
           export __VFOX_SHELL="$$"
           vfox use php@$(vfox list php | sed -n 's/-> v//p')
           eval "$(vfox env -s zsh)"
-          echo "PATH:   $PATH"
           export PATH="$(echo $PATH | tr -d '$')"
-          echo "PATH:   $PATH"
+          php -v
+          php -m
+          composer -V
