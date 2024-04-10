@@ -1,0 +1,41 @@
+name: Test unix workflow
+
+on:
+  pull_request:
+  # push:
+  schedule:
+    - cron: 0 0 * * 5
+
+jobs:
+  plugin-test-linux:
+    strategy:
+      matrix:
+        # ref: https://github.com/actions/runner-images
+        os: [ macos-latest ]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: install vfox (MacOS)
+        run: |
+          brew tap version-fox/tap
+          brew install vfox
+
+      - name: Install packages
+        run: brew install autoconf automake bison freetype gd gettext icu4c krb5 libedit libiconv libjpeg libpng libxml2 libzip pkg-config re2c zlib
+
+      - name: Generate PHP plugin
+        run: |
+          zip -r php.zip ./
+
+      - name: Test
+        shell: bash
+        run: |
+          vfox add -s php.zip
+          vfox install php@8.3.3
+          vfox use -p php@8.3.3
+          eval "$(vfox activate bash)"
+          php -v
+          php -m
+          composer -V
+
+          
+          

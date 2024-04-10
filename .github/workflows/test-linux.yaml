@@ -1,0 +1,42 @@
+name: Test unix workflow
+
+on:
+  pull_request:
+  # push:
+  schedule:
+    - cron: 0 0 * * 5
+
+jobs:
+  plugin-test-linux:
+    strategy:
+      matrix:
+        # ref: https://github.com/actions/runner-images
+        os: [ ubuntu-latest ]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: install vfox (Linux)
+        run: |
+          echo "deb [trusted=yes] https://apt.fury.io/versionfox/ /" | sudo tee /etc/apt/sources.list.d/versionfox.list
+          sudo apt-get update
+          sudo apt-get install vfox
+
+      - name: Install packages
+        run: sudo apt-get update && sudo apt-get install -y autoconf bison build-essential curl gettext git libgd-dev libcurl4-openssl-dev libedit-dev libicu-dev libjpeg-dev libmysqlclient-dev libonig-dev libpng-dev libpq-dev libreadline-dev libsqlite3-dev libssl-dev libxml2-dev libzip-dev openssl pkg-config re2c zlib1g-dev
+
+      - name: Generate PHP plugin
+        run: |
+          zip -r php.zip ./
+
+      - name: Test
+        run: |
+          vfox add -s php.zip
+          vfox install php@8.3.3
+          vfox use -p php@8.3.3
+          eval "$(vfox activate bash)"
+          php -v
+          php -m
+          composer -V
+
+          
