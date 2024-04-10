@@ -13,7 +13,6 @@ jobs:
         # ref: https://github.com/actions/runner-images
         os: [ ubuntu-20.04, macos-13, windows-2022 ]
     runs-on: ${{ matrix.os }}
-    container: ubuntu:latest
     steps:
       - name: install vfox (Linux)
         if: runner.os == 'Linux'
