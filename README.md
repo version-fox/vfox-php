@@ -1,4 +1,5 @@
 # vfox-php
+
 [PHP](https://www.php.net/) plugin for [vfox](https://vfox.lhan.me/).
 
 ## Usage
@@ -9,13 +10,13 @@ vfox add php
 
 # install an available version
 vofx search php
-# or specific version 
+# or specific version
 vfox install php@8.3.3
 ```
 
-
 ## Prerequirements
 
+PHP installation requires some dependencies. Please install the dependencies based on the error messages, or refer to [.github/workflows/test-\*.yaml](https://github.com/version-fox/vfox-php/tree/main/.github/workflows) for guidance.
 
 ### macOS
 
@@ -32,4 +33,3 @@ brew install gmp libsodium imagemagick
 ```
 
 Note that the supported extension are not exhaustive, so you may need edit the [bin/install](./bin/install) script to support additional extension. Feel free to submit a PR for any missing extensions.
-
