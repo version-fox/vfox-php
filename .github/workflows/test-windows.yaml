@@ -1,0 +1,34 @@
+name: Test windows workflow
+
+on:
+  pull_request:
+  push:
+  schedule:
+    - cron: 0 0 * * 5
+
+jobs:
+  plugin-test-windows:
+    strategy:
+      matrix:
+        # ref: https://github.com/actions/runner-images
+        os: [windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: install vfox and test (Windows)
+        shell: pwsh
+        run: |
+          Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+          Invoke-RestMethod -Uri https://get.scoop.sh | Invoke-Expression
+          scoop install vfox
+          Compress-Archive -Path .\* -DestinationPath .\php.zip
+          vfox -v
+          vfox add -s php.zip
+          vfox install php@latest
+          vfox use -p php@$(vfox list php | sed -n 's/-> v//p')
+          Invoke-Expression "$(vfox activate pwsh)"
+          php -v
+          php -m
+          composer -V
