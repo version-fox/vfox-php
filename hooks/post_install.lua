@@ -19,8 +19,9 @@ function InstallComposerForWin(path)
     if err ~= nil then
         error(err)
     end
-    content = content:gsub(';extension_dir = "ext"', 'extension_dir = "./ext"')
+    content = content:gsub(';%s*extension_dir = "ext"', 'extension_dir = "./ext"')
     content = content:gsub(';extension=openssl', 'extension=openssl')
+    content = content:gsub(';extension=php_openssl.dll', 'extension=php_openssl.dll')
     _, err = util.write_file(path .. '\\php.ini', content)
     if err ~= nil then
         error(err)
