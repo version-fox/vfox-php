@@ -9,7 +9,7 @@
 vfox add php
 
 # install an available version
-vofx search php
+vfox search php
 # or specific version
 vfox install php@8.3.3
 ```
@@ -32,4 +32,4 @@ There's also a set of optional packages which enable additional extensions to be
 brew install gmp libsodium imagemagick
 ```
 
-Note that the supported extension are not exhaustive, so you may need edit the [bin/install](./bin/install) script to support additional extension. Feel free to submit a PR for any missing extensions.
+Note that the supported extensions are not exhaustive, so you may need to edit the [bin/install](./bin/install) script to support additional extension. Feel free to submit a PR for any missing extensions.
