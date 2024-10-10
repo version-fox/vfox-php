@@ -19,6 +19,7 @@ install_php() {
     local krb5_path=$(homebrew_package_path krb5)
     local libedit_path=$(homebrew_package_path libedit)
     local libxml2_path=$(homebrew_package_path libxml2)
+    local libxslt_path=$(homebrew_package_path libxslt)
     local openssl_path=$(homebrew_package_path openssl@1.1)
 
     if [ -n "$bison_path" ]; then
@@ -39,6 +40,10 @@ install_php() {
 
     if [ -n "$libxml2_path" ]; then
       export "PKG_CONFIG_PATH=${libxml2_path}/lib/pkgconfig:${PKG_CONFIG_PATH}"
+    fi
+
+    if [ -n "$libxslt_path" ]; then
+      export "PKG_CONFIG_PATH=${libxslt_path}/lib/pkgconfig:${PKG_CONFIG_PATH}"
     fi
 
     if [ -n "$openssl_path" ]; then
@@ -183,6 +188,7 @@ os_based_configure_options() {
     local libedit_path=$(homebrew_package_path libedit)
     local libpng_path=$(homebrew_package_path libpng)
     local libxml2_path=$(homebrew_package_path libxml2)
+    local libxslt_path=$(homebrew_package_path libxslt)
     local libzip_path=$(homebrew_package_path libzip)
     local openssl_path=$(homebrew_package_path openssl@1.1)
     local readline_path=$(homebrew_package_path readline)
@@ -238,6 +244,10 @@ os_based_configure_options() {
       configure_options="$configure_options --with-libxml-dir=$libxml2_path"
     fi
 
+    if [ -n "$libxslt_path" ]; then
+      configure_options="$configure_options --with-xsl=$libxslt_path"
+    fi
+
     if [ -n "$zlib_path" ]; then
       configure_options="$configure_options --with-zlib-dir=$zlib_path"
     fi
@@ -264,7 +274,7 @@ os_based_configure_options() {
   else
     local jpeg_path=$(locate libjpeg.so | awk '{ print length(), $0 | "sort -n" }' | cut -d" " -f2- | head -n 1)
     local libpng_path=$(locate libpng.so | awk '{ print length(), $0 | "sort -n" }' | cut -d" " -f2- | head -n 1)
-    configure_options="--with-openssl --with-curl --with-zlib --with-readline --with-gettext"
+    configure_options="--with-openssl --with-curl --with-zlib --with-readline --with-gettext --with-xsl"
 
     if [ -n "$jpeg_path" ]; then
       configure_options="$configure_options --with-jpeg-dir=$jpeg_path --with-jpeg"
