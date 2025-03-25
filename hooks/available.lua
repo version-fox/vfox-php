@@ -15,27 +15,40 @@ function PLUGIN:Available(ctx)
 end
 
 function GetReleaseListForWindows()
-    local resp, err = http.get({
-        url = WIN_URL
-    })
-    local doc = html.parse(resp.body)
-
     local result = {}
-    doc:find('a'):each(function(i, selection)
-        local versionStr = selection:text()
-        if util.filter_windows_version(versionStr) then
-            local versions = util.split_string(versionStr, '-')
-            if util.compare_versions(versions[2], "5.3.2") >= 0 then
-                table.insert(result, {
-                    version = versions[2],
-                    name = versionStr,
-                })
+    local urls = { WIN_URL, WIN_URL_LTS }
+
+    for _, url in ipairs(urls) do
+        local resp, err = http.get({ url = url })
+
+        if resp then
+            local doc = html.parse(resp.body)
+            local versions = {}
+            doc:find('a'):each(function(i, selection)
+                local versionStr = selection:text()
+                table.insert(versions, versionStr)
+            end)
+            -- LIKE this because for some reason sorting it at the end resets is_from_lts
+            table.sort(versions, function(a, b)
+                return util.compare_versions(a, b) > 0
+            end)
+            for _, versionStr in ipairs(versions) do
+                if util.filter_windows_version(versionStr) then
+                    local versions = util.split_string(versionStr, '-')
+                    if util.compare_versions(versions[2], "5.3.2") >= 0 then
+                        local entry = {
+                            version = versions[2],
+                            name = versionStr
+                        }
+
+                        entry.is_from_lts = (url == WIN_URL_LTS)
+                        table.insert(result, entry)
+                    end
+                end
             end
         end
-    end)
-    table.sort(result, function(a, b)
-        return util.compare_versions(a.version, b.version) > 0
-    end)
+    end
+
     return result
 end
 

@@ -11,10 +11,18 @@ require('constants')
 function PLUGIN:PreInstall(ctx)
     local version = ctx.version
 
-    local lists = self:Available({})
+    -- TODO for the oddest reason its pulling a cached version of the functions inside of it they refuse to override
+    --   local lists = self:Available({})
+    local lists = {}
+    if RUNTIME.osType == 'windows' then
+        lists = GetReleaseListForWindows()
+    else
+        lists = GetReleaseListForLinux()
+    end
+
     if version == 'latest' or version == '' then
         version = lists[1].version
-    end
+    end    
 
     local versions = {}
     for _, value in pairs(lists) do
@@ -40,9 +48,14 @@ function PLUGIN:PreInstall(ctx)
 end
 
 function GetReleaseForWindows(versions)
+    url = WIN_URL .. versions.name
+
+    if (versions.is_from_lts) then
+        url = WIN_URL_LTS .. versions.name
+    end
     return {
         version = versions.version,
-        url = WIN_URL .. versions.name,
+        url = url,
     }
 end
 
