@@ -10,19 +10,10 @@ require('constants')
 --- @return table Version information
 function PLUGIN:PreInstall(ctx)
     local version = ctx.version
-
-    -- TODO for the oddest reason its pulling a cached version of the functions inside of it they refuse to override
-    --   local lists = self:Available({})
-    local lists = {}
-    if RUNTIME.osType == 'windows' then
-        lists = GetReleaseListForWindows()
-    else
-        lists = GetReleaseListForLinux()
-    end
-
+    local lists = self:Available({})
     if version == 'latest' or version == '' then
         version = lists[1].version
-    end    
+    end  
 
     local versions = {}
     for _, value in pairs(lists) do

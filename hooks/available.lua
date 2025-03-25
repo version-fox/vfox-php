@@ -28,7 +28,7 @@ function GetReleaseListForWindows()
                 local versionStr = selection:text()
                 table.insert(versions, versionStr)
             end)
-            -- LIKE this because for some reason sorting it at the end resets is_from_lts
+            -- TODO like this because for some reason sorting it at the end resets is_from_lts to false
             table.sort(versions, function(a, b)
                 return util.compare_versions(a, b) > 0
             end)
@@ -37,7 +37,7 @@ function GetReleaseListForWindows()
                     local versions = util.split_string(versionStr, '-')
                     if util.compare_versions(versions[2], "5.3.2") >= 0 then
                         local entry = {
-                            version = versions[2],
+                            version = (versions[3] ~= "nts") and versions[2] or versions[2] .. "-nts",
                             name = versionStr
                         }
 
