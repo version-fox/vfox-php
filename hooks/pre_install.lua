@@ -9,62 +9,78 @@ require('constants')
 --- @field ctx.version string User-input version
 --- @return table Version information
 function PLUGIN:PreInstall(ctx)
-    local version = ctx.version
+  local version = ctx.version
+  -- TODO for the oddest reason its pulling a cached version of the functions inside of it they refuse to override
+  --   local lists = self:Available({})
+  local lists = {}
+  if RUNTIME.osType == 'windows' then
+    lists = GetReleaseListForWindows()
+  else
+    lists = GetReleaseListForLinux()
+  end  
+  
+  if version == 'latest' or version == '' then
+    version = lists[1].version
+  end
 
-    local lists = self:Available({})
-    if version == 'latest' or version == '' then
-        version = lists[1].version
-    end
 
-    local versions = {}
-    for _, value in pairs(lists) do
-        if util.starts_with(value.version, version .. '.') then
-            versions = value
-        end
-        if value.version == version then
-            versions = value
-        end
-        if next(versions) ~= nil then
-            break
-        end
+  local versions = {}
+  for _, value in pairs(lists) do
+    if util.starts_with(value.version, version .. '.') then
+      versions = value
     end
-    if next(versions) == nil then
-        error('version not found for provided version ' .. version)
+    if value.version == version then
+      versions = value
     end
+    if next(versions) ~= nil then
+      break
+    end
+  end
+  if next(versions) == nil then
+    error('version not found for provided version ' .. version)
+  end
 
-    if RUNTIME.osType == 'windows' then
-        return GetReleaseForWindows(versions)
-    else
-        return GetReleaseForLinux(versions)
-    end
+  if RUNTIME.osType == 'windows' then
+    return GetReleaseForWindows(versions)
+  else
+    return GetReleaseForLinux(versions)
+  end
 end
 
 function GetReleaseForWindows(versions)
-    return {
-        version = versions.version,
-        url = WIN_URL .. versions.name,
-    }
+  url = WIN_URL .. versions.name
+
+  if (versions.is_from_lts) then
+    url = WIN_URL_LTS .. versions.name
+  end
+  return {
+    version = versions.version,
+    url = url,
+  }
 end
 
 function GetReleaseForLinux(versions)
-    local resp, err = http.get({
-        url = URL .. "/releases/index.php?json&version=" .. versions.version
-    })
-    local data = json.decode(resp.body)
+  local resp, err = http.get({
+    url = URL .. "/releases/index.php?json&version=" .. versions.version
+  })
+  local data = json.decode(resp.body)
 
-    local filename, md5, sha256 = "", "", ""
-    for _, s in pairs(data["source"]) do
-        if util.ends_with(s.filename, ".tar.gz") then
-            filename = s.filename
-            md5 = s.md5
-            sha256 = s.sha256
-            break
-        end
+  local filename, md5, sha256 = "", "", ""
+  for _, s in pairs(data["source"]) do
+    if util.ends_with(s.filename, ".tar.gz") then
+      filename = s.filename
+      md5 = s.md5
+      sha256 = s.sha256
+      break
     end
-    return {
-        version = versions.version,
-        url = URL .. "/distributions/" .. filename,
-        sha256 = sha256,
-        md5 = md5
-    }
+  end
+  return {
+    version = versions.version,
+    url = URL .. "/distributions/" .. filename,
+    sha256 = sha256,
+    md5 = md5
+  }
 end
+
+
+
