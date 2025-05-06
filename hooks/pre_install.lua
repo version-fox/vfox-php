@@ -10,11 +10,10 @@ require('constants')
 --- @return table Version information
 function PLUGIN:PreInstall(ctx)
     local version = ctx.version
-
     local lists = self:Available({})
     if version == 'latest' or version == '' then
         version = lists[1].version
-    end
+    end  
 
     local versions = {}
     for _, value in pairs(lists) do
@@ -40,9 +39,14 @@ function PLUGIN:PreInstall(ctx)
 end
 
 function GetReleaseForWindows(versions)
+    url = WIN_URL .. versions.name
+
+    if (versions.is_from_lts) then
+        url = WIN_URL_LTS .. versions.name
+    end
     return {
         version = versions.version,
-        url = WIN_URL .. versions.name,
+        url = url,
     }
 end
 
