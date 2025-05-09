@@ -36,12 +36,35 @@ function InstallComposerForWin(path)
         error(err)
     end
 
-    local code = os.execute(path .. '\\php.exe ' .. setup .. ' --install-dir=' .. path)
+    local phpPath = path .. "\\php.exe"
+    local setupPath = setup
+    local installPath = path
+    local execString = phpPath .. ' ' .. setupPath .. ' --install-dir=' .. installPath
+    
+
+    if RUNTIME.osType == 'windows' then
+        phpPath = "\"" .. phpPath .. "\""
+        setupPath = "\"" .. setupPath .. "\""
+        installPath = "\"" .. installPath .. "\""
+        
+        local winPrefix = ''
+
+        util.write_file(path .. '\\composer_install.bat', winPrefix .. phpPath .. ' ' .. setupPath .. ' --install-dir=' .. installPath)
+
+        execString = path .. '\\composer_install.bat'
+    end
+
+    local code = os.execute(execString)
     if code ~= 0 then
         error('Failed to install composer.')
     end
 
     os.remove(setup)
+
+    if RUNTIME.osType == 'windows' then
+        os.remove(path .. '\\composer_install.bat')
+    end
+
     util.write_file(path .. '\\composer.bat', '@php "%~dp0composer.phar" %*')
 end
 
