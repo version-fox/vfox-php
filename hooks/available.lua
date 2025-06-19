@@ -19,7 +19,7 @@ function GetReleaseListForWindows()
     local urls = { WIN_URL, WIN_URL_LTS }
 
     for _, url in ipairs(urls) do
-        local resp, err = http.get({ url = url })
+        local resp, err = http.get({ url = url, headers = { ["User-Agent"] = "vfox" } })
 
         if resp then
             local doc = html.parse(resp.body)
