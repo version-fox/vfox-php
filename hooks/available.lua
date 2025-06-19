@@ -16,7 +16,7 @@ end
 
 function GetReleaseListForWindows()
     local result = {}
-    local urls = { WIN_URL, WIN_URL_LTS }
+    local urls = { WIN_RELEASES_URL, WIN_RELEASES_URL_LTS }
 
     for _, url in ipairs(urls) do
         local resp, err = http.get({ url = url })
@@ -41,7 +41,7 @@ function GetReleaseListForWindows()
                             name = versionStr
                         }
 
-                        entry.is_from_lts = (url == WIN_URL_LTS)
+                        entry.is_from_lts = (url == WIN_RELEASES_URL_LTS)
                         table.insert(result, entry)
                     end
                 end
@@ -53,20 +53,27 @@ function GetReleaseListForWindows()
 end
 
 function GetReleaseListForLinux()
-    local resp, err = http.get({
-        url = URL .. '/releases'
-    })
-    local doc = html.parse(resp.body)
-
     local result = {}
-    doc:find("#layout-content h2"):each(function(i, selection)
-        local versionStr = selection:text()
-        if util.compare_versions(versionStr, "5.3.2") >= 0 then
-            table.insert(result, {
-                version = versionStr,
-            })
+    local urls = { RELEASES_URL, RELEASES_URL_LTS }
+
+    for _, url in ipairs(urls) do
+        local resp, err = http.get({ url = url })
+        local is_from_lts = (url == RELEASES_URL_LTS)
+
+        if resp then
+            local doc = html.parse(resp.body)
+            local query = "#layout-content " .. (is_from_lts and "h3" or "h2")
+            doc:find(query):each(function(i, selection)
+                local versionStr = is_from_lts and selection:attr("id") or selection:text()
+                versionStr = versionStr:gsub("^v", "")
+                if util.compare_versions(versionStr, "5.3.2") >= 0 then
+                    table.insert(result, {
+                        version = versionStr,
+                    })
+                end
+            end)
         end
-    end)
+    end
 
     table.sort(result, function(a, b)
         return util.compare_versions(a.version, b.version) > 0

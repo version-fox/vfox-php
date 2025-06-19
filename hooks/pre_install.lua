@@ -39,10 +39,10 @@ function PLUGIN:PreInstall(ctx)
 end
 
 function GetReleaseForWindows(versions)
-    url = WIN_URL .. versions.name
+    url = WIN_RELEASES_URL .. versions.name
 
     if (versions.is_from_lts) then
-        url = WIN_URL_LTS .. versions.name
+        url = WIN_RELEASES_URL_LTS .. versions.name
     end
     return {
         version = versions.version,
