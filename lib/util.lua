@@ -42,7 +42,6 @@ end
 
 function util.filter_windows_version(version)
     return util.starts_with(version, 'php')
-        and string.find(version, 'nts')
         and not util.starts_with(version, 'php-debug')
         and not util.starts_with(version, 'php-devel')
         and not util.starts_with(version, 'php-test')

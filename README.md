@@ -11,7 +11,10 @@ vfox add php
 # install an available version
 vfox search php
 # or specific version
-vfox install php@8.3.3
+vfox install php@8.4.5
+
+# or nts version
+vfox install php@8.4.5-nts
 ```
 
 ## Prerequirements
