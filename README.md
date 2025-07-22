@@ -1,6 +1,6 @@
 # vfox-php
 
-[PHP](https://www.php.net/) plugin for [vfox](https://vfox.lhan.me/).
+[PHP](https://www.php.net/) plugin for [vfox](https://vfox.dev/).
 
 ## Usage
 
