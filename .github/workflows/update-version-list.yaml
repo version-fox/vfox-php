@@ -1,0 +1,88 @@
+name: Check Updates Periodically
+
+on:
+  schedule:
+    # Twice a week — Mon and Thu at 16:00 UTC. Mirrors vfox-clang's cadence.
+    - cron: "0 16 * * 1,4"
+  workflow_dispatch:
+  push:
+    branches: ["main", "master"]
+    paths:
+      - ".github/update-manifest.py"
+      - ".github/workflows/update-version-list.yaml"
+
+permissions:
+  contents: write
+
+jobs:
+  update-version-list:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Generate manifest
+        run: python ./.github/update-manifest.py -o version-manifest.json
+
+      - name: Compare with previous manifest
+        id: compare
+        env:
+          REPO: ${{ github.repository }}
+        run: |
+          python <<'PY'
+          import json, os, sys, urllib.error, urllib.request
+
+          repo = os.environ["REPO"]
+          new = json.load(open("version-manifest.json", encoding="utf-8"))
+
+          url = f"https://github.com/{repo}/releases/download/version-manifest/version-manifest.json"
+          changed = True
+          try:
+              with urllib.request.urlopen(url, timeout=30) as resp:
+                  old = json.load(resp)
+              changed = old != new
+          except urllib.error.HTTPError as exc:
+              if exc.code != 404:
+                  raise
+
+          out = os.environ["GITHUB_OUTPUT"]
+          with open(out, "a", encoding="utf-8") as f:
+              f.write(f"HAS_UPDATES={'true' if changed else 'false'}\n")
+          print("Update needed" if changed else "Already up to date")
+          PY
+
+      - name: Build release notes
+        if: steps.compare.outputs.HAS_UPDATES == 'true'
+        run: |
+          python <<'PY'
+          import json
+          m = json.load(open("version-manifest.json", encoding="utf-8"))
+          src_top = [e["version"] for e in m["source"][:5]]
+          win_top = sorted({e["version"] for e in m["windows"]}, reverse=True)[:5]
+          with open("notes.md", "w", encoding="utf-8") as f:
+              f.write("# vfox-php version manifest\n\n")
+              f.write(f"- Source releases: **{len(m['source'])}**\n")
+              f.write(f"- Windows binaries: **{len(m['windows'])}**\n\n")
+              f.write(f"Latest source: `{', '.join(src_top)}`\n\n")
+              f.write(f"Latest Windows: `{', '.join(win_top)}`\n\n")
+              f.write("Consumed by `lib/util.lua` at install time. Auto-refreshed by ")
+              f.write("`.github/workflows/update-version-list.yaml`.\n")
+          PY
+
+      - name: Update manifest release
+        if: steps.compare.outputs.HAS_UPDATES == 'true'
+        uses: ncipollo/release-action@v1
+        with:
+          name: "version manifest"
+          tag: "version-manifest"
+          allowUpdates: true
+          bodyFile: "notes.md"
+          artifacts: "version-manifest.json"
+          replacesArtifacts: true
+          omitNameDuringUpdate: true
+          omitPrereleaseDuringUpdate: true

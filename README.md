@@ -13,13 +13,16 @@ vfox search php
 # or specific version
 vfox install php@8.4.5
 
-# or nts version
+# or nts (non-thread-safe) version on Windows
 vfox install php@8.4.5-nts
+
+# install latest stable
+vfox install php@latest
 ```
 
-## Prerequirements
+## Prerequisites
 
-PHP installation requires some dependencies. Please install the dependencies based on the error messages, or refer to [.github/workflows/test-\*.yaml](https://github.com/version-fox/vfox-php/tree/main/.github/workflows) for guidance.
+PHP installation requires some dependencies. Please install the dependencies based on the error messages, or refer to the [test workflows](https://github.com/version-fox/vfox-php/tree/main/.github/workflows) for guidance.
 
 ### macOS
 
@@ -36,3 +39,18 @@ brew install gmp libsodium imagemagick
 ```
 
 Note that the supported extensions are not exhaustive, so you may need to edit the [bin/install](./bin/install) script to support additional extension. Feel free to submit a PR for any missing extensions.
+
+### Linux (Debian/Ubuntu)
+
+```shell
+sudo apt-get install -y autoconf bison build-essential curl gettext git libgd-dev \
+  libcurl4-openssl-dev libedit-dev libicu-dev libjpeg-dev libmysqlclient-dev \
+  libonig-dev libpng-dev libpq-dev libreadline-dev libsqlite3-dev libssl-dev \
+  libxml2-dev libxslt-dev libzip-dev openssl pkg-config re2c zlib1g-dev
+```
+
+### Windows
+
+No build tools are needed. The plugin downloads the official prebuilt zip from
+[windows.php.net](https://windows.php.net/downloads/releases/) and installs
+Composer alongside it.

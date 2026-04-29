@@ -1,5 +1,4 @@
-URL = 'https://www.php.net'
-RELEASES_URL = URL .. '/releases/'
-RELEASES_URL_LTS = URL .. '/downloads.php'
-WIN_RELEASES_URL = 'https://windows.php.net/downloads/releases/archives/'
-WIN_RELEASES_URL_LTS = 'https://windows.php.net/downloads/releases/'
+PHP_NET = "https://www.php.net"
+PHP_DIST_URL = PHP_NET .. "/distributions/"
+PHP_WIN_RELEASES = "https://windows.php.net/downloads/releases/"
+PHP_WIN_ARCHIVES = PHP_WIN_RELEASES .. "archives/"

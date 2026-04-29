@@ -15,7 +15,11 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v6
+
+      - name: Pre-generate manifest (for fallback when version-manifest release does not yet exist)
+        shell: pwsh
+        run: python ./.github/update-manifest.py -o ./version-manifest.json
 
       - name: install vfox and test (Windows)
         shell: pwsh
@@ -27,7 +31,19 @@ jobs:
           vfox -v
           vfox add -s php.zip
           vfox install php@latest
-          vfox use -p php@$(vfox list php | sed -n 's/-> v//p')
+          # `vfox list php` does not mark a version with `-> v` until something
+          # has been activated, so the legacy `sed -n 's/-> v//p'` extraction
+          # would return an empty string right after install. Match the bare
+          # version string instead.
+          $installed = (vfox list php | Select-String -Pattern '\d+\.\d+\.\d+(?:-nts)?').Matches[0].Value
+          if (-not $installed) { throw 'no installed version detected from `vfox list php`' }
+          # vfox 1.0+ requires the shell hook for project / session scope and
+          # only refreshes $env:PATH on the *next* activate after a `use`.
+          # Mirror the double-activate pattern used by vfox-erlang's E2E tests:
+          # first call sets up the hook, `use -g` writes the global pin, and
+          # the second call picks up the just-installed PHP for $env:PATH.
+          Invoke-Expression "$(vfox activate pwsh)"
+          vfox use -g "php@$installed"
           Invoke-Expression "$(vfox activate pwsh)"
           php -v
           php -m

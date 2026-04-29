@@ -1,74 +1,81 @@
-local util = {}
+local http = require("http")
+local json = require("json")
 
-function util.starts_with(str, prefix)
-    return str:sub(1, string.len(prefix)) == prefix
+local M = {}
+
+function M.starts_with(str, prefix)
+    return str:sub(1, #prefix) == prefix
 end
 
-function util.ends_with(str, suffix)
-    return str:sub(-string.len(suffix)) == suffix
+function M.ends_with(str, suffix)
+    return suffix == "" or str:sub(-#suffix) == suffix
 end
 
-function util.split_string(str, delimiter)
-    local result = {}
-    for substr in str:gmatch('([^' .. delimiter .. ']+)') do
-        table.insert(result, substr)
+--- Map vfox archType to the architecture token used in windows.php.net filenames.
+function M.windows_arch(arch)
+    if arch == "amd64" then return "x64" end
+    if arch == "386" then return "x86" end
+    return arch
+end
+
+local manifest_cache
+
+--- Fetch the version manifest.
+---
+--- Primary source: the GitHub release asset on the `version-manifest` tag,
+--- refreshed by .github/workflows/update-version-list.yaml.
+--- Fallback: a `version-manifest.json` shipped inside the plugin directory.
+--- The fallback is what CI uses (the test workflows generate the manifest
+--- locally before zipping the plugin) and also what kicks in for offline /
+--- pre-release-bootstrap installs.
+function M.fetch_manifest()
+    if manifest_cache then return manifest_cache end
+
+    local githubURL = os.getenv("GITHUB_URL") or "https://github.com/"
+    githubURL = githubURL:gsub("/$", "")
+    local url = githubURL .. "/version-fox/vfox-php/releases/download/version-manifest/version-manifest.json"
+
+    local resp, err = http.get({ url = url })
+    if err == nil and resp and resp.status_code == 200 then
+        manifest_cache = json.decode(resp.body)
+        return manifest_cache
     end
-    return result
-end
 
-function util.compare_versions(v1, v2)
-    local v1_parts = {}
-    for part in string.gmatch(v1, '[^.]+') do
-        table.insert(v1_parts, tonumber(part))
+    local local_path = RUNTIME.pluginDirPath .. "/version-manifest.json"
+    local content, read_err = M.read_file(local_path)
+    if read_err == nil and content ~= "" then
+        manifest_cache = json.decode(content)
+        return manifest_cache
     end
 
-    local v2_parts = {}
-    for part in string.gmatch(v2, '[^.]+') do
-        table.insert(v2_parts, tonumber(part))
+    local detail
+    if err ~= nil then
+        detail = err
+    else
+        detail = "HTTP " .. tostring(resp.status_code) .. " for " .. url
     end
-
-    for i = 1, math.max(#v1_parts, #v2_parts) do
-        local v1_part = v1_parts[i] or 0
-        local v2_part = v2_parts[i] or 0
-        if v1_part > v2_part then
-            return 1
-        elseif v1_part < v2_part then
-            return -1
-        end
-    end
-
-    return 0
+    error("Failed to fetch version manifest: " .. detail
+        .. " (no fallback at " .. local_path .. ")")
 end
 
-function util.filter_windows_version(version)
-    return util.starts_with(version, 'php')
-        and not util.starts_with(version, 'php-debug')
-        and not util.starts_with(version, 'php-devel')
-        and not util.starts_with(version, 'php-test')
-        and not string.find(version, 'src')
-        and util.ends_with(version, '.zip')
-        and ((RUNTIME.archType == '386' and string.find(version, 'x86'))
-            or (RUNTIME.archType ~= '386' and string.find(version, 'x64')))
-end
-
-function util.read_file(filename)
-    local file = io.open(filename, 'r')
+function M.read_file(filename)
+    local file = io.open(filename, "r")
     if not file then
-        return '', 'Failed to open file: ' .. filename
+        return "", "Failed to open file: " .. filename
     end
-    local content = file:read('*a')
+    local content = file:read("*a")
     file:close()
     return content
 end
 
-function util.write_file(filename, content)
-    local file = io.open(filename, 'w')
+function M.write_file(filename, content)
+    local file = io.open(filename, "w")
     if not file then
-        return false, 'Failed to open file for writing: ' .. filename
+        return false, "Failed to open file for writing: " .. filename
     end
     file:write(content)
     file:close()
     return true
 end
 
-return util
+return M

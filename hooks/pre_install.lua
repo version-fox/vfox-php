@@ -1,7 +1,5 @@
-local http = require('http')
-local json = require('json')
-local util = require('util')
-require('constants')
+local util = require("util")
+require("constants")
 
 --- Returns some pre-installed information, such as version number, download address, local files, etc.
 --- If checksum is provided, vfox will automatically check it for you.
@@ -10,65 +8,73 @@ require('constants')
 --- @return table Version information
 function PLUGIN:PreInstall(ctx)
     local version = ctx.version
-    local lists = self:Available({})
-    if version == 'latest' or version == '' then
-        version = lists[1].version
-    end  
+    local manifest = util.fetch_manifest()
 
-    local versions = {}
-    for _, value in pairs(lists) do
-        if util.starts_with(value.version, version .. '.') then
-            versions = value
-        end
-        if value.version == version then
-            versions = value
-        end
-        if next(versions) ~= nil then
-            break
-        end
-    end
-    if next(versions) == nil then
-        error('version not found for provided version ' .. version)
-    end
-
-    if RUNTIME.osType == 'windows' then
-        return GetReleaseForWindows(versions)
+    if RUNTIME.osType == "windows" then
+        return WindowsPreInstall(manifest, version)
     else
-        return GetReleaseForLinux(versions)
+        return SourcePreInstall(manifest, version)
     end
 end
 
-function GetReleaseForWindows(versions)
-    url = WIN_RELEASES_URL .. versions.name
-
-    if (versions.is_from_lts) then
-        url = WIN_RELEASES_URL_LTS .. versions.name
+local function find_match(list, version, predicate)
+    if version == "" or version == "latest" then
+        for _, e in ipairs(list) do
+            if not predicate or predicate(e) then
+                return e
+            end
+        end
+        return nil
     end
-    return {
-        version = versions.version,
-        url = url,
-    }
-end
-
-function GetReleaseForLinux(versions)
-    local resp, err = http.get({
-        url = URL .. "/releases/index.php?json&version=" .. versions.version
-    })
-    local data = json.decode(resp.body)
-
-    local filename, md5, sha256 = "", "", ""
-    for _, s in pairs(data["source"]) do
-        if util.ends_with(s.filename, ".tar.gz") then
-            filename = s.filename
-            md5 = s.md5
-            sha256 = s.sha256
-            break
+    for _, e in ipairs(list) do
+        if e.version == version and (not predicate or predicate(e)) then
+            return e
         end
     end
+    local prefix = version .. "."
+    for _, e in ipairs(list) do
+        if util.starts_with(e.version, prefix) and (not predicate or predicate(e)) then
+            return e
+        end
+    end
+    return nil
+end
+
+function SourcePreInstall(manifest, version)
+    local entry = find_match(manifest.source or {}, version, nil)
+    if not entry then
+        error("PHP source release not found for version: " .. tostring(version))
+    end
+    local result = {
+        version = entry.version,
+        url = PHP_DIST_URL .. entry.filename,
+    }
+    if entry.sha256 and entry.sha256 ~= "" then
+        result.sha256 = entry.sha256
+    end
+    if entry.md5 and entry.md5 ~= "" then
+        result.md5 = entry.md5
+    end
+    return result
+end
+
+function WindowsPreInstall(manifest, version)
+    local arch = util.windows_arch(RUNTIME.archType)
+    local entry = find_match(manifest.windows or {}, version, function(e)
+        return e.arch == arch and not e.nts
+    end)
+    if not entry and version ~= "" and version ~= "latest" then
+        -- The user may have explicitly requested an NTS build (e.g. "8.5.5-nts").
+        entry = find_match(manifest.windows or {}, version, function(e)
+            return e.arch == arch
+        end)
+    end
+    if not entry then
+        error("PHP Windows binary not found for version " .. tostring(version) .. " (arch=" .. tostring(arch) .. ")")
+    end
+    local base = entry.current and PHP_WIN_RELEASES or PHP_WIN_ARCHIVES
     return {
-        version = versions.version,
-        url = URL .. "/distributions/" .. filename,
-        sha256 = sha256,
-        md5 = md5
+        version = entry.version,
+        url = base .. entry.filename,
     }
 end
