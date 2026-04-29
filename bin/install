@@ -20,7 +20,7 @@ install_php() {
     local libedit_path=$(homebrew_package_path libedit)
     local libxml2_path=$(homebrew_package_path libxml2)
     local libxslt_path=$(homebrew_package_path libxslt)
-    local openssl_path=$(homebrew_package_path openssl@1.1)
+    local openssl_path=$(homebrew_openssl_path)
 
     if [ -n "$bison_path" ]; then
       export "PATH=${bison_path}/bin:${PATH}"
@@ -163,6 +163,21 @@ homebrew_package_path() {
   fi
 }
 
+# Resolve the OpenSSL path to use for building PHP.
+#
+# Homebrew disabled openssl@1.1 on 2024-10-24, so the long-standing
+# `openssl@1.1` reference no longer resolves on a modern macOS. PHP 7.4+
+# builds fine against OpenSSL 3, so we prefer `openssl@3` and fall back
+# to `openssl@1.1` only if it still happens to be installed (older PHP
+# branches that still need it).
+homebrew_openssl_path() {
+  local path=$(homebrew_package_path openssl@3)
+  if [ -z "$path" ]; then
+    path=$(homebrew_package_path openssl@1.1)
+  fi
+  echo "$path"
+}
+
 exit_if_homebrew_not_installed() {
   if [ "$(brew --version 2>/dev/null)" = "" ]; then
     echo "ERROR: Please install homebrew for OSX"
@@ -190,7 +205,7 @@ os_based_configure_options() {
     local libxml2_path=$(homebrew_package_path libxml2)
     local libxslt_path=$(homebrew_package_path libxslt)
     local libzip_path=$(homebrew_package_path libzip)
-    local openssl_path=$(homebrew_package_path openssl@1.1)
+    local openssl_path=$(homebrew_openssl_path)
     local readline_path=$(homebrew_package_path readline)
     local webp_path=$(homebrew_package_path webp)
     local zlib_path=$(homebrew_package_path zlib)

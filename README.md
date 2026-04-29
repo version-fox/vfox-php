@@ -26,7 +26,7 @@ PHP installation requires some dependencies. Please install the dependencies bas
 To install PHP on macOS, you'll need a set of packages installed via homebrew.
 
 ```shell
-brew install autoconf automake bison freetype gd gettext icu4c krb5 libedit libiconv libjpeg libpng libxml2 libzip pkg-config re2c zlib
+brew install autoconf automake bison freetype gd gettext icu4c krb5 libedit libiconv libjpeg libpng libxml2 libzip openssl@3 pkg-config re2c zlib
 ```
 
 There's also a set of optional packages which enable additional extensions to be enabled:
