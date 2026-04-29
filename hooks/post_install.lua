@@ -19,7 +19,14 @@ function InstallComposerForWin(path)
     if err ~= nil then
         error(err)
     end
-    content = content:gsub(';%s*extension_dir = "ext"', 'extension_dir = "./ext"')
+    -- Use an absolute extension_dir so php.exe can locate php_openssl.dll
+    -- regardless of which CWD it was launched from. The composer-setup
+    -- step below invokes php.exe from the user's shell CWD, so a relative
+    -- "./ext" path resolves to the wrong directory and fails to load
+    -- openssl, breaking the HTTPS download Composer needs.
+    local ext_dir = (path .. "\\ext"):gsub("\\", "/")
+    content = content:gsub(';%s*extension_dir = "ext"',
+        function() return 'extension_dir = "' .. ext_dir .. '"' end)
     content = content:gsub(';extension=openssl', 'extension=openssl')
     content = content:gsub(';extension=php_openssl.dll', 'extension=php_openssl.dll')
     _, err = util.write_file(path .. '\\php.ini', content)
