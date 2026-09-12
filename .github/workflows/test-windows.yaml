@@ -3,6 +3,8 @@ name: Test windows workflow
 on:
   pull_request:
   push:
+    branches: [main]
+  workflow_dispatch:
   schedule:
     - cron: 0 0 * * 5
 
