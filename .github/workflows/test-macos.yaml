@@ -31,6 +31,8 @@ jobs:
         run: brew install autoconf automake bison freetype gd gettext icu4c krb5 libedit libiconv libjpeg libpng libxml2 libxslt libzip openssl@3 pkg-config re2c zlib
 
       - name: Test
+        env:
+          MAKEFLAGS: -j2
         shell: bash
         run: |
           vfox add -s php.zip
@@ -38,6 +40,8 @@ jobs:
           eval "$(vfox activate bash)"
           vfox use -p php@latest
           eval "$(vfox env --shell bash)"
+          php_path=$(command -v php)
+          [[ "$php_path" == "$(pwd -P)/.vfox/sdks/php/bin/php" ]]
           php -v
           php -m
           composer -V

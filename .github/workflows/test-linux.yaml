@@ -32,12 +32,16 @@ jobs:
           zip -r php.zip ./
 
       - name: Test
+        env:
+          MAKEFLAGS: -j2
         run: |
           vfox add -s php.zip
           vfox install php@latest
           eval "$(vfox activate bash)"
           vfox use -p php@latest
           eval "$(vfox env --shell bash)"
+          php_path=$(command -v php)
+          [[ "$php_path" == "$(pwd -P)/.vfox/sdks/php/bin/php" ]]
           php -v
           php -m
           composer -V
