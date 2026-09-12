@@ -10,7 +10,7 @@ function PLUGIN:PostInstall(ctx)
     if RUNTIME.osType == 'windows' then
         InstallComposerForWin(path)
     else
-        CompileInstallPHP(path)
+        CompileInstallPHP(path, sdkInfo.version)
     end
 end
 
@@ -19,7 +19,14 @@ function InstallComposerForWin(path)
     if err ~= nil then
         error(err)
     end
-    content = content:gsub(';%s*extension_dir = "ext"', 'extension_dir = "./ext"')
+    -- Use an absolute extension_dir so php.exe can locate php_openssl.dll
+    -- regardless of which CWD it was launched from. The composer-setup
+    -- step below invokes php.exe from the user's shell CWD, so a relative
+    -- "./ext" path resolves to the wrong directory and fails to load
+    -- openssl, breaking the HTTPS download Composer needs.
+    local ext_dir = (path .. "\\ext"):gsub("\\", "/")
+    content = content:gsub(';%s*extension_dir = "ext"',
+        function() return 'extension_dir = "' .. ext_dir .. '"' end)
     content = content:gsub(';extension=openssl', 'extension=openssl')
     content = content:gsub(';extension=php_openssl.dll', 'extension=php_openssl.dll')
     _, err = util.write_file(path .. '\\php.ini', content)
@@ -68,9 +75,12 @@ function InstallComposerForWin(path)
     util.write_file(path .. '\\composer.bat', '@php "%~dp0composer.phar" %*')
 end
 
-function CompileInstallPHP(path)
+function CompileInstallPHP(path, version)
+    if not version:match("^%d+%.%d+%.%d+$") then
+        error("Invalid PHP source version: " .. tostring(version))
+    end
     os.execute('chmod +x ' .. RUNTIME.pluginDirPath .. '/bin/install')
-    local code = os.execute(RUNTIME.pluginDirPath .. '/bin/install ' .. path)
+    local code = os.execute(RUNTIME.pluginDirPath .. '/bin/install ' .. path .. ' ' .. version)
     if code ~= 0 then
         error('Compilation Failure.')
     end

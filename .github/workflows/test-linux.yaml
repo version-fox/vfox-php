@@ -15,7 +15,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: install vfox (Linux)
         run: |
           echo "deb [trusted=yes] https://apt.fury.io/versionfox/ /" | sudo tee /etc/apt/sources.list.d/versionfox.list
@@ -33,7 +33,7 @@ jobs:
         run: |
           vfox add -s php.zip
           vfox install php@latest
-          vfox use -p php@$(vfox list php | sed -n 's/-> v//p')
+          vfox use -p php@latest
           eval "$(vfox activate bash)"
           php -v
           php -m
