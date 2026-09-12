@@ -7,7 +7,8 @@ install_php() {
   local install_path=$1
 
   local source_path="${install_path}_source"
-  local configure_options="$(construct_configure_options $install_path)"
+  local configure_options
+  configure_options="$(construct_configure_options "$install_path")" || return 1
 
   local operating_system=$(uname -a)
 
@@ -20,7 +21,11 @@ install_php() {
     local libedit_path=$(homebrew_package_path libedit)
     local libxml2_path=$(homebrew_package_path libxml2)
     local libxslt_path=$(homebrew_package_path libxslt)
-    local openssl_path=$(homebrew_package_path openssl@1.1)
+    local openssl_path
+    # Explicit configure options own their dependency paths, as before.
+    if [ -z "${PHP_CONFIGURE_OPTIONS:-}" ]; then
+      openssl_path=$(homebrew_openssl_path) || return 1
+    fi
 
     if [ -n "$bison_path" ]; then
       export "PATH=${bison_path}/bin:${PATH}"
@@ -133,7 +138,9 @@ construct_configure_options() {
     --without-snmp"
 
   if [ "$PHP_CONFIGURE_OPTIONS" = "" ]; then
-    local configure_options="$(os_based_configure_options) $global_config"
+    local platform_options
+    platform_options=$(os_based_configure_options) || return 1
+    local configure_options="$platform_options $global_config"
   else
     local configure_options="$PHP_CONFIGURE_OPTIONS $global_config"
   fi
@@ -163,6 +170,28 @@ homebrew_package_path() {
   fi
 }
 
+homebrew_openssl_path() {
+  # PHP 7.1-8.0 requires OpenSSL < 3.0; PHP 8.1+ supports OpenSSL 3.
+  # See https://www.php.net/manual/en/openssl.requirements.php
+  local major minor formula path
+  if [[ ! "${PHP_VERSION:-}" =~ ^([0-9]+)\.([0-9]+)\. ]]; then
+    echo "ERROR: Cannot determine PHP version for OpenSSL selection" >&2
+    return 1
+  fi
+  major=${BASH_REMATCH[1]}
+  minor=${BASH_REMATCH[2]}
+  formula=openssl@1.1
+  if (( major > 8 || (major == 8 && minor >= 1) )); then
+    formula=openssl@3
+  fi
+  path=$(homebrew_package_path "$formula")
+  if [ -z "$path" ]; then
+    echo "ERROR: PHP $PHP_VERSION requires $formula; install a compatible dependency before building." >&2
+    return 1
+  fi
+  echo "$path"
+}
+
 exit_if_homebrew_not_installed() {
   if [ "$(brew --version 2>/dev/null)" = "" ]; then
     echo "ERROR: Please install homebrew for OSX"
@@ -190,7 +219,8 @@ os_based_configure_options() {
     local libxml2_path=$(homebrew_package_path libxml2)
     local libxslt_path=$(homebrew_package_path libxslt)
     local libzip_path=$(homebrew_package_path libzip)
-    local openssl_path=$(homebrew_package_path openssl@1.1)
+    local openssl_path
+    openssl_path=$(homebrew_openssl_path) || return 1
     local readline_path=$(homebrew_package_path readline)
     local webp_path=$(homebrew_package_path webp)
     local zlib_path=$(homebrew_package_path zlib)
@@ -298,5 +328,8 @@ os_based_configure_options() {
   echo $configure_options
 }
 
-install_php $1
-install_composer $1
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+  PHP_VERSION=${2:-$(sed -n 's/^#define PHP_VERSION "\([^"]*\)"/\1/p' "$1/main/php_version.h")}
+  install_php "$1"
+  install_composer "$1"
+fi

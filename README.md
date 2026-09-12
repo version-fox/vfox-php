@@ -17,6 +17,11 @@ vfox install php@8.4.5
 vfox install php@8.4.5-nts
 ```
 
+The version list combines current and archived Windows binaries, sorted newest
+first. Plain Windows versions select thread-safe (TS) builds; `-nts` selects NTS.
+Linux and macOS source versions come directly from PHP's official JSON API.
+Network failures report the upstream URL instead of returning an empty list.
+
 ## Prerequirements
 
 PHP installation requires some dependencies. Please install the dependencies based on the error messages, or refer to [.github/workflows/test-\*.yaml](https://github.com/version-fox/vfox-php/tree/main/.github/workflows) for guidance.
@@ -26,8 +31,16 @@ PHP installation requires some dependencies. Please install the dependencies bas
 To install PHP on macOS, you'll need a set of packages installed via homebrew.
 
 ```shell
-brew install autoconf automake bison freetype gd gettext icu4c krb5 libedit libiconv libjpeg libpng libxml2 libzip pkg-config re2c zlib
+brew install autoconf automake bison freetype gd gettext icu4c krb5 libedit libiconv libjpeg libpng libxml2 libzip openssl@3 pkg-config re2c zlib
 ```
+
+PHP 8.1 and newer use `openssl@3` on macOS. Older PHP versions require a
+compatible older OpenSSL installation; the build reports a missing dependency
+instead of silently selecting OpenSSL 3 or omitting HTTPS support. Homebrew no
+longer supplies `openssl@1.1` through its normal supported formulae. See the
+[PHP OpenSSL compatibility requirements](https://www.php.net/manual/en/openssl.requirements.php).
+If you supply `PHP_CONFIGURE_OPTIONS`, you remain responsible for configuring
+the dependency paths; automatic macOS dependency selection is bypassed.
 
 There's also a set of optional packages which enable additional extensions to be enabled:
 
