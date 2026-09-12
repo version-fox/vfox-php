@@ -233,13 +233,13 @@ os_based_configure_options() {
     if [ -n "$gmp_path" ]; then
       configure_options="--with-gmp=$gmp_path"
     else
-      echo "gmp not found, not including in installation"
+      echo "gmp not found, not including in installation" >&2
     fi
 
     if [ -n "$sodium_path" ]; then
       configure_options="$configure_options --with-sodium=$sodium_path"
     else
-      echo "sodium not found, not including in installation"
+      echo "sodium not found, not including in installation" >&2
     fi
 
     if [ -n "$freetype_path" ]; then
