@@ -1,6 +1,7 @@
 name: Test Plugin
 
 on:
+  workflow_dispatch:
   pull_request:
   push:
     branches: [main]
@@ -25,3 +26,5 @@ jobs:
         run: go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/windows_test.lua
       - name: Test macOS OpenSSL selection
         run: bash tests/openssl_test.sh
+      - name: Test optional dependency diagnostics
+        run: bash tests/configure_options_test.sh
