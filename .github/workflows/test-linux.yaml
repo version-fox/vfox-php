@@ -35,8 +35,9 @@ jobs:
         run: |
           vfox add -s php.zip
           vfox install php@latest
-          vfox use -p php@latest
           eval "$(vfox activate bash)"
+          vfox use -p php@latest
+          eval "$(vfox env --shell bash)"
           php -v
           php -m
           composer -V
