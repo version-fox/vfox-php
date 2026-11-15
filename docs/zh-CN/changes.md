@@ -7,6 +7,7 @@
 ## 未发布
 
 - 开发：开发容器；Linux 和 Windows 的 Go 端到端套件，在容器里用 vfox 安装 PHP；CI 中的 lint、格式和 license 头检查；中英文文档。
+- Linux：`bin/install` 在编译之前检查构建依赖：编译器、`make`、`autoconf`、`pkg-config` 和 `curl`，以及 configure 选项所用的库。缺少任何一项，安装会立即停止，消息会列出每个缺失的项目及其 Debian 或 Ubuntu 软件包。此前，安装要等到长时间编译之后才会在 configure 或 make 中失败。见[平台](platforms.md#linux)。
 - Lua 和 shell 源文件带上了 Apache-2.0 的 license 头。
 - Linux 和 macOS：PCRE JIT 默认开启，与 PHP 一致。`PHP_WITHOUT_PCRE_JIT` 用来关闭它。此前这个变量的判断条件写反了，构建默认关闭 JIT。
 - Linux：gmp 和 sodium 通过系统的库缓存及其头文件查找，不再使用 `locate`。JPEG 和 PNG 来自系统的 libgd，因为构建使用 `--with-external-gd`，所以旧的 `--with-jpeg-dir` 和 `--with-png-dir` 选项已经去掉。

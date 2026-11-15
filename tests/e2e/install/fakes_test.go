@@ -26,14 +26,17 @@ import (
 // fakeCommands maps the name that a fake answers to onto what it does. A fake
 // reads the host from the FAKE_ variables of its session, and logs to FAKE_WORK.
 var fakeCommands = map[string]func(args []string, stdin io.Reader, stdout io.Writer) int{
-	"uname":     fakeUname,
-	"brew":      fakeBrew,
-	"ldconfig":  fakeLdconfig,
-	"cc":        fakeCC,
-	"locate":    fakeLocate,
-	"make":      fakeMake,
-	"configure": fakeConfigure,
-	"buildconf": fakeBuildconf,
+	"uname":      fakeUname,
+	"brew":       fakeBrew,
+	"ldconfig":   fakeLdconfig,
+	"cc":         fakeCC,
+	"locate":     fakeLocate,
+	"make":       fakeMake,
+	"autoconf":   fakeTool("autoconf"),
+	"pkg-config": fakePkgConfig,
+	"curl":       fakeTool("curl"),
+	"configure":  fakeConfigure,
+	"buildconf":  fakeBuildconf,
 }
 
 // fakeUname prints the uname of the host, as uname -a would.
@@ -89,9 +92,13 @@ func fakeLdconfig(_ []string, _ io.Reader, stdout io.Writer) int {
 
 var includeLine = regexp.MustCompile(`#include <([^>]+)>`)
 
-// fakeCC answers the header check of bin/install: it reads "#include <header>"
-// on stdin, and succeeds when FAKE_HEADERS lists that header.
-func fakeCC(_ []string, stdin io.Reader, _ io.Writer) int {
+// fakeCC answers the tool check of bin/install, "cc --version", and its header
+// check: it reads "#include <header>" on stdin, and succeeds when FAKE_HEADERS
+// lists that header.
+func fakeCC(args []string, stdin io.Reader, stdout io.Writer) int {
+	if status, ok := answerVersion("cc", args, stdout); ok {
+		return status
+	}
 	input, err := io.ReadAll(stdin)
 	if err != nil {
 		return 1
@@ -115,8 +122,12 @@ func fakeLocate(args []string, _ io.Reader, _ io.Writer) int {
 }
 
 // fakeMake logs its call. make install creates the prefix that configure was
-// given, as the real make install does.
-func fakeMake(args []string, _ io.Reader, _ io.Writer) int {
+// given, as the real make install does. make --version is the tool check of
+// bin/install, which is answered but not logged.
+func fakeMake(args []string, _ io.Reader, stdout io.Writer) int {
+	if status, ok := answerVersion("make", args, stdout); ok {
+		return status
+	}
 	appendLog("make.log", strings.TrimSpace("make "+strings.Join(args, " ")))
 	if len(args) == 1 && args[0] == "install" {
 		prefix := configuredPrefix()
@@ -146,6 +157,64 @@ func fakeConfigure(args []string, _ io.Reader, _ io.Writer) int {
 
 // fakeBuildconf does nothing: a fake source tree needs no generated files.
 func fakeBuildconf(_ []string, _ io.Reader, _ io.Writer) int {
+	return 0
+}
+
+// fakeTool answers the tool check of bin/install, "name --version", for a tool
+// that no other fake answers. Any other call of the tool fails.
+func fakeTool(name string) func(args []string, stdin io.Reader, stdout io.Writer) int {
+	return func(args []string, _ io.Reader, stdout io.Writer) int {
+		if status, ok := answerVersion(name, args, stdout); ok {
+			return status
+		}
+		return 1
+	}
+}
+
+// answerVersion answers "name --version", which bin/install runs to see whether a
+// tool is installed. The tool is installed when FAKE_TOOLS lists it. It reports
+// false for any other call, which the caller answers.
+func answerVersion(name string, args []string, stdout io.Writer) (int, bool) {
+	if len(args) != 1 || args[0] != "--version" {
+		return 0, false
+	}
+	if !hostHasTool(name) {
+		return 1, true
+	}
+	fmt.Fprintf(stdout, "%s (fake)\n", name)
+	return 0, true
+}
+
+// hostHasTool reports whether FAKE_TOOLS lists the tool.
+func hostHasTool(name string) bool {
+	return envListHas("FAKE_TOOLS", name)
+}
+
+// envListHas reports whether the comma-separated list in the variable has the item.
+func envListHas(variable, item string) bool {
+	for _, got := range strings.Split(os.Getenv(variable), ",") {
+		if got == item {
+			return true
+		}
+	}
+	return false
+}
+
+// fakePkgConfig answers the tool check of bin/install, "pkg-config --version", and
+// its module checks, "pkg-config --exists MODULE...". The module checks succeed when
+// pkg-config is installed and FAKE_PKGS lists every module.
+func fakePkgConfig(args []string, _ io.Reader, stdout io.Writer) int {
+	if status, ok := answerVersion("pkg-config", args, stdout); ok {
+		return status
+	}
+	if len(args) < 2 || args[0] != "--exists" || !hostHasTool("pkg-config") {
+		return 1
+	}
+	for _, module := range args[1:] {
+		if !envListHas("FAKE_PKGS", module) {
+			return 1
+		}
+	}
 	return 0
 }
 

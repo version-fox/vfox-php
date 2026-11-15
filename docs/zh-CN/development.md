@@ -60,7 +60,7 @@ go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/detect_test.lua
 go test -C tests/e2e -count=1 -v ./install/
 ```
 
-`hooks_test.lua` 会替换 HTTP 客户端、JSON 和 HTML 模块以及文件函数，然后检查 hook 的返回值，包括带 NTS 构建的 Windows 发布列表。`windows_test.lua` 检查 Windows 上的安装：php.ini、Composer 安装器及其 sha384 校验，以及带空格路径的引号。`post_install_test.lua` 检查 Linux 和 macOS 的编译步骤，`pre_uninstall_test.lua` 检查删除 PHP 构建的步骤。`tests/e2e/install` 在 bash 中运行 `bin/install`，宿主机的命令都被替换：`uname`、`brew`、`ldconfig`、`cc`、`locate` 和 `make` 是指向测试二进制的符号链接，测试二进制按调用时的命令名作出回应；假的 PHP 源码树里的 `buildconf` 和 `configure` 也是这样。它检查 macOS 的选项及选中的 OpenSSL、Linux 的选项（包括 PCRE JIT、gmp 和 sodium），以及带空格安装路径的构建目录；构建失败或卸载 PHP 时，这个目录会被删除。在 macOS 上，`TestHomebrewOfThisMac` 还会把选项与这台 Mac 的 Homebrew 对照。`detect_test.lua` 检查能找到机器上哪些 PHP 安装、如何为它们命名，以及哪些不纳入：共享的系统目录、shims、vfox 自己的安装，以及不回应 `php -v` 的 PHP。容器套件见 [E2E 测试](e2e.md)。
+`hooks_test.lua` 会替换 HTTP 客户端、JSON 和 HTML 模块以及文件函数，然后检查 hook 的返回值，包括带 NTS 构建的 Windows 发布列表。`windows_test.lua` 检查 Windows 上的安装：php.ini、Composer 安装器及其 sha384 校验，以及带空格路径的引号。`post_install_test.lua` 检查 Linux 和 macOS 的编译步骤，`pre_uninstall_test.lua` 检查删除 PHP 构建的步骤。`tests/e2e/install` 在 bash 中运行 `bin/install`，宿主机的命令都被替换：`uname`、`brew`、`ldconfig`、`cc`、`locate`、`make`、`autoconf`、`pkg-config` 和 `curl` 是指向测试二进制的符号链接，测试二进制按调用时的命令名作出回应；假的 PHP 源码树里的 `buildconf` 和 `configure` 也是这样。它检查 macOS 的选项及选中的 OpenSSL、Linux 的选项（包括 PCRE JIT、gmp 和 sodium）、Linux 的构建依赖（缺少任何一项，安装都会在编译前停止，提示中会列出对应的软件包），以及带空格安装路径的构建目录；构建失败或卸载 PHP 时，这个目录会被删除。在 macOS 上，`TestHomebrewOfThisMac` 还会把选项与这台 Mac 的 Homebrew 对照。`detect_test.lua` 检查能找到机器上哪些 PHP 安装、如何为它们命名，以及哪些不纳入：共享的系统目录、shims、vfox 自己的安装，以及不回应 `php -v` 的 PHP。容器套件见 [E2E 测试](e2e.md)。
 
 ## 本地检查
 

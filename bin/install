@@ -77,6 +77,13 @@ install_php() {
   local prefix=$install_path
   local source_path="${install_path}_source"
   local build_dir=""
+  local operating_system=$(uname -a)
+
+  # A missing build dependency ends the install here, before the source is moved
+  # or compiled, rather than after a long build. macOS checks Homebrew instead.
+  if [[ ! $operating_system =~ "Darwin" ]]; then
+    check_linux_build_dependencies || return 1
+  fi
 
   # PHP's make install does not quote its paths, and neither do the pear and pecl
   # scripts it writes, so PHP cannot be built or installed under a path with a
@@ -98,8 +105,6 @@ install_php() {
   while IFS= read -r option; do
     configure_args+=("$option")
   done <<<"$configured"
-
-  local operating_system=$(uname -a)
 
   if [[ $operating_system =~ "Darwin" ]]; then
     exit_if_homebrew_not_installed
@@ -310,6 +315,88 @@ have_system_library() {
   local cache
   cache="$(ldconfig -p 2>/dev/null || /sbin/ldconfig -p 2>/dev/null || true)"
   grep -q -- "$library" <<<"$cache" && echo "#include <$header>" | cc -E -x c - >/dev/null 2>&1
+}
+
+# Prints the build dependencies of PHP on Linux, one per line as kind|name|need|package.
+# A tool is run as "name --version". A pkg is one or more pkg-config modules, which
+# configure looks up with PKG_CHECK_MODULES, so pkg-config must know them all. A
+# header must be found by the compiler. need says what uses the dependency, and
+# package is the Debian or Ubuntu package that provides it. The last four are used
+# by the platform options, which PHP_CONFIGURE_OPTIONS replaces, as
+# construct_configure_options does.
+linux_build_requirements() {
+  printf '%s\n' \
+    'tool|cc|a C compiler|build-essential' \
+    'tool|make|the build|build-essential' \
+    'tool|autoconf|buildconf|autoconf' \
+    'tool|pkg-config|the libraries that configure looks up with pkg-config|pkg-config' \
+    'tool|curl|the Composer installer|curl' \
+    'pkg|zlib|--with-zlib|zlib1g-dev' \
+    'pkg|libxml-2.0|the xml, dom, simplexml and soap extensions|libxml2-dev' \
+    'pkg|libcurl|--with-curl|libcurl4-openssl-dev' \
+    'pkg|gdlib|--with-external-gd|libgd-dev' \
+    'pkg|libpng|the PNG support of gd|libpng-dev' \
+    'pkg|libzip|--with-zip|libzip-dev' \
+    'pkg|icu-uc icu-io icu-i18n|--enable-intl|libicu-dev' \
+    'pkg|oniguruma|--enable-mbregex|libonig-dev' \
+    'pkg|sqlite3|the sqlite3 and pdo_sqlite extensions|libsqlite3-dev'
+  if [ -z "${PHP_CONFIGURE_OPTIONS:-}" ]; then
+    printf '%s\n' \
+      'header|openssl/ssl.h|--with-openssl|libssl-dev' \
+      'header|readline/readline.h|--with-readline|libreadline-dev' \
+      'header|libintl.h|--with-gettext|libc6-dev' \
+      'pkg|libxslt|--with-xsl|libxslt-dev'
+  fi
+}
+
+# Succeeds when the compiler finds the header.
+have_header() {
+  echo "#include <$1>" | cc -E -x c - >/dev/null 2>&1
+}
+
+# Succeeds when the tool runs, which shows that it is installed.
+have_tool() {
+  "$1" --version >/dev/null 2>&1
+}
+
+# Succeeds when pkg-config knows every module named. The name is split on purpose,
+# since a pkg may name several modules.
+have_pkg() {
+  pkg-config --exists $1 >/dev/null 2>&1
+}
+
+# Prints each Linux build dependency that is missing, with what needs it, and the
+# packages that provide them. Returns 1 when one is missing.
+check_linux_build_dependencies() {
+  local kind name need package found
+  local missing="" packages=""
+  while IFS='|' read -r kind name need package; do
+    found=1
+    if [ "$kind" = tool ]; then
+      have_tool "$name" || found=0
+    elif [ "$kind" = pkg ]; then
+      have_pkg "$name" || found=0
+    else
+      have_header "$name" || found=0
+    fi
+    if [ "$found" = 0 ]; then
+      missing="${missing}  - ${name}: ${need}"$'\n'
+      case " $packages " in
+        *" $package "*) ;;
+        *) packages="$packages $package" ;;
+      esac
+    fi
+  done < <(linux_build_requirements)
+  if [ -z "$missing" ]; then
+    return 0
+  fi
+  {
+    echo "ERROR: PHP cannot be built, because these build dependencies are missing. Nothing was compiled:"
+    printf '%s' "$missing"
+    echo "Install them and run vfox install again. The packages are named for Debian and Ubuntu:"
+    echo "  sudo apt-get install --assume-yes$packages"
+  } >&2
+  return 1
 }
 
 os_based_configure_options() {

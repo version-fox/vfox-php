@@ -22,6 +22,17 @@ sudo apt-get install --assume-yes autoconf bison build-essential ca-certificates
     re2c zip zlib1g-dev libgmp-dev libsodium-dev
 ```
 
+编译之前，`bin/install` 会先检查系统上的构建依赖：编译器、`make`、`autoconf`、`pkg-config` 和 `curl`，以及 configure 选项所用的库。缺少任何一项，安装会立即停止。消息会列出每个缺失的项目，以及提供它的 Debian 或 Ubuntu 软件包：
+
+```text
+ERROR: PHP cannot be built, because these build dependencies are missing. Nothing was compiled:
+  - libzip: --with-zip
+Install them and run vfox install again. The packages are named for Debian and Ubuntu:
+  sudo apt-get install --assume-yes libzip-dev
+```
+
+不检查 `bison` 和 `re2c`：发布包里已经带有生成好的语法分析器和扫描器，只有从 git 检出的源码才需要它们。OpenSSL、readline、gettext 和 xsl 这几项平台依赖只在没有设置 `PHP_CONFIGURE_OPTIONS` 时才检查，因为只有那时才会用到平台选项。
+
 安装路径可以含有空格，例如 `/home/John Doe` 下的 `VFOX_HOME`。PHP 的 `make install` 以及 `pear`、`pecl` 脚本都不会给路径加引号，所以 PHP 无法直接构建或安装到这样的路径。因此 `bin/install` 会在不含空格的目录里构建 PHP，安装路径则链接到该目录。构建目录依次取以下第一个可用的：已设置且不含空格的 `$XDG_DATA_HOME/vfox-php`；不含空格的主目录下的 `~/.local/share/vfox-php`；若主目录也含空格，则为 `/var/tmp/vfox-php-<uid>`。`vfox uninstall` 会删除链接，连同构建目录一起删除。这需要 vfox 把安装路径传给 `PreUninstall` 钩子，vfox 1.1.0 会传。若 vfox 不传，请手动删除构建目录。
 
 JPEG 和 PNG 的支持来自系统的 libgd（`libgd-dev`），因为构建使用 `--with-external-gd`。E2E 套件会检查 gd 是否报告 JPEG 支持。
