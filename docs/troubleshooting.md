@@ -61,13 +61,17 @@ Information only. GMP is optional, so the build continues without it. Install `g
 
 ## Windows
 
+### `php.exe did not start (exit code ...)`
+
+The PHP builds load the Microsoft Visual C++ 2015-2022 Redistributable, which the plugin does not install, and `php.exe` exits at once without it. Install the x64 build from [Microsoft](https://aka.ms/vs/17/release/vc_redist.x64.exe), or the x86 build (`vc_redist.x86.exe`) for x86 PHP, then install PHP again.
+
 ### `The Composer installer does not match the sha384 that Composer publishes`
 
-The installer that the plugin downloaded is not the one Composer publishes, so the install stopped before Composer was installed. Run the install again. If it fails every time, something between you and getcomposer.org is changing the file, such as a proxy that rewrites HTTPS responses.
+The installer that the plugin downloaded is not the one Composer publishes, so the install stopped before Composer was installed. Run the install again. If it fails every time, something between you and getcomposer.org is changing the file, such as a proxy that rewrites HTTPS responses. This message is only about the download: when `php.exe` cannot start, the install reports that instead, as above.
 
 ### `The code execution cannot proceed because VCRUNTIME140.dll was not found`
 
-The PHP builds need the Microsoft Visual C++ Redistributable, which the plugin does not install. Install it from Microsoft and run PHP again.
+Windows shows this when you start `php.exe` yourself without the Visual C++ Redistributable, which the plugin does not install. Install the x64 build from [Microsoft](https://aka.ms/vs/17/release/vc_redist.x64.exe), or `vc_redist.x86.exe` for x86 PHP, and run PHP again.
 
 ### `Failed to install composer.`
 

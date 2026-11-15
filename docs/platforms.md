@@ -46,15 +46,16 @@ If you set `PHP_CONFIGURE_OPTIONS`, the plugin does not choose the OpenSSL path 
 
 ## Windows
 
-Windows needs no compiler. The plugin unpacks the build from windows.php.net and then:
+Windows needs no compiler, but the builds need the Microsoft Visual C++ 2015-2022 Redistributable, which the plugin does not install. Install the x64 build from [Microsoft](https://aka.ms/vs/17/release/vc_redist.x64.exe), or the x86 build (`vc_redist.x86.exe`) for x86 PHP, before you install PHP. The plugin unpacks the build from windows.php.net and then:
 
+- runs `php.exe` once. If it does not start, the install stops there and names the exit code and the Redistributable to install, before it writes anything or downloads Composer;
 - writes `php.ini` next to `php.exe`, from `php.ini-development`. It sets `extension_dir` to the absolute `ext` folder and enables `openssl`, so Composer can fetch packages over HTTPS;
 - downloads Composer's installer from getcomposer.org and checks it against the sha384 that Composer publishes. If they differ, the install stops and Composer is not installed. The check is made by PHP, which is already in place at that point;
 - runs the installer with `php.exe`, and writes a `composer.bat` next to it.
 
 Install paths may hold spaces, as a Windows user profile often does. The plugin quotes them: CI installs into `C:\vfox home`.
 
-The builds load the Microsoft Visual C++ Redistributable, which the plugin does not install. If `php.exe` reports a missing `VCRUNTIME140.dll`, install the redistributable from Microsoft.
+If Windows reports that `VCRUNTIME140.dll` was not found when you start `php.exe` yourself, the Redistributable is missing: install it as described above.
 
 ## Composer
 

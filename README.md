@@ -35,7 +35,7 @@ On Windows a plain version is the thread-safe (TS) build, and `-nts` selects the
 
 ## Prerequisites
 
-On Linux and macOS, PHP installation requires some dependencies: a compiler and the development libraries that PHP is built against. The packages for each system are listed in [docs/platforms.md](docs/platforms.md). Windows needs none.
+On Linux and macOS, PHP installation requires some dependencies: a compiler and the development libraries that PHP is built against. The packages for each system are listed in [docs/platforms.md](docs/platforms.md). On Windows, the builds need the Microsoft Visual C++ 2015-2022 Redistributable (x64, or x86 for x86 PHP), which the plugin does not install. See [docs/platforms.md](docs/platforms.md#windows).
 
 ## Platforms
 
