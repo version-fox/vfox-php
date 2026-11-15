@@ -1,3 +1,17 @@
+-- Copyright 2026 Han Li and contributors
+--
+-- Licensed under the Apache License, Version 2.0 (the "License");
+-- you may not use this file except in compliance with the License.
+-- You may obtain a copy of the License at
+--
+--   http://www.apache.org/licenses/LICENSE-2.0
+--
+-- Unless required by applicable law or agreed to in writing, software
+-- distributed under the License is distributed on an "AS IS" BASIS,
+-- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-- See the License for the specific language governing permissions and
+-- limitations under the License.
+
 local util = {}
 
 function util.starts_with(str, prefix)
@@ -10,7 +24,7 @@ end
 
 function util.split_string(str, delimiter)
     local result = {}
-    for substr in str:gmatch('([^' .. delimiter .. ']+)') do
+    for substr in str:gmatch("([^" .. delimiter .. "]+)") do
         table.insert(result, substr)
     end
     return result
@@ -18,12 +32,12 @@ end
 
 function util.compare_versions(v1, v2)
     local v1_parts = {}
-    for part in string.gmatch(v1, '[^.]+') do
+    for part in string.gmatch(v1, "[^.]+") do
         table.insert(v1_parts, tonumber(part))
     end
 
     local v2_parts = {}
-    for part in string.gmatch(v2, '[^.]+') do
+    for part in string.gmatch(v2, "[^.]+") do
         table.insert(v2_parts, tonumber(part))
     end
 
@@ -41,30 +55,32 @@ function util.compare_versions(v1, v2)
 end
 
 function util.filter_windows_version(version)
-    return util.starts_with(version, 'php')
-        and not util.starts_with(version, 'php-debug')
-        and not util.starts_with(version, 'php-devel')
-        and not util.starts_with(version, 'php-test')
-        and not string.find(version, 'src')
-        and util.ends_with(version, '.zip')
-        and ((RUNTIME.archType == '386' and string.find(version, 'x86'))
-            or (RUNTIME.archType ~= '386' and string.find(version, 'x64')))
+    return util.starts_with(version, "php")
+        and not util.starts_with(version, "php-debug")
+        and not util.starts_with(version, "php-devel")
+        and not util.starts_with(version, "php-test")
+        and not string.find(version, "src")
+        and util.ends_with(version, ".zip")
+        and (
+            (RUNTIME.archType == "386" and string.find(version, "x86"))
+            or (RUNTIME.archType ~= "386" and string.find(version, "x64"))
+        )
 end
 
 function util.read_file(filename)
-    local file = io.open(filename, 'r')
+    local file = io.open(filename, "r")
     if not file then
-        return '', 'Failed to open file: ' .. filename
+        return "", "Failed to open file: " .. filename
     end
-    local content = file:read('*a')
+    local content = file:read("*a")
     file:close()
     return content
 end
 
 function util.write_file(filename, content)
-    local file = io.open(filename, 'w')
+    local file = io.open(filename, "w")
     if not file then
-        return false, 'Failed to open file for writing: ' .. filename
+        return false, "Failed to open file for writing: " .. filename
     end
     file:write(content)
     file:close()

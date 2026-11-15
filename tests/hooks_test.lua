@@ -1,3 +1,17 @@
+-- Copyright 2026 Han Li and contributors
+--
+-- Licensed under the Apache License, Version 2.0 (the "License");
+-- you may not use this file except in compliance with the License.
+-- You may obtain a copy of the License at
+--
+--   http://www.apache.org/licenses/LICENSE-2.0
+--
+-- Unless required by applicable law or agreed to in writing, software
+-- distributed under the License is distributed on an "AS IS" BASIS,
+-- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-- See the License for the specific language governing permissions and
+-- limitations under the License.
+
 package.path = "./lib/?.lua;" .. package.path
 PLUGIN = {}
 RUNTIME = { osType = "windows", archType = "amd64" }
@@ -56,6 +70,7 @@ responses[archives] = {
     "php-8.4.2-Win32-vs17-x64.zip",
     "php-8.3.15-Win32-vs16-x64.zip",
     "php-8.4.1-nts-Win32-vs17-x64.zip",
+    "php-8.2.35-1-nts-Win32-vs16-x64.zip",
     "php-7.2.33-1-Win32-VC15-x64.zip",
     "php-7.2.33-Win32-VC15-x64.zip",
 }
@@ -71,10 +86,12 @@ dofile("hooks/available.lua")
 dofile("hooks/pre_install.lua")
 local list = PLUGIN:Available({})
 assert(list[1].version == "8.4.2", "latest must be current TS, got " .. tostring(list[1].version))
-assert(#list == 6, #list)
+assert(#list == 7, #list)
 assert(PLUGIN:PreInstall({ version = "7.2.33" }).url == archives .. "php-7.2.33-1-Win32-VC15-x64.zip")
 assert(PLUGIN:PreInstall({ version = "latest" }).url == current .. "php-8.4.2-Win32-vs17-x64.zip")
 assert(PLUGIN:PreInstall({ version = "8.4.2-nts" }).version == "8.4.2-nts")
+-- NTS builds carry the rebuild number before "nts", as the release listing names them.
+assert(PLUGIN:PreInstall({ version = "8.2.35-nts" }).url == archives .. "php-8.2.35-1-nts-Win32-vs16-x64.zip")
 assert(PLUGIN:PreInstall({ version = "8.3" }).url == archives .. "php-8.3.15-Win32-vs16-x64.zip")
 RUNTIME.archType = "386"
 assert(#PLUGIN:Available({}) == 1)

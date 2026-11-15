@@ -1,3 +1,17 @@
+-- Copyright 2026 Han Li and contributors
+--
+-- Licensed under the Apache License, Version 2.0 (the "License");
+-- you may not use this file except in compliance with the License.
+-- You may obtain a copy of the License at
+--
+--   http://www.apache.org/licenses/LICENSE-2.0
+--
+-- Unless required by applicable law or agreed to in writing, software
+-- distributed under the License is distributed on an "AS IS" BASIS,
+-- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-- See the License for the specific language governing permissions and
+-- limitations under the License.
+
 local http = require("http")
 local json = require("json")
 local html = require("html")
@@ -48,11 +62,14 @@ local function windows()
             if not version or fileArch ~= arch then
                 return
             end
-            local rebuild = variant:match("^%-(%d+)$") or variant:match("^%-nts%-(%d+)$")
+            -- Rebuilds are written before or after "nts": 8.5.12-1-nts and 8.5.12-nts-1.
+            local rebuild = variant:match("^%-(%d+)$")
+                or variant:match("^%-(%d+)%-nts$")
+                or variant:match("^%-nts%-(%d+)$")
             if variant ~= "" and variant ~= "-nts" and not rebuild then
                 return
             end
-            local nts = variant:match("^%-nts") ~= nil
+            local nts = variant:match("nts") ~= nil
             rebuild = tonumber(rebuild) or 0
             if util.compare_versions(version, "5.3.2") < 0 then
                 return
