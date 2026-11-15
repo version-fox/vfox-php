@@ -41,7 +41,33 @@ local function fetch_or_fail(url)
     return resp.body
 end
 
+-- The builds load the Visual C++ runtime, which the plugin does not install.
+-- Without it php.exe exits at once. Every check below runs php.exe, so this one
+-- runs first: the install then names the runtime, rather than reporting an
+-- installer that does not match.
+local function check_php_starts(path)
+    local startBat = path .. "\\php_start.bat"
+    local _, err = util.write_file(startBat, '"' .. path .. '\\php.exe" -n -r "exit(0);"')
+    if err ~= nil then
+        error(err)
+    end
+    local started = os.execute('""' .. startBat .. '""')
+    os.remove(startBat)
+    if started ~= 0 then
+        local redist = RUNTIME.archType == "386" and "x86" or "x64"
+        error(
+            string.format(
+                "php.exe did not start (exit code %s). The PHP builds for Windows load the Microsoft Visual C++ 2015-2022 Redistributable, which the plugin does not install. Install the %s build from https://aka.ms/vs/17/release/vc_redist.%s.exe, then install PHP again. Composer was not installed.",
+                tostring(started),
+                redist,
+                redist
+            )
+        )
+    end
+end
+
 function InstallComposerForWin(path)
+    check_php_starts(path)
     local content, err = util.read_file(path .. "\\php.ini-development")
     if err ~= nil then
         error(err)

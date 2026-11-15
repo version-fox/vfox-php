@@ -19,6 +19,7 @@ local util = require("util")
 
 -- The fakes and the test share one table, and only its fields change: the
 -- Lua runtime used here does not see a local that a function has rebound.
+-- The start and verification batch files report the exit statuses the test sets.
 local S = {}
 
 -- Every test starts from a clean state. os.execute reports the exit status
@@ -32,6 +33,7 @@ local function reset(overrides)
     S.removed = {}
     S.urls = {}
     S.verify_exit = 0
+    S.start_exit = 0
     S.sig = { status_code = 200, body = "  ABCDEF\n" }
     for key, value in pairs(overrides or {}) do
         S[key] = value
@@ -59,6 +61,9 @@ package.preload.http = function()
 end
 os.execute = function(command)
     S.commands[#S.commands + 1] = command
+    if command:find("php_start.bat", 1, true) then
+        return S.start_exit
+    end
     if command:find("composer_verify.bat", 1, true) then
         return S.verify_exit
     end
@@ -91,10 +96,13 @@ assert(S.urls[2] == "https://composer.github.io/installer.sig", S.urls[2])
 local verify = assert(S.files[path .. "\\composer_verify.bat"])
 assert(verify:find("=== 'ABCDEF'", 1, true), verify)
 assert(verify:find(path .. "\\composer-setup.php", 1, true), verify)
--- Both batch files run quoted, so a path with spaces stays one argument for cmd.exe.
-assert(#S.commands == 2, #S.commands)
-assert(S.commands[1] == '""' .. path .. '\\composer_verify.bat""', S.commands[1])
-assert(S.commands[2] == '""' .. path .. '\\composer_install.bat""', S.commands[2])
+-- Every batch file runs quoted, so a path with spaces stays one argument for cmd.exe.
+assert(#S.commands == 3, #S.commands)
+assert(S.commands[1] == '""' .. path .. '\\php_start.bat""', S.commands[1])
+assert(S.commands[2] == '""' .. path .. '\\composer_verify.bat""', S.commands[2])
+assert(S.commands[3] == '""' .. path .. '\\composer_install.bat""', S.commands[3])
+local start = assert(S.files[path .. "\\php_start.bat"])
+assert(start:find('"' .. path .. '\\php.exe" -n -r "exit(0);"', 1, true), start)
 local install = assert(S.files[path .. "\\composer_install.bat"])
 assert(install:find('--install-dir="C:\\SDKs\\100% PHP"', 1, true), install)
 print("Windows PHP extension path substitution and composer install passed")
@@ -104,7 +112,7 @@ reset({ verify_exit = 1 })
 fails(function()
     post_install(path)
 end, "does not match the sha384")
-assert(#S.commands == 1, "the installer must not run after a failed check")
+assert(#S.commands == 2, "the installer must not run after a failed check")
 assert(S.removed[#S.removed] == path .. "\\composer-setup.php", S.removed[#S.removed])
 print("Windows composer installer verification refuses a mismatch")
 
@@ -113,5 +121,29 @@ reset({ sig = { status_code = 503, body = "" } })
 fails(function()
     post_install(path)
 end, "HTTP 503")
-assert(#S.commands == 0, "no install step may run without the signature")
+assert(
+    #S.commands == 1 and S.commands[1]:find("php_start.bat", 1, true),
+    "only the start check may run before the signature"
+)
 print("Windows composer installer stops when the signature cannot be fetched")
+
+-- A php.exe that does not start is the missing runtime, not a Composer mismatch.
+-- It is found before anything is written or downloaded.
+reset({ start_exit = -1073741515 })
+local ok, err = pcall(post_install, path)
+assert(not ok, "a php.exe that does not start must fail the install")
+assert(tostring(err):find("php.exe did not start (exit code -1073741515)", 1, true), tostring(err))
+assert(tostring(err):find("https://aka.ms/vs/17/release/vc_redist.x64.exe", 1, true), tostring(err))
+assert(not tostring(err):find("sha384", 1, true), tostring(err))
+assert(#S.commands == 1, "only the start check may run")
+assert(#S.urls == 0, "nothing may be downloaded when php.exe does not start")
+assert(S.files[path .. "\\php.ini"] == nil, "nothing may be written when php.exe does not start")
+print("Windows reports a php.exe that does not start as the missing runtime")
+
+-- An x86 PHP needs the x86 Redistributable.
+RUNTIME.archType = "386"
+reset({ start_exit = 1 })
+ok, err = pcall(post_install, path)
+assert(not ok and tostring(err):find("vc_redist.x86.exe", 1, true), tostring(err))
+RUNTIME.archType = nil
+print("Windows names the x86 Redistributable for x86 builds")
