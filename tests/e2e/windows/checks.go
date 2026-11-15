@@ -106,7 +106,9 @@ func checkRuntime(s *session, version string) {
 	}
 
 	// The plugin lists TS builds under the plain version, so this one is thread-safe.
-	if zts := strings.TrimSpace(s.ok(project + "php -r 'echo PHP_ZTS;'")); zts != "1" {
+	// PHP 8.5 defines PHP_ZTS as a bool (true prints 1, false prints nothing);
+	// earlier versions define an int. (int) gives 1 or 0 for both.
+	if zts := strings.TrimSpace(s.ok(project + "php -r 'echo (int) PHP_ZTS;'")); zts != "1" {
 		s.t.Fatalf("PHP_ZTS = %q for the plain version, want 1 (thread-safe)", zts)
 	}
 
@@ -160,7 +162,7 @@ func checkNTS(s *session, version string) {
 	s.ok(fmt.Sprintf(`New-Item -ItemType Directory -Force -Path '%s' | Out-Null; Set-Location '%s'; vfox install 'php@%s-nts'; vfox use -p 'php@%s-nts'`, ntsDir, ntsDir, version, version))
 
 	project := selectIn(ntsDir)
-	if zts := strings.TrimSpace(s.ok(project + "php -r 'echo PHP_ZTS;'")); zts != "0" {
+	if zts := strings.TrimSpace(s.ok(project + "php -r 'echo (int) PHP_ZTS;'")); zts != "0" {
 		s.t.Fatalf("PHP_ZTS = %q for the -nts build, want 0", zts)
 	}
 	if got := strings.TrimSpace(s.ok(project + "php -r 'echo PHP_VERSION;'")); got != version {
