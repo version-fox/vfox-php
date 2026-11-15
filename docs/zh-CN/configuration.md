@@ -8,7 +8,7 @@
 | --- | --- |
 | `PHP_CONFIGURE_OPTIONS` | 替换平台选项，即针对系统库（OpenSSL、curl、readline 等）的那些选项。全局选项仍会追加在它们后面。 |
 | `PHP_WITHOUT_PEAR` | 设为除 `no` 以外的任何值，构建时不带 PEAR（`--without-pear`）。未设置或设为 `no`，则带 PEAR（`--with-pear`）。 |
-| `PHP_WITHOUT_PCRE_JIT` | 未设置或设为 `no`，会加上 `--without-pcre-jit`。设为其他任何值则什么都不加，PCRE JIT 保持开启。它的含义与变量名相反，设置前请核对取值。 |
+| `PHP_WITHOUT_PCRE_JIT` | 设为除 `no` 以外的任何值，构建时不带 PCRE JIT（`--without-pcre-jit`）。未设置或设为 `no`，保持 PHP 的默认值，即开启 PCRE JIT。 |
 | `MAKEFLAGS` | 传给编译 PHP 的 `make`，例如 `MAKEFLAGS=-j8`。 |
 
 ```shell
@@ -16,6 +16,8 @@ MAKEFLAGS=-j8 PHP_WITHOUT_PEAR=yes vfox install php@8.4
 ```
 
 在 Windows 上这些变量不起作用：插件解压的是预编译构建，不做编译。
+
+此前，在 Linux 和 macOS 上未设置 `PHP_WITHOUT_PCRE_JIT` 时，构建会关闭 JIT，因为这个变量的判断条件写反了。现在构建会保持 JIT 开启，与 PHP 一致。如果需要旧的结果，请设置 `PHP_WITHOUT_PCRE_JIT=yes`。
 
 ## PHP_CONFIGURE_OPTIONS
 

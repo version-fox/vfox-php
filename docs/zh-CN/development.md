@@ -50,11 +50,13 @@ vfox 会加载 `metadata.lua`，在某个命令需要时调用对应的 hook，�
 ```shell
 go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/hooks_test.lua
 go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/windows_test.lua
+go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/post_install_test.lua
 bash tests/openssl_test.sh
 bash tests/configure_options_test.sh
+bash tests/linux_options_test.sh
 ```
 
-`hooks_test.lua` 和 `windows_test.lua` 会替换 HTTP 客户端、JSON 和 HTML 模块以及文件函数，然后检查 hook 的返回值。shell 测试会在替换掉 `uname`、`brew` 和 Homebrew 相关辅助函数之后载入 `bin/install`，检查它生成的选项，以及 macOS 上选择的 OpenSSL。容器套件见 [E2E 测试](e2e.md)。
+`hooks_test.lua` 会替换 HTTP 客户端、JSON 和 HTML 模块以及文件函数，然后检查 hook 的返回值，包括带 NTS 构建的 Windows 发布列表。`windows_test.lua` 检查 Windows 上的安装：php.ini、Composer 安装器及其 sha384 校验，以及带空格路径的引号。`post_install_test.lua` 检查 Linux 和 macOS 的编译步骤。shell 测试会替换 `uname`、`brew`、`ldconfig` 和编译器之后载入 `bin/install`：`configure_options_test.sh` 检查 macOS 的选项以及选中的 OpenSSL，`linux_options_test.sh` 检查 Linux 的选项，包括 PCRE JIT、gmp 和 sodium。容器套件见 [E2E 测试](e2e.md)。
 
 ## 本地检查
 

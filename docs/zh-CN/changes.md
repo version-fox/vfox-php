@@ -7,7 +7,13 @@
 ## 未发布
 
 - 开发：开发容器；Linux 和 Windows 的 Go 端到端套件，在容器里用 vfox 安装 PHP；CI 中的 lint、格式和 license 头检查；中英文文档。
-- Lua 和 shell 源文件带上了 Apache-2.0 的 license 头。行为没有变化。
+- Lua 和 shell 源文件带上了 Apache-2.0 的 license 头。
+- Linux 和 macOS：PCRE JIT 默认开启，与 PHP 一致。`PHP_WITHOUT_PCRE_JIT` 用来关闭它。此前这个变量的判断条件写反了，构建默认关闭 JIT。
+- Linux：gmp 和 sodium 通过系统的库缓存及其头文件查找，不再使用 `locate`。JPEG 和 PNG 来自系统的 libgd，因为构建使用 `--with-external-gd`，所以旧的 `--with-jpeg-dir` 和 `--with-png-dir` 选项已经去掉。
+- Linux 和 macOS：Composer 安装器下载到 PHP 的 `bin` 目录，而不是安装开始时所在的目录。
+- Linux、macOS 和 Windows：安装路径可以含有空格。configure 参数逐个传递，Windows 上 Composer 的各个步骤也会给路径加引号。
+- Windows：Composer 安装器在运行前会与 Composer 公布的 sha384 核对，与 Linux 和 macOS 一致。
+- Windows：文件名带 rebuild 号的 NTS 构建（如 `8.5.12-1-nts`）现在会被列出，也能安装。
 
 ## 0.3.2
 

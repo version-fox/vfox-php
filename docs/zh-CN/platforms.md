@@ -19,10 +19,12 @@
 sudo apt-get install --assume-yes autoconf bison build-essential ca-certificates curl gettext git \
     libcurl4-openssl-dev libedit-dev libgd-dev libicu-dev libjpeg-dev libonig-dev libpng-dev libpq-dev \
     libreadline-dev libsqlite3-dev libssl-dev libxml2-dev libxslt-dev libzip-dev openssl pkg-config \
-    re2c zip zlib1g-dev
+    re2c zip zlib1g-dev libgmp-dev libsodium-dev
 ```
 
-有些库是可选的。`bin/install` 用 `locate` 查找 libjpeg、libpng、libgmp 和 libsodium，找到哪个就把哪个传给 configure。要让它找得到，请安装 `plocate`（或 `mlocate`），并执行一次 `sudo updatedb`。没有 `locate` 时，构建会打印 `locate: command not found`，这四个库都会被略过。
+JPEG 和 PNG 的支持来自系统的 libgd（`libgd-dev`），因为构建使用 `--with-external-gd`。E2E 套件会检查 gd 是否报告 JPEG 支持。
+
+gmp 和 sodium 是可选的。`bin/install` 在对应的库和头文件都已安装时启用它：用 `ldconfig` 检查库，用编译器检查头文件，两者都要满足。缺少时，构建会打印 `gmp not found, not including in installation`（或 sodium 的那一行）并继续。上面列表中的 `libgmp-dev` 和 `libsodium-dev` 提供了这两者。
 
 ## macOS
 
@@ -45,11 +47,12 @@ PHP 8.1 及更新的版本使用 `openssl@3` 编译。PHP 7.x 和 8.0 需要 Ope
 Windows 不需要编译器。插件从 windows.php.net 解压构建，然后：
 
 - 在 `php.exe` 旁边写入 `php.ini`，内容来自 `php.ini-development`。它把 `extension_dir` 设为绝对路径的 `ext` 目录，并启用 `openssl`，让 Composer 能通过 HTTPS 下载包；
-- 从 getcomposer.org 下载 Composer 的安装器，用 `php.exe` 运行它，并在旁边写入 `composer.bat`。
+- 从 getcomposer.org 下载 Composer 的安装器，并与 Composer 公布的 sha384 核对。两者不一致时，安装停止，Composer 不会被安装。核对由 PHP 完成，此时 PHP 已经就位；
+- 用 `php.exe` 运行安装器，并在旁边写入 `composer.bat`。
+
+安装路径可能含有空格，Windows 的用户目录常常如此。插件会给路径加引号，所以 `C:\Users\John Doe\.vfox` 可以正常使用。
 
 这些构建依赖 Microsoft Visual C++ Redistributable，插件不会安装它。如果 `php.exe` 提示找不到 `VCRUNTIME140.dll`，请从 Microsoft 安装这个运行库。
-
-在 Linux 和 macOS 上，`bin/install` 会把 Composer 安装器与 Composer 公布的 sha384 对比，不一致就停止。Windows 的路径目前还没有做这项检查。
 
 ## Composer
 

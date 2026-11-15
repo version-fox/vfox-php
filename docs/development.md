@@ -50,11 +50,13 @@ The offline tests run in the Test Plugin workflow, and you can run them the same
 ```shell
 go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/hooks_test.lua
 go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/windows_test.lua
+go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/post_install_test.lua
 bash tests/openssl_test.sh
 bash tests/configure_options_test.sh
+bash tests/linux_options_test.sh
 ```
 
-`hooks_test.lua` and `windows_test.lua` replace the HTTP client, the JSON and HTML modules and the file functions, then check what the hooks return. The shell tests source `bin/install` with `uname`, `brew` and the Homebrew helpers replaced, and check the options it builds and the OpenSSL it picks on macOS. The container suites are described in [E2E tests](e2e.md).
+`hooks_test.lua` replaces the HTTP client, the JSON and HTML modules and the file functions, then checks what the hooks return, including the Windows release list with its NTS builds. `windows_test.lua` checks the Windows install: the php.ini, the Composer installer and its sha384 check, and the quoting of paths that hold spaces. `post_install_test.lua` checks the Linux and macOS compile step. The shell tests source `bin/install` with `uname`, `brew`, `ldconfig` and the compiler replaced: `configure_options_test.sh` checks the macOS options and the OpenSSL it picks, and `linux_options_test.sh` checks the Linux options, including PCRE JIT and gmp and sodium. The container suites are described in [E2E tests](e2e.md).
 
 ## Local checks
 

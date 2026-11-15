@@ -27,10 +27,6 @@ PHP 没有为这个架构发布构建。在 Windows on ARM 上没有可以安装
 
 ## Linux
 
-### `bash: locate: command not found`
-
-`bin/install` 用 `locate` 查找 libjpeg、libpng、libgmp 和 libsodium。没有它，这些库不会传给 configure。请安装 `plocate`（或 `mlocate`），执行 `sudo updatedb`，然后重新安装。见[平台](platforms.md#linux)。
-
 ### `Compilation Failure.`
 
 编译中途停止了，这条消息上方的输出会说明原因。常见原因是缺少某个开发包，比如 `libxml2-dev` 或 `libonig-dev`。软件包列表见[平台](platforms.md#linux)。
@@ -43,7 +39,7 @@ Composer 的安装器与 Composer 公布的 sha384 不一致，所以 `bin/insta
 
 ### `ERROR: Please install homebrew for OSX`
 
-构建用 Homebrew 提供库。请先安装它，再安装 [平台](platforms.md#macos) 中列出的 formula。
+构建用 Homebrew 提供库。请先安装它，再安装[平台](platforms.md#macos)中列出的 formula。
 
 ### `ERROR: PHP 8.0.30 requires openssl@1.1`
 
@@ -54,6 +50,10 @@ PHP 7.x 和 8.0 需要 OpenSSL 1.1，而 Homebrew 已不再通过常规的 formu
 仅供参考。GMP 是可选的，没有它构建也会继续。用 Homebrew 安装 `gmp` 即可启用。
 
 ## Windows
+
+### `The Composer installer does not match the sha384 that Composer publishes`
+
+插件下载的安装器与 Composer 公布的不一致，所以安装在 Composer 装好之前就停止了。请重新安装。如果每次都失败，说明你和 getcomposer.org 之间有东西（比如改写 HTTPS 响应的代理）在改动文件。
 
 ### `The code execution cannot proceed because VCRUNTIME140.dll was not found`
 

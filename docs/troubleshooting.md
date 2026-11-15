@@ -27,10 +27,6 @@ The plugin could not read the release list. The address is the one it tried. Ope
 
 ## Linux
 
-### `bash: locate: command not found`
-
-`bin/install` searches for libjpeg, libpng, libgmp and libsodium with `locate`. Without it those libraries are not passed to configure. Install `plocate` (or `mlocate`) and run `sudo updatedb`, then install again. See [platforms](platforms.md#linux).
-
 ### `Compilation Failure.`
 
 The compile stopped, and the output above that message says where. The usual cause is a missing development package, such as `libxml2-dev` or `libonig-dev`. The package list is in [platforms](platforms.md#linux).
@@ -54,6 +50,10 @@ PHP 7.x and 8.0 need OpenSSL 1.1, which Homebrew no longer supplies through its 
 Information only. GMP is optional, so the build continues without it. Install `gmp` with Homebrew to enable it.
 
 ## Windows
+
+### `The Composer installer does not match the sha384 that Composer publishes`
+
+The installer that the plugin downloaded is not the one Composer publishes, so the install stopped before Composer was installed. Run the install again. If it fails every time, something between you and getcomposer.org is changing the file, such as a proxy that rewrites HTTPS responses.
 
 ### `The code execution cannot proceed because VCRUNTIME140.dll was not found`
 

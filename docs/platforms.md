@@ -19,10 +19,12 @@ The plugin does one of two things, depending on the system: it compiles PHP from
 sudo apt-get install --assume-yes autoconf bison build-essential ca-certificates curl gettext git \
     libcurl4-openssl-dev libedit-dev libgd-dev libicu-dev libjpeg-dev libonig-dev libpng-dev libpq-dev \
     libreadline-dev libsqlite3-dev libssl-dev libxml2-dev libxslt-dev libzip-dev openssl pkg-config \
-    re2c zip zlib1g-dev
+    re2c zip zlib1g-dev libgmp-dev libsodium-dev
 ```
 
-Some libraries are optional. `bin/install` finds libjpeg, libpng, libgmp and libsodium with `locate`, and passes each one to configure when it finds it. Install `plocate` (or `mlocate`) and run `sudo updatedb` so that it can. Without `locate`, the build prints `locate: command not found`, and those four are left out.
+JPEG and PNG support come from the system libgd (`libgd-dev`), because the build uses `--with-external-gd`. The E2E suite checks that gd reports JPEG support.
+
+gmp and sodium are optional. `bin/install` enables each one when its library and its header are installed, and checks both: the library with `ldconfig`, the header with the compiler. Without them, the build prints `gmp not found, not including in installation` (or the sodium line) and carries on. The `libgmp-dev` and `libsodium-dev` packages in the list above provide them.
 
 ## macOS
 
@@ -45,11 +47,12 @@ If you set `PHP_CONFIGURE_OPTIONS`, the plugin does not choose the OpenSSL path 
 Windows needs no compiler. The plugin unpacks the build from windows.php.net and then:
 
 - writes `php.ini` next to `php.exe`, from `php.ini-development`. It sets `extension_dir` to the absolute `ext` folder and enables `openssl`, so Composer can fetch packages over HTTPS;
-- downloads Composer's installer from getcomposer.org, runs it with `php.exe`, and writes a `composer.bat` next to it.
+- downloads Composer's installer from getcomposer.org and checks it against the sha384 that Composer publishes. If they differ, the install stops and Composer is not installed. The check is made by PHP, which is already in place at that point;
+- runs the installer with `php.exe`, and writes a `composer.bat` next to it.
+
+Install paths may hold spaces, as a Windows user profile often does. The plugin quotes them, so `C:\Users\John Doe\.vfox` works.
 
 The builds load the Microsoft Visual C++ Redistributable, which the plugin does not install. If `php.exe` reports a missing `VCRUNTIME140.dll`, install the redistributable from Microsoft.
-
-On Linux and macOS, `bin/install` checks Composer's installer against the sha384 that Composer publishes, and stops when they differ. The Windows path does not check it yet.
 
 ## Composer
 

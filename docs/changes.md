@@ -7,7 +7,13 @@ What each release changed. The releases before 0.3.0 are on the [GitHub releases
 ## Unreleased
 
 - Development: a dev container, Go E2E suites for Linux and Windows that install PHP with vfox inside containers, lint, format and license-header checks in CI, and documentation in English and Chinese.
-- The Lua and shell sources carry the Apache-2.0 license header. No behaviour changes.
+- The Lua and shell sources carry the Apache-2.0 license header.
+- Linux and macOS: PCRE JIT is on by default, as in PHP. `PHP_WITHOUT_PCRE_JIT` turns it off. The variable was tested the wrong way round, so builds had JIT off by default.
+- Linux: gmp and sodium are found through the system library cache and their headers, without `locate`. JPEG and PNG come from the system libgd, as the build uses `--with-external-gd`, so the old `--with-jpeg-dir` and `--with-png-dir` options are gone.
+- Linux and macOS: the Composer installer is fetched into PHP's `bin` directory, not into the directory the install was started from.
+- Linux, macOS and Windows: install paths with spaces work. Configure arguments are passed one by one, and the Windows Composer steps quote their paths.
+- Windows: the Composer installer is checked against the sha384 that Composer publishes before it runs, as on Linux and macOS.
+- Windows: NTS builds whose name carries a rebuild number, such as `8.5.12-1-nts`, are listed and can be installed.
 
 ## 0.3.2
 

@@ -8,7 +8,7 @@ On Linux and macOS, `bin/install` compiles PHP when `vfox install` runs. It read
 | --- | --- |
 | `PHP_CONFIGURE_OPTIONS` | Replaces the platform options, the ones for the system libraries (OpenSSL, curl, readline and so on). The global options are still added after them. |
 | `PHP_WITHOUT_PEAR` | Any value other than `no` builds without PEAR (`--without-pear`). Unset or `no` builds with PEAR (`--with-pear`). |
-| `PHP_WITHOUT_PCRE_JIT` | Unset or `no` adds `--without-pcre-jit`. Any other value adds nothing, so PCRE JIT stays on. The meaning is the reverse of what the name suggests, so check the value you set. |
+| `PHP_WITHOUT_PCRE_JIT` | Any value other than `no` builds without PCRE JIT (`--without-pcre-jit`). Unset or `no` keeps PHP's default, PCRE JIT on. |
 | `MAKEFLAGS` | Passed to `make`, which compiles PHP, for example `MAKEFLAGS=-j8`. |
 
 ```shell
@@ -16,6 +16,8 @@ MAKEFLAGS=-j8 PHP_WITHOUT_PEAR=yes vfox install php@8.4
 ```
 
 On Windows these variables do nothing: the plugin unpacks a prebuilt build and compiles nothing.
+
+Before this change, a Linux or macOS build with `PHP_WITHOUT_PCRE_JIT` unset was built without JIT, because the variable was tested the wrong way round. Builds now keep JIT on, as PHP does. Set `PHP_WITHOUT_PCRE_JIT=yes` to get the old result.
 
 ## PHP_CONFIGURE_OPTIONS
 
