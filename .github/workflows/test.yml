@@ -41,6 +41,8 @@ jobs:
         run: go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/post_install_test.lua
       - name: Test the uninstall step that removes a PHP build
         run: go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/pre_uninstall_test.lua
+      - name: Test the detection of PHP installs already on the machine
+        run: go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/detect_test.lua
       - name: Test Windows configuration and composer verification
         run: go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/windows_test.lua
       - name: Test macOS OpenSSL selection
