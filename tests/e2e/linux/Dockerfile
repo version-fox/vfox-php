@@ -34,6 +34,7 @@ RUN apt-get update \
         libcurl4-openssl-dev libedit-dev libgd-dev libicu-dev libjpeg-dev libonig-dev \
         libpng-dev libpq-dev libreadline-dev libsqlite3-dev libssl-dev libxml2-dev \
         libxslt-dev libzip-dev openssl pkg-config re2c zip zlib1g-dev \
+        libgmp-dev libsodium-dev \
     && rm --recursive --force /var/lib/apt/lists/*
 
 # vfox from its release, checked against the sha256 of the release's checksums.txt.

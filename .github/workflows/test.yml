@@ -37,9 +37,13 @@ jobs:
           cache: false
       - name: Test plugin hooks with vfox's Lua interpreter
         run: go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/hooks_test.lua
-      - name: Test Windows configuration generation
+      - name: Test the compile step with the install path quoted
+        run: go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/post_install_test.lua
+      - name: Test Windows configuration and composer verification
         run: go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/windows_test.lua
       - name: Test macOS OpenSSL selection
         run: bash tests/openssl_test.sh
       - name: Test optional dependency diagnostics
         run: bash tests/configure_options_test.sh
+      - name: Test the Linux configure options
+        run: bash tests/linux_options_test.sh

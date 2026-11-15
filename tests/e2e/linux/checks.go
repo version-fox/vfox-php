@@ -103,6 +103,14 @@ func checkRuntime(s *session, version string) {
 		s.t.Fatalf("php -m lacks %v:\n%s", missing, modules)
 	}
 
+	// PCRE JIT is on unless the build opted out, and gd takes JPEG from the system libgd.
+	if jit := strings.TrimSpace(s.ok(project() + "php -i | grep 'PCRE JIT Support'")); !strings.HasSuffix(jit, "=> enabled") {
+		s.t.Fatalf("PCRE JIT is not enabled in the build: %q", jit)
+	}
+	if jpeg := strings.TrimSpace(s.ok(project() + `php -r 'echo gd_info()["JPEG Support"] ? "yes" : "no";'`)); jpeg != "yes" {
+		s.t.Fatalf("gd reports no JPEG support: %q", jpeg)
+	}
+
 	// bin/install writes conf.d/php.ini into the install, next to bin/.
 	s.ok(project() + `test -f "$(dirname "$(dirname "$(command -v php)")")/conf.d/php.ini"`)
 

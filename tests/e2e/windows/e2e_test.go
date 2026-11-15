@@ -16,6 +16,7 @@ package windows
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"strings"
 	"testing"
@@ -159,6 +160,10 @@ func runOne(ctx context.Context, t *testing.T, image string, c common.Combo, att
 	s := &session{t: t, ctx: ctx, ctr: ctr}
 
 	t.Logf("=== php@%s on %s ===", c.Spec, platform)
+
+	// vfox creates the plugin folder inside VFOX_HOME, but it does not create
+	// VFOX_HOME itself: the first `vfox add` fails without these folders.
+	s.ok(fmt.Sprintf("New-Item -ItemType Directory -Force -Path '%s', '%s\\plugin' | Out-Null", vfoxHome, vfoxHome))
 
 	checkPlugin(s)
 	checkUnknownVersion(s)

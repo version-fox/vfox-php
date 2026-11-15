@@ -69,7 +69,7 @@ var PassThroughEnvs = []string{"MAKEFLAGS"}
 // one on through its platform options or its global options.
 var LinuxModules = []string{
 	"openssl", "curl", "mbstring", "zip", "intl", "bcmath", "sockets", "mysqli",
-	"pdo_mysql", "soap", "gd", "xsl", "readline", "calendar", "exif",
+	"pdo_mysql", "soap", "gd", "xsl", "readline", "calendar", "exif", "gmp", "sodium",
 }
 
 // WindowsModules are the modules every Windows install has: the php.ini that
