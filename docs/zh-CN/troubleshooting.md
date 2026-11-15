@@ -37,9 +37,13 @@ PHP 没有为这个架构发布构建。在 Windows on ARM 上没有可以安装
 
 ## Linux
 
+### `ERROR: PHP cannot be built, because these build dependencies are missing`
+
+`bin/install` 发现构建需要的一些工具或库在系统上缺失。它在移动源码或编译之前就停止了。消息下方的各行列出每个缺失的项目，`sudo apt-get install` 那一行给出提供它们的 Debian 或 Ubuntu 软件包。安装这些软件包后，重新运行 `vfox install`。在其他系统上，请安装对应的软件包。完整列表见[平台](platforms.md#linux)。
+
 ### `Compilation Failure.`
 
-编译中途停止了，这条消息上方的输出会说明原因。常见原因是缺少某个开发包，比如 `libxml2-dev` 或 `libonig-dev`。软件包列表见[平台](platforms.md#linux)。
+编译中途停止了，这条消息上方的输出会说明原因。现在构建开始前就会检查缺失的软件包，所以缺包时通常会在上面那条消息处停止。
 
 ### `Installer corrupt`
 

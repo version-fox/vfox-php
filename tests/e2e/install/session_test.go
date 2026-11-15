@@ -34,11 +34,31 @@ type host struct {
 	formulae  map[string]string // installed Homebrew formulae and their prefixes; nil when Homebrew is absent
 	libraries string            // what ldconfig -p lists
 	headers   []string          // the headers that the compiler finds
+	tools     []string          // the tools that answer "--version"
+	pkgs      []string          // the pkg-config modules that pkg-config --exists finds
 }
 
-// linuxHost is a Linux machine with no libraries and no headers.
+// linuxBuildTools, linuxBuildPkgs and linuxBuildHeaders are what bin/install checks
+// on Linux when PHP_CONFIGURE_OPTIONS is not set. A healthy Linux host has all of
+// them; TestLinuxHostHasEveryRequirement checks the lists against the script.
+var linuxBuildTools = []string{"cc", "make", "autoconf", "pkg-config", "curl"}
+
+var linuxBuildPkgs = []string{
+	"zlib", "libxml-2.0", "libcurl", "gdlib", "libpng", "libzip",
+	"icu-uc", "icu-io", "icu-i18n", "oniguruma", "sqlite3", "libxslt",
+}
+
+var linuxBuildHeaders = []string{"openssl/ssl.h", "readline/readline.h", "libintl.h"}
+
+// linuxHost is a Linux machine with every build dependency that bin/install checks,
+// and none of the optional libraries: gmp and sodium are found only when present.
 func linuxHost() host {
-	return host{uname: "Linux test 6.8.0 x86_64 GNU/Linux"}
+	return host{
+		uname:   "Linux test 6.8.0 x86_64 GNU/Linux",
+		headers: linuxBuildHeaders,
+		tools:   linuxBuildTools,
+		pkgs:    linuxBuildPkgs,
+	}
 }
 
 // linuxWith is a Linux machine with the given libraries and headers.
@@ -71,7 +91,7 @@ func newSession(t *testing.T, h host) *session {
 	bin := filepath.Join(work, "bin")
 	mkdir(t, bin)
 	self := testBinary(t)
-	for _, name := range []string{"uname", "brew", "ldconfig", "cc", "locate", "make"} {
+	for _, name := range []string{"uname", "brew", "ldconfig", "cc", "locate", "make", "autoconf", "pkg-config", "curl"} {
 		if err := os.Symlink(self, filepath.Join(bin, name)); err != nil {
 			t.Fatalf("link the fake %s: %v", name, err)
 		}
@@ -86,6 +106,8 @@ func newSession(t *testing.T, h host) *session {
 		"FAKE_UNAME="+h.uname,
 		"FAKE_LIBRARIES="+h.libraries,
 		"FAKE_HEADERS="+strings.Join(h.headers, ","),
+		"FAKE_TOOLS="+strings.Join(h.tools, ","),
+		"FAKE_PKGS="+strings.Join(h.pkgs, ","),
 		"PHP_CONFIGURE_OPTIONS=",
 	)
 	if h.formulae == nil {

@@ -14,8 +14,9 @@
 
 // Package install tests bin/install, the build script of the plugin, on a host
 // that has none of the libraries it looks for. bin/install runs under bash, and
-// the commands it calls on the host (uname, brew, ldconfig, cc, locate and make,
-// and the buildconf and configure of a PHP source tree) are replaced: each is a
+// the commands it calls on the host (uname, brew, ldconfig, cc, locate, make,
+// autoconf, pkg-config and curl, and the buildconf and configure of a PHP source
+// tree) are replaced: each is a
 // symlink to this test binary, which answers as the command it was called as. See
 // fakes_test.go.
 package install

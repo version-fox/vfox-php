@@ -37,9 +37,13 @@ The install path is a link, but to a directory that the plugin did not make, so 
 
 ## Linux
 
+### `ERROR: PHP cannot be built, because these build dependencies are missing`
+
+`bin/install` found tools or libraries that the build needs and the system does not have. It stopped before it moved the source or compiled anything. The lines under the message name each missing item, and the `sudo apt-get install` line names the Debian or Ubuntu packages that provide them. Install those packages and run `vfox install` again. On other systems, install the equivalent packages. The full list is in [platforms](platforms.md#linux).
+
 ### `Compilation Failure.`
 
-The compile stopped, and the output above that message says where. The usual cause is a missing development package, such as `libxml2-dev` or `libonig-dev`. The package list is in [platforms](platforms.md#linux).
+The compile stopped, and the output above that message says where. The build checks for missing packages before it starts, so a missing package now usually stops the install with the message above instead.
 
 ### `Installer corrupt`
 

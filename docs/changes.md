@@ -7,6 +7,7 @@ What each release changed. The releases before 0.3.0 are on the [GitHub releases
 ## Unreleased
 
 - Development: a dev container, Go E2E suites for Linux and Windows that install PHP with vfox inside containers, lint, format and license-header checks in CI, and documentation in English and Chinese.
+- Linux: `bin/install` checks the build dependencies before it compiles: the compiler, `make`, `autoconf`, `pkg-config` and `curl`, and the libraries that the configure options use. A missing one stops the install at once, and the message names each missing item and its Debian or Ubuntu package. Before, the install failed in configure or make, after a long build. See [platforms](platforms.md#linux).
 - The Lua and shell sources carry the Apache-2.0 license header.
 - Linux and macOS: PCRE JIT is on by default, as in PHP. `PHP_WITHOUT_PCRE_JIT` turns it off. The variable was tested the wrong way round, so builds had JIT off by default.
 - Linux: gmp and sodium are found through the system library cache and their headers, without `locate`. JPEG and PNG come from the system libgd, as the build uses `--with-external-gd`, so the old `--with-jpeg-dir` and `--with-png-dir` options are gone.
