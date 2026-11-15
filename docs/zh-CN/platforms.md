@@ -48,7 +48,7 @@ PHP 8.1 及更新的版本使用 `openssl@3` 编译。PHP 7.x 和 8.0 需要 Ope
 
 Windows 不需要编译器，但这些构建需要 Microsoft Visual C++ 2015-2022 Redistributable，插件不会安装它。请在安装 PHP 之前先从 [Microsoft](https://aka.ms/vs/17/release/vc_redist.x64.exe) 安装 x64 版（x86 版 PHP 则安装 `vc_redist.x86.exe`）。插件从 windows.php.net 解压构建，然后：
 
-- 运行一次 `php.exe`。如果它无法启动，安装在此停止，并给出退出码和需要安装的 Redistributable，在此之前不会写入任何内容，也不会下载 Composer；
+- 运行一次 `php.exe`。如果它无法启动，安装在此停止，并指出需要安装的 Redistributable，在此之前不会写入任何内容，也不会下载 Composer；
 - 在 `php.exe` 旁边写入 `php.ini`，内容来自 `php.ini-development`。它把 `extension_dir` 设为绝对路径的 `ext` 目录，并启用 `openssl`，让 Composer 能通过 HTTPS 下载包；
 - 从 getcomposer.org 下载 Composer 的安装器，并与 Composer 公布的 sha384 核对。两者不一致时，安装停止，Composer 不会被安装。核对由 PHP 完成，此时 PHP 已经就位；
 - 用 `php.exe` 运行安装器，并在旁边写入 `composer.bat`。
