@@ -18,7 +18,7 @@ lib/constants.lua       the URLs of those lists
 lib/util.lua            version comparison and file helpers
 bin/install             compiles PHP and installs Composer on Linux and macOS
 tests/*_test.lua        offline hook tests, run with glua
-tests/*.sh              offline tests of bin/install
+tests/e2e/install/      offline tests of bin/install, in Go, with its host faked
 tests/e2e/              the container suites and the Go checks of the repository, see e2e.md
 Injection.lua           type hints for what vfox injects; never loaded
 .devcontainer/          the dev container
@@ -49,18 +49,18 @@ vfox loads `metadata.lua`, calls a hook when a command needs it, and puts `PLUGI
 
 ## Tests
 
-The offline tests run in the Test Plugin workflow, and you can run them the same way:
+The offline tests run in the Test Plugin workflow. The Lua tests run on Ubuntu; the Go tests of `bin/install` run on Ubuntu and on macOS. You can run them the same way:
 
 ```shell
 go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/hooks_test.lua
 go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/windows_test.lua
 go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/post_install_test.lua
-bash tests/openssl_test.sh
-bash tests/configure_options_test.sh
-bash tests/linux_options_test.sh
+go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/pre_uninstall_test.lua
+go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/detect_test.lua
+go test -C tests/e2e -count=1 -v ./install/
 ```
 
-`hooks_test.lua` replaces the HTTP client, the JSON and HTML modules and the file functions, then checks what the hooks return, including the Windows release list with its NTS builds. `windows_test.lua` checks the Windows install: the php.ini, the Composer installer and its sha384 check, and the quoting of paths that hold spaces. `post_install_test.lua` checks the Linux and macOS compile step, and `pre_uninstall_test.lua` checks the step that removes a PHP build. The shell tests source `bin/install` with `uname`, `brew`, `ldconfig` and the compiler replaced: `configure_options_test.sh` checks the macOS options and the OpenSSL it picks, and `linux_options_test.sh` checks the Linux options, including PCRE JIT, gmp and sodium, and the build directory of an install path with spaces, with the build replaced by stubs. `detect_test.lua` checks which PHP installs on the machine are found, how they are named, and which are left alone: shared system folders, shims, vfox's own installs, and a PHP that does not answer `php -v`. The container suites are described in [E2E tests](e2e.md).
+`hooks_test.lua` replaces the HTTP client, the JSON and HTML modules and the file functions, then checks what the hooks return, including the Windows release list with its NTS builds. `windows_test.lua` checks the Windows install: the php.ini, the Composer installer and its sha384 check, and the quoting of paths that hold spaces. `post_install_test.lua` checks the Linux and macOS compile step, and `pre_uninstall_test.lua` checks the step that removes a PHP build. `tests/e2e/install` runs `bin/install` in bash with its host faked: `uname`, `brew`, `ldconfig`, `cc`, `locate` and `make` are symlinks to the test binary, which answers as the command it was called as, and so are the `buildconf` and `configure` of a fake PHP source tree. It checks the macOS options and the OpenSSL it picks, the Linux options, including PCRE JIT, gmp and sodium, and the build directory of an install path with spaces, which is removed when a build fails or when PHP is uninstalled. On macOS, `TestHomebrewOfThisMac` also checks the options against the Homebrew of the Mac. `detect_test.lua` checks which PHP installs on the machine are found, how they are named, and which are left alone: shared system folders, shims, vfox's own installs, and a PHP that does not answer `php -v`. The container suites are described in [E2E tests](e2e.md).
 
 ## Local checks
 

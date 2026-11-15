@@ -18,7 +18,7 @@ lib/constants.lua       那些列表的 URL
 lib/util.lua            版本比较和文件辅助函数
 bin/install             在 Linux 和 macOS 上编译 PHP、安装 Composer
 tests/*_test.lua        离线的 hook 测试，用 glua 运行
-tests/*.sh              bin/install 的离线测试
+tests/e2e/install/      bin/install 的离线测试：用 Go 编写，宿主机的命令被替换
 tests/e2e/              容器端到端套件，以及仓库的 Go 检查，见 e2e.md
 Injection.lua           vfox 注入对象的类型提示，从不加载
 .devcontainer/          开发容器
@@ -49,18 +49,18 @@ vfox 会加载 `metadata.lua`，在某个命令需要时调用对应的 hook，�
 
 ## 测试
 
-离线测试在 Test Plugin 工作流中运行，你也可以在本地用同样的方式运行：
+离线测试在 Test Plugin 工作流中运行：Lua 测试在 Ubuntu 上运行，`bin/install` 的 Go 测试在 Ubuntu 和 macOS 上都运行。你也可以在本地用同样的方式运行：
 
 ```shell
 go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/hooks_test.lua
 go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/windows_test.lua
 go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/post_install_test.lua
-bash tests/openssl_test.sh
-bash tests/configure_options_test.sh
-bash tests/linux_options_test.sh
+go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/pre_uninstall_test.lua
+go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/detect_test.lua
+go test -C tests/e2e -count=1 -v ./install/
 ```
 
-`hooks_test.lua` 会替换 HTTP 客户端、JSON 和 HTML 模块以及文件函数，然后检查 hook 的返回值，包括带 NTS 构建的 Windows 发布列表。`windows_test.lua` 检查 Windows 上的安装：php.ini、Composer 安装器及其 sha384 校验，以及带空格路径的引号。`post_install_test.lua` 检查 Linux 和 macOS 的编译步骤，`pre_uninstall_test.lua` 检查删除 PHP 构建的步骤。shell 测试会替换 `uname`、`brew`、`ldconfig` 和编译器之后载入 `bin/install`：`configure_options_test.sh` 检查 macOS 的选项以及选中的 OpenSSL，`linux_options_test.sh` 检查 Linux 的选项，包括 PCRE JIT、gmp 和 sodium，以及含空格安装路径的构建目录（构建过程用桩替代）。`detect_test.lua` 检查能找到机器上哪些 PHP 安装、如何为它们命名，以及哪些不纳入：共享的系统目录、shims、vfox 自己的安装，以及不回应 `php -v` 的 PHP。容器套件见 [E2E 测试](e2e.md)。
+`hooks_test.lua` 会替换 HTTP 客户端、JSON 和 HTML 模块以及文件函数，然后检查 hook 的返回值，包括带 NTS 构建的 Windows 发布列表。`windows_test.lua` 检查 Windows 上的安装：php.ini、Composer 安装器及其 sha384 校验，以及带空格路径的引号。`post_install_test.lua` 检查 Linux 和 macOS 的编译步骤，`pre_uninstall_test.lua` 检查删除 PHP 构建的步骤。`tests/e2e/install` 在 bash 中运行 `bin/install`，宿主机的命令都被替换：`uname`、`brew`、`ldconfig`、`cc`、`locate` 和 `make` 是指向测试二进制的符号链接，测试二进制按调用时的命令名作出回应；假的 PHP 源码树里的 `buildconf` 和 `configure` 也是这样。它检查 macOS 的选项及选中的 OpenSSL、Linux 的选项（包括 PCRE JIT、gmp 和 sodium），以及带空格安装路径的构建目录；构建失败或卸载 PHP 时，这个目录会被删除。在 macOS 上，`TestHomebrewOfThisMac` 还会把选项与这台 Mac 的 Homebrew 对照。`detect_test.lua` 检查能找到机器上哪些 PHP 安装、如何为它们命名，以及哪些不纳入：共享的系统目录、shims、vfox 自己的安装，以及不回应 `php -v` 的 PHP。容器套件见 [E2E 测试](e2e.md)。
 
 ## 本地检查
 

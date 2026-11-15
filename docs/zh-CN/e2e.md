@@ -4,7 +4,7 @@
 
 端到端套件在容器里用 vfox 安装 PHP，检查的是用户会检查的内容。它们是 `tests/e2e` 里的 Go 测试：`linux` 和 `windows` 各自为每个 PHP 版本运行一个容器，`common` 放两者共用的部分。
 
-离线的 Lua 和 shell 测试在 Test Plugin 工作流中运行，见[开发](development.md)。
+离线的 Lua 测试和 `bin/install` 的 Go 测试在 Test Plugin 工作流中运行，见[开发](development.md)。
 
 ## 在哪里运行
 
@@ -90,5 +90,5 @@ docker run --rm -v "$PWD:/src" ghcr.io/google/addlicense:v1.2.0 -check -f .licen
 ## 已知缺口
 
 - Linux arm64 任务和 Windows 任务只在 CI 中运行。开发容器覆盖的是 Linux amd64，而 Windows 套件需要 Windows 宿主机。
-- macOS 任务直接在 runner 上安装 PHP，所以 macOS 上的 OpenSSL 选择只在那里被覆盖。
+- macOS 任务直接在 runner 上安装 PHP。Test Plugin 任务把 `bin/install` 与 runner 的 Homebrew 对照，Linux 没有 Homebrew，所以这一点只能在 macOS 上覆盖。
 - 套件测试的是镜像里的 vfox 发布版本，而不是 `main` 分支。

@@ -4,7 +4,7 @@
 
 The end-to-end suites install PHP with vfox inside containers, and check what a user would check. They are Go tests in `tests/e2e`: `linux` and `windows` each run one container per PHP version, and `common` holds what the two share.
 
-The offline Lua and shell tests run in the Test Plugin workflow, described in [development](development.md).
+The offline Lua tests and the Go tests of `bin/install` run in the Test Plugin workflow, described in [development](development.md).
 
 ## Where they run
 
@@ -90,5 +90,5 @@ docker run --rm -v "$PWD:/src" ghcr.io/google/addlicense:v1.2.0 -check -f .licen
 ## Known gaps
 
 - The Linux arm64 job and the Windows job run only in CI. The dev container covers Linux amd64, and the Windows suite needs a Windows host.
-- The macOS job installs PHP on the runner, so the macOS OpenSSL choice is covered only there.
+- The macOS job installs PHP on the runner. The Test Plugin job checks `bin/install` against the runner's Homebrew, which Linux does not have.
 - The suites test one vfox release, the one in the image, not `main`.
