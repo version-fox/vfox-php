@@ -193,8 +193,13 @@ assert(S.files[installer] == nil, "the installer must not go through the text wr
 local helper = assert(S.files[path .. "\\install_vc_redist.ps1"])
 assert(helper:find("Get-AuthenticodeSignature", 1, true), helper)
 assert(helper:find("O=Microsoft Corporation", 1, true), helper)
+assert(helper:find("trap { exit 102 }", 1, true), helper)
 local run = assert(S.files[path .. "\\install_vc_redist.bat"])
 assert(run:find('-File "' .. path .. '\\install_vc_redist.ps1" -Installer "' .. installer .. '"', 1, true), run)
+-- PowerShell 7 puts its modules on PSModulePath, so the batch file gives Windows PowerShell
+-- its own module path, and runs it by its full path.
+assert(run:find('@set "PSModulePath=%SystemRoot%\\System32\\WindowsPowerShell\\v1.0\\Modules"', 1, true), run)
+assert(run:find('"%SystemRoot%\\System32\\WindowsPowerShell\\v1.0\\powershell.exe" -NoProfile', 1, true), run)
 -- php.exe is not run before the installer: the installer runs, php.exe is checked, then
 -- the composer steps.
 assert(#S.commands == 4, #S.commands)
@@ -251,6 +256,16 @@ assert(message:find("Windows did not start the Visual C++ Redistributable instal
 assert(message:find(redist_url, 1, true), message)
 assert(S.files[path .. "\\php.ini"] == nil, "nothing may be written when the installer did not start")
 print("Windows reports an installer that it did not start")
+
+-- When PowerShell itself fails, the install says so, rather than naming an installer code.
+reset({ registered = false, redist_exit = 102 })
+message = error_of(function()
+    post_install(path)
+end)
+assert(message:find("PowerShell could not check or start the Visual C++ Redistributable installer", 1, true), message)
+assert(message:find(redist_url, 1, true), message)
+assert(S.files[path .. "\\php.ini"] == nil, "nothing may be written when PowerShell fails")
+print("Windows reports a PowerShell failure apart from the installer's exit code")
 
 -- Any other exit code of the installer fails the install with that code.
 reset({ registered = false, redist_exit = 1603 })

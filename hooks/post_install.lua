@@ -80,11 +80,12 @@ end
 
 -- Installs the runtime silently, run by a batch file. Exit 100: the installer is not
 -- signed by Microsoft, so it does not run. Exit 101: Windows does not start it, for
--- instance because the permission prompt was declined. Any other code is the
--- installer's own. Without administrator rights the installer starts elevated, which
--- shows Windows' permission prompt.
+-- instance because the permission prompt was declined. Exit 102: PowerShell itself
+-- failed. Any other code is the installer's own. Without administrator rights the
+-- installer starts elevated, which shows Windows' permission prompt.
 local INSTALL_REDIST_PS1 = [[
 param([string] $Installer)
+trap { exit 102 }
 $signature = Get-AuthenticodeSignature -LiteralPath $Installer
 if ($signature.Status -ne 'Valid' -or $signature.SignerCertificate.Subject -notlike '*O=Microsoft Corporation*') { exit 100 }
 $admin = (New-Object Security.Principal.WindowsPrincipal ([Security.Principal.WindowsIdentity]::GetCurrent())).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
@@ -127,8 +128,11 @@ local function install_vc_redist(path, arch)
     if err ~= nil then
         error(err)
     end
+    -- PowerShell 7 adds its modules to PSModulePath, which this process inherits, and
+    -- Windows PowerShell cannot load its Security module from there. The batch file
+    -- gives Windows PowerShell its own module path, and runs it by its full path.
     local runCommand = string.format(
-        'powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "%s" -Installer "%s"',
+        '@set "PSModulePath=%%SystemRoot%%\\System32\\WindowsPowerShell\\v1.0\\Modules"\n"%%SystemRoot%%\\System32\\WindowsPowerShell\\v1.0\\powershell.exe" -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "%s" -Installer "%s"',
         script,
         installer
     )
@@ -157,6 +161,8 @@ local function install_vc_redist(path, arch)
             "Windows did not start the Visual C++ Redistributable installer, for instance because its permission prompt was declined. "
                 .. manual
         )
+    elseif code == 102 then
+        error("PowerShell could not check or start the Visual C++ Redistributable installer. " .. manual)
     elseif code ~= 0 and code ~= 3010 then
         error("The Visual C++ Redistributable installer exited with code " .. tostring(code) .. ". " .. manual)
     end

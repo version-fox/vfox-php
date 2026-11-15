@@ -73,6 +73,10 @@ PHP 7.x 和 8.0 需要 OpenSSL 1.1，而 Homebrew 已不再通过常规的 formu
 
 安装程序需要管理员权限，所以 Windows 会询问是否允许。如果你拒绝了提示，或 Windows 不允许提升权限，请重新安装并允许提示。你也可以按上面的方法自己安装该构建。
 
+### `PowerShell could not check or start the Visual C++ Redistributable installer`
+
+Windows PowerShell 在核对或运行安装程序之前就失败了，所以插件没有安装运行库，安装在写入任何内容之前就停止了。请按错误信息中的链接自己安装该构建，然后重新安装 PHP。
+
 ### `The Visual C++ Redistributable installer exited with code`
 
 安装程序运行后失败，并返回了该退出码。请按错误信息中的链接自己安装该构建，然后重新安装 PHP。

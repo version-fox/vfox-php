@@ -73,6 +73,10 @@ The plugin downloads the Microsoft Visual C++ 2015-2022 Redistributable from aka
 
 The installer needs administrator rights, so Windows asks for permission. If the prompt was declined, or Windows does not allow the elevation, install again and allow the prompt. You can also install the build yourself, as above.
 
+### `PowerShell could not check or start the Visual C++ Redistributable installer`
+
+Windows PowerShell failed before it could check or run the installer, so the plugin did not install the runtime, and the install stopped before it wrote anything. Install the build yourself from the link in the message, then install PHP again.
+
 ### `The Visual C++ Redistributable installer exited with code`
 
 The installer ran and failed with that exit code. Install the build yourself from the link in the message, then install PHP again.
