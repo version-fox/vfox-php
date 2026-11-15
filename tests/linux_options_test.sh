@@ -101,13 +101,25 @@ if [ -s "$locate_log" ]; then
 fi
 echo "locate is not used"
 
-# An install path with spaces is one argument, not several.
+# The argument list keeps each argument whole, even one that holds a space.
+# (install_php does not reach this for such a path; see below.)
 spaced="/home/John Doe/.vfox/sdks/php-8.5.12"
 options=$(construct_configure_options "$spaced")
 expect_option "--prefix=$spaced"
 expect_option "--sysconfdir=$spaced"
 expect_option "--with-config-file-scan-dir=$spaced/conf.d"
-echo "an install path with spaces stays one argument"
+echo "the argument list keeps arguments whole"
+
+# PHP cannot install into a path with spaces: install_php refuses it before it
+# moves, builds or creates anything.
+refused="/tmp/vfox home-$$/php-8.5.12"
+if install_php "$refused" 2>"$diagnostics"; then
+  echo "install_php accepted an install path with spaces" >&2
+  exit 1
+fi
+grep -q 'cannot be installed into a path with spaces' "$diagnostics"
+[ ! -e "$refused" ]
+echo "install_php refuses an install path with spaces before compiling"
 
 # PHP_CONFIGURE_OPTIONS replaces the platform options, as documented.
 FAKE_LIBRARIES=$'libgmp.so.10 => /lib/libgmp.so.10'

@@ -20,10 +20,19 @@ set -eo pipefail
 install_php() {
   local install_path=$1
 
+  # PHP's make install cannot install into a path with a space: it splits the
+  # destination, and install-cli, install-cgi and install-fpm fail. Stop here,
+  # before the compile, which takes minutes, and say why.
+  if [[ "$install_path" =~ [[:space:]] ]]; then
+    echo "ERROR: PHP cannot be installed into a path with spaces: $install_path" >&2
+    echo "ERROR: Set VFOX_HOME to a path without spaces, then install again." >&2
+    return 1
+  fi
+
   local source_path="${install_path}_source"
   local configured
   configured="$(construct_configure_options "$install_path")" || return 1
-  # One argument per line, so that an install path with spaces stays one argument.
+  # One argument per line, so that each argument stays whole.
   local -a configure_args=()
   local option
   while IFS= read -r option; do

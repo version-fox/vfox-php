@@ -112,6 +112,15 @@ function CompileInstallPHP(path, version)
     if not version:match("^%d+%.%d+%.%d+$") then
         error("Invalid PHP source version: " .. tostring(version))
     end
+    -- PHP's make install cannot install into a path with a space. Refuse before
+    -- the compile, which takes minutes, and name the way out.
+    if path:find("%s") then
+        error(
+            "PHP cannot be installed into a path with spaces: "
+                .. path
+                .. ". Set VFOX_HOME to a path without spaces, then install again."
+        )
+    end
     local install = RUNTIME.pluginDirPath .. "/bin/install"
     os.execute('chmod +x "' .. install .. '"')
     local code = os.execute('"' .. install .. '" "' .. path .. '" ' .. version)
