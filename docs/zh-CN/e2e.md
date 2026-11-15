@@ -70,11 +70,11 @@ go test -v -timeout 55m -run TestE2E .\windows
 
 1. **插件**：`vfox add -s` 安装压缩包，`vfox info php` 链接到 README。
 2. **未知版本**：`vfox install php@99.0.0` 失败，并且报出版本号：`PHP version not found: 99.0.0`。
-3. **安装**：`vfox install` 成功。在 Linux 上，其输出中会有 `Verifying checksum`，因为 PreInstall 传入了 php.net 的 sha256。在 Windows 上，镜像里没有 Visual C++ 运行库：安装前，加载器的搜索路径上没有任何文件夹含有 `vcruntime140.dll`；安装后 `System32` 中有它，因为是插件装上的。
+3. **安装**：`vfox install` 成功。在 Linux 上，其输出中会有 `Verifying checksum`，因为 PreInstall 传入了 php.net 的 sha256。在 Windows 上，镜像里没有 Visual C++ 运行库：安装前，加载器的搜索路径上没有任何文件夹含有 `vcruntime140.dll`；安装后 `System32` 中有它，因为是插件装上的。安装的输出中会显示安装它的助手脚本。
 4. **选择**：`vfox use -p` 选中该版本。在 Linux 上，`php` 解析为项目里的 `.vfox/sdks/php/bin/php`，并且 `PHP_VERSION` 与请求的版本匹配。
 5. **Linux 上的运行时**：`php -v` 的开头是该发布版本，`php -m` 列出 `bin/install` 启用的模块（见 `tests/e2e/common/common.go` 中的 `LinuxModules`，其中包括镜像里安装了的 gmp 和 sodium），PCRE JIT 已开启（含空格的运行中为 `not compiled in`，即构建时传入了 `--without-pcre-jit`），`PHP_ZTS` 在 `-zts` 的容器中为 1，其他容器中为 0，gd 报告支持 JPEG，`bin/` 旁边有 `conf.d/php.ini`，`composer -V` 与 `pear version` 能运行，`vfox list` 显示该版本。
 6. **Windows 上的运行时**：同样的版本横幅检查，另外还有：TS 构建的 `PHP_ZTS` 为 1，已加载 `openssl`，PHP 加载的 `php.ini` 就是插件写入的那个，`extension_dir` 是绝对路径，`composer.bat` 能运行。套件以 `VFOX_HOME=C:\vfox home` 运行，这个路径含有空格，所以安装路径的引号处理也会被测试。
-7. **Windows 上的 NTS**：在单独的项目中执行 `vfox install php@<version>-nts`，其 `PHP_ZTS` 为 0。此时运行库已经记录在注册表中，所以这次安装不会再安装它。
+7. **Windows 上的 NTS**：在单独的项目中执行 `vfox install php@<version>-nts`，其 `PHP_ZTS` 为 0。此时运行库已经记录在注册表中，所以这次安装的输出中不会再出现该助手脚本。
 8. **搜索**：`vfox search php` 列出该版本。列表从网络获取，所以会重试。
 
 在 Linux 上，另外还有一次运行使用含空格的 `VFOX_HOME`（`/root/vfox home`），并且构建时关闭了 PCRE JIT。它执行与其他运行相同的检查，还会检查安装路径是否链接到不含空格的构建目录，以及 `vfox uninstall` 是否同时删除了链接和构建目录。这次运行还会把 PHP 复制到 `/opt/php-system`，卸载 vfox 自己的副本，并检查 `vfox link --detect -y php` 能否链接这份副本、vfox 能否运行它，以及卸载链接后副本是否仍在原处。Windows 套件对每个 PHP 版本做同样的事，使用的是 `C:\php-system` 中的 TS 构建。

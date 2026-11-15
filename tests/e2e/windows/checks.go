@@ -64,15 +64,29 @@ func checkUnknownVersion(s *session) {
 	}
 }
 
-// checkInstall installs the spec. Windows releases carry no checksum in
-// PreInstall, so vfox has nothing to verify here.
-func checkInstall(s *session, spec string) {
+// checkInstall installs the spec, and returns the output of the install. Windows
+// releases carry no checksum in PreInstall, so vfox has nothing to verify here.
+func checkInstall(s *session, spec string) string {
 	s.t.Helper()
-	s.ok(fmt.Sprintf(`Set-Location '%s'; vfox install 'php@%s'`, workDir, spec))
+	return s.ok(fmt.Sprintf(`Set-Location '%s'; vfox install 'php@%s'`, workDir, spec))
 }
 
 // vcRuntimeDLL is the Visual C++ 2015-2022 runtime file that the x64 PHP builds load.
 const vcRuntimeDLL = "vcruntime140.dll"
+
+// redistHelper is the PowerShell script that the plugin's install runs, through a
+// batch file, to install the runtime. The batch file echoes its command, so the name
+// shows in the output of the install that runs it.
+const redistHelper = "install_vc_redist.ps1"
+
+// checkRedistInstalled checks that the install installed the runtime itself: its
+// output shows the helper that the plugin runs for that.
+func checkRedistInstalled(s *session, install string) {
+	s.t.Helper()
+	if !strings.Contains(install, redistHelper) {
+		s.t.Fatalf("the install did not run %s, so it did not install the runtime:\n%s", redistHelper, install)
+	}
+}
 
 // checkRuntimeOnPath checks the Visual C++ runtime that the PHP builds load. The
 // image has none, and no folder that the loader searches may hold it before the
@@ -182,7 +196,11 @@ func extensionDirIsAbsolute(info string) bool {
 func checkNTS(s *session, version string) {
 	s.t.Helper()
 	// The project folder is made here: nothing in the image creates it.
-	s.ok(fmt.Sprintf(`New-Item -ItemType Directory -Force -Path '%s' | Out-Null; Set-Location '%s'; vfox install 'php@%s-nts'; vfox use -p 'php@%s-nts'`, ntsDir, ntsDir, version, version))
+	out := s.ok(fmt.Sprintf(`New-Item -ItemType Directory -Force -Path '%s' | Out-Null; Set-Location '%s'; vfox install 'php@%s-nts'; vfox use -p 'php@%s-nts'`, ntsDir, ntsDir, version, version))
+	// The runtime is recorded by now, so this install must not run its installer again.
+	if strings.Contains(out, redistHelper) {
+		s.t.Fatalf("the -nts install ran %s again, although the runtime is recorded:\n%s", redistHelper, out)
+	}
 
 	project := selectIn(ntsDir)
 	if zts := strings.TrimSpace(s.ok(project + "php -r 'echo (int) PHP_ZTS;'")); zts != "0" {
