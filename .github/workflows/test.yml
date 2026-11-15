@@ -33,7 +33,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6
         with:
-          go-version: '1.24.0'
+          go-version: '1.27.1'
           cache: false
       - name: Test plugin hooks with vfox's Lua interpreter
         run: go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/hooks_test.lua
@@ -45,9 +45,6 @@ jobs:
         run: go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/detect_test.lua
       - name: Test Windows configuration and composer verification
         run: go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/windows_test.lua
-      - name: Test macOS OpenSSL selection
-        run: bash tests/openssl_test.sh
-      - name: Test optional dependency diagnostics
-        run: bash tests/configure_options_test.sh
-      - name: Test the Linux configure options
-        run: bash tests/linux_options_test.sh
+      - name: Test bin/install with its commands faked
+        run: go test -count=1 -v ./install/
+        working-directory: tests/e2e
