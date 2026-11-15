@@ -21,8 +21,14 @@ install_php() {
   local install_path=$1
 
   local source_path="${install_path}_source"
-  local configure_options
-  configure_options="$(construct_configure_options "$install_path")" || return 1
+  local configured
+  configured="$(construct_configure_options "$install_path")" || return 1
+  # One argument per line, so that an install path with spaces stays one argument.
+  local -a configure_args=()
+  local option
+  while IFS= read -r option; do
+    configure_args+=("$option")
+  done <<<"$configured"
 
   local operating_system=$(uname -a)
 
@@ -73,8 +79,8 @@ install_php() {
   # Running this in a subshell because we don't to disturb the current
   # working directory.
   (
-    mv $install_path $source_path
-    cd $source_path
+    mv "$install_path" "$source_path"
+    cd "$source_path"
 
     # Target is OS-specific
     # target=$(get_target)
@@ -82,8 +88,8 @@ install_php() {
     # Build PHP
     echo "Running buildconfig..."
     ./buildconf --force || exit 1
-    echo "Running ./configure $configure_options"
-    ./configure $configure_options || exit 1
+    echo "Running ./configure ${configure_args[*]}"
+    ./configure "${configure_args[@]}" || exit 1
     echo "Running make"
     make || exit 1
     echo "Running make install..."
@@ -92,86 +98,97 @@ install_php() {
   )
 
   # it's not obvious where php.ini should be placed, let us make it easy for the user
-  mkdir -p $install_path/conf.d/
-  echo "# add system-wide php configuration options here" >$install_path/conf.d/php.ini
-  rm -rf $source_path
+  mkdir -p "$install_path/conf.d/"
+  echo "# add system-wide php configuration options here" >"$install_path/conf.d/php.ini"
+  rm -rf "$source_path"
 }
 
 install_composer() {
   local bin_path=$1/bin
-  local expected_signature="$(curl -sL https://composer.github.io/installer.sig)"
+  local expected_signature
+  expected_signature="$(curl -sL https://composer.github.io/installer.sig)"
 
-  $bin_path/php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
-  $bin_path/php -r "if (hash_file('sha384', 'composer-setup.php') === '${expected_signature}') { echo 'Installer verified'; } else { echo 'Installer corrupt'; unlink('composer-setup.php'); } echo PHP_EOL;"
-  $bin_path/php composer-setup.php --install-dir=$bin_path --filename=composer
-  $bin_path/php -r "unlink('composer-setup.php');"
+  # The installer is fetched into the bin directory, not into the directory the
+  # install was started from. A signature that does not match stops the install.
+  (
+    cd "$bin_path" || exit 1
+    ./php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');" || exit 1
+    ./php -r "if (hash_file('sha384', 'composer-setup.php') === '${expected_signature}') { echo 'Installer verified'; } else { echo 'Installer corrupt'; unlink('composer-setup.php'); exit(1); } echo PHP_EOL;" || exit 1
+    ./php composer-setup.php --install-dir=. --filename=composer || exit 1
+    ./php -r "unlink('composer-setup.php');"
+  )
 }
 
+# Prints the configure arguments for PHP built into install_path, one per line.
 construct_configure_options() {
   local install_path=$1
+  local -a platform_args=()
+  local -a extra_args=()
 
   # many options included below are not applicable to newer PHP versions
-  # including these will trigger a build warning, but will not b
-  global_config="--prefix=$install_path \
-    --enable-bcmath \
-    --enable-calendar \
-    --enable-dba \
-    --enable-exif \
-    --enable-fpm \
-    --enable-ftp \
-    --enable-gd \
-    --enable-gd-native-ttf \
-    --enable-intl \
-    --enable-mbregex \
-    --enable-mbstring \
-    --enable-mysqlnd \
-    --enable-pcntl \
-    --enable-shmop \
-    --enable-soap \
-    --enable-sockets \
-    --enable-sysvmsg \
-    --enable-sysvsem \
-    --enable-sysvshm \
-    --enable-wddx \
-    --enable-zip \
-    --sysconfdir=$install_path \
-    --with-config-file-path=$install_path \
-    --with-config-file-scan-dir=$install_path/conf.d \
-    --with-curl \
-    --with-external-gd \
-    --with-fpm-group=www-data \
-    --with-fpm-user=www-data \
-    --with-gd \
-    --with-mhash \
-    --with-mysql=mysqlnd \
-    --with-mysqli=mysqlnd \
-    --with-pdo-mysql=mysqlnd \
-    --with-xmlrpc \
-    --with-zip \
-    --with-zlib \
-    --without-snmp"
+  # including these will trigger a build warning, but will not break the build
+  local -a global_args=(
+    "--prefix=$install_path"
+    --enable-bcmath
+    --enable-calendar
+    --enable-dba
+    --enable-exif
+    --enable-fpm
+    --enable-ftp
+    --enable-gd
+    --enable-gd-native-ttf
+    --enable-intl
+    --enable-mbregex
+    --enable-mbstring
+    --enable-mysqlnd
+    --enable-pcntl
+    --enable-shmop
+    --enable-soap
+    --enable-sockets
+    --enable-sysvmsg
+    --enable-sysvsem
+    --enable-sysvshm
+    --enable-wddx
+    --enable-zip
+    "--sysconfdir=$install_path"
+    "--with-config-file-path=$install_path"
+    "--with-config-file-scan-dir=$install_path/conf.d"
+    --with-curl
+    --with-external-gd
+    --with-fpm-group=www-data
+    --with-fpm-user=www-data
+    --with-gd
+    --with-mhash
+    --with-mysql=mysqlnd
+    --with-mysqli=mysqlnd
+    --with-pdo-mysql=mysqlnd
+    --with-xmlrpc
+    --with-zip
+    --with-zlib
+    --without-snmp
+  )
 
   if [ "$PHP_CONFIGURE_OPTIONS" = "" ]; then
     local platform_options
     platform_options=$(os_based_configure_options) || return 1
-    local configure_options="$platform_options $global_config"
+    read -r -a platform_args <<<"$platform_options" || true
   else
-    local configure_options="$PHP_CONFIGURE_OPTIONS $global_config"
+    read -r -a platform_args <<<"$PHP_CONFIGURE_OPTIONS" || true
   fi
 
   if [ "${PHP_WITHOUT_PEAR:-no}" != "no" ]; then
-    configure_options="$configure_options --without-pear"
+    extra_args+=(--without-pear)
   else
-    configure_options="$configure_options --with-pear"
+    extra_args+=(--with-pear)
   fi
 
+  # PCRE JIT is on in PHP's own configuration, so it stays on unless
+  # PHP_WITHOUT_PCRE_JIT asks for --without-pcre-jit.
   if [ "${PHP_WITHOUT_PCRE_JIT:-no}" != "no" ]; then
-    configure_options="$configure_options"
-  else
-    configure_options="$configure_options --without-pcre-jit"
+    extra_args+=(--without-pcre-jit)
   fi
 
-  echo "$configure_options"
+  printf '%s\n' "${platform_args[@]}" "${global_args[@]}" "${extra_args[@]}"
 }
 
 homebrew_package_path() {
@@ -211,6 +228,16 @@ exit_if_homebrew_not_installed() {
     echo "ERROR: Please install homebrew for OSX"
     exit 1
   fi
+}
+
+# Succeeds when the system has the shared library and the header that configure
+# needs for it. The library is looked up in the dynamic linker's cache, which
+# ldconfig lists, so no search database has to be built first.
+have_system_library() {
+  local library=$1 header=$2
+  local cache
+  cache="$(ldconfig -p 2>/dev/null || /sbin/ldconfig -p 2>/dev/null || true)"
+  grep -q -- "$library" <<<"$cache" && echo "#include <$header>" | cc -E -x c - >/dev/null 2>&1
 }
 
 os_based_configure_options() {
@@ -316,30 +343,24 @@ os_based_configure_options() {
       configure_options="$configure_options --with-iconv=$iconv_path"
     fi
   else
-    local jpeg_path=$(locate libjpeg.so | awk '{ print length(), $0 | "sort -n" }' | cut -d" " -f2- | head -n 1)
-    local libpng_path=$(locate libpng.so | awk '{ print length(), $0 | "sort -n" }' | cut -d" " -f2- | head -n 1)
-    local libgmp_path=$(locate libgmp.so | awk '{ print length(), $0 | "sort -n" }' | cut -d" " -f2- | head -n 1)
-    local libsodium_path=$(locate libsodium.so | awk '{ print length(), $0 | "sort -n" }' | cut -d" " -f2- | head -n 1)
+    # PHP's gd is built against the system libgd (--with-external-gd, a global
+    # option), which brings its own JPEG and PNG support.
     configure_options="--with-openssl --with-curl --with-zlib --with-readline --with-gettext --with-xsl"
 
-    if [ -n "$jpeg_path" ]; then
-      configure_options="$configure_options --with-jpeg-dir=$jpeg_path --with-jpeg"
-    fi
-
-    if [ -n "$libpng_path" ]; then
-      configure_options="$configure_options --with-png-dir=$libpng_path --with-png"
-    fi
-
-    if [ -n "$libgmp_path" ]; then
+    if have_system_library libgmp.so gmp.h; then
       configure_options="$configure_options --with-gmp"
+    else
+      echo "gmp not found, not including in installation" >&2
     fi
 
-    if [ -n "$libsodium_path" ]; then
+    if have_system_library libsodium.so sodium.h; then
       configure_options="$configure_options --with-sodium"
+    else
+      echo "sodium not found, not including in installation" >&2
     fi
   fi
 
-  echo $configure_options
+  echo "$configure_options"
 }
 
 if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
