@@ -156,7 +156,8 @@ func extensionDirIsAbsolute(info string) bool {
 // project of its own, and checks that PHP reports itself non-thread-safe.
 func checkNTS(s *session, version string) {
 	s.t.Helper()
-	s.ok(fmt.Sprintf(`Set-Location '%s'; vfox install 'php@%s-nts'; vfox use -p 'php@%s-nts'`, ntsDir, version, version))
+	// The project folder is made here: nothing in the image creates it.
+	s.ok(fmt.Sprintf(`New-Item -ItemType Directory -Force -Path '%s' | Out-Null; Set-Location '%s'; vfox install 'php@%s-nts'; vfox use -p 'php@%s-nts'`, ntsDir, ntsDir, version, version))
 
 	project := selectIn(ntsDir)
 	if zts := strings.TrimSpace(s.ok(project + "php -r 'echo PHP_ZTS;'")); zts != "0" {
