@@ -94,18 +94,23 @@ local function quote(value)
     return "'" .. value:gsub("'", "'\\''") .. "'"
 end
 
---- Runs a command and returns its lines, trimmed. A command that cannot run
---- returns none.
+--- Runs a command and returns its non-empty lines, trimmed. A command that cannot
+--- run returns none. The whole output is read at once: vfox's io.popen on Windows
+--- returns a handle with read and close, and no lines method.
 local function read_lines(command)
     local handle = io.popen(command, "r")
     if not handle then
         return {}
     end
-    local lines = {}
-    for line in handle:lines() do
-        table.insert(lines, trim(line))
-    end
+    local output = handle:read("*a") or ""
     handle:close()
+    local lines = {}
+    for line in output:gmatch("[^\r\n]+") do
+        local value = trim(line)
+        if value ~= "" then
+            table.insert(lines, value)
+        end
+    end
     return lines
 end
 

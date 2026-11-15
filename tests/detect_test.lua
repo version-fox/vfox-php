@@ -61,13 +61,21 @@ io.popen = function(command)
             lines = S.probes[norm(exe)] or {}
         end
     end
-    local index = 0
+    -- Like vfox's io.popen on Windows, the handle has read and close, and no lines:
+    -- a command's output is read whole.
+    local output = ""
+    if #lines > 0 then
+        output = table.concat(lines, "\n") .. "\n"
+    end
+    local consumed = false
     return {
-        lines = function()
-            return function()
-                index = index + 1
-                return lines[index]
+        read = function(_, format)
+            assert(format == "*a", "the whole output is read: " .. tostring(format))
+            if consumed then
+                return ""
             end
+            consumed = true
+            return output
         end,
         close = function()
             return true
