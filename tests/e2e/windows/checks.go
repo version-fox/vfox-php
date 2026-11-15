@@ -71,6 +71,29 @@ func checkInstall(s *session, spec string) {
 	s.ok(fmt.Sprintf(`Set-Location '%s'; vfox install 'php@%s'`, workDir, spec))
 }
 
+// vcRuntimeDLL is the Visual C++ 2015-2022 runtime file that the x64 PHP builds load.
+const vcRuntimeDLL = "vcruntime140.dll"
+
+// checkRuntimeOnPath checks the Visual C++ runtime that the PHP builds load. The
+// image has none, and no folder that the loader searches may hold it before the
+// install: the plugin brings it in when php.exe does not start. After the install,
+// System32 holds it. The search covers System32, the Windows folder and every PATH
+// folder, as the loader does for php.exe.
+func checkRuntimeOnPath(s *session, installed bool) {
+	s.t.Helper()
+	if installed {
+		got := strings.TrimSpace(s.ok(fmt.Sprintf(`Test-Path -LiteralPath (Join-Path $env:SystemRoot 'System32\%s')`, vcRuntimeDLL)))
+		if got != "True" {
+			s.t.Fatalf("System32 has no %s after the install (Test-Path = %q)", vcRuntimeDLL, got)
+		}
+		return
+	}
+	found := strings.TrimSpace(s.ok(fmt.Sprintf(`$dirs = @((Join-Path $env:SystemRoot 'System32'), $env:SystemRoot) + ($env:PATH -split ';'); $dirs | Where-Object { $_ } | ForEach-Object { Join-Path $_ '%s' } | Where-Object { Test-Path -LiteralPath $_ }`, vcRuntimeDLL)))
+	if found != "" {
+		s.t.Fatalf("the runtime is on the search path before the install, so the install would not bring it in:\n%s", found)
+	}
+}
+
 // checkUse selects the spec in the project, the way the CI workflow does, and
 // returns the version that was installed.
 func checkUse(s *session, spec string) string {
