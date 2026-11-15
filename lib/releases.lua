@@ -62,11 +62,14 @@ local function windows()
             if not version or fileArch ~= arch then
                 return
             end
-            local rebuild = variant:match("^%-(%d+)$") or variant:match("^%-nts%-(%d+)$")
+            -- Rebuilds are written before or after "nts": 8.5.12-1-nts and 8.5.12-nts-1.
+            local rebuild = variant:match("^%-(%d+)$")
+                or variant:match("^%-(%d+)%-nts$")
+                or variant:match("^%-nts%-(%d+)$")
             if variant ~= "" and variant ~= "-nts" and not rebuild then
                 return
             end
-            local nts = variant:match("^%-nts") ~= nil
+            local nts = variant:match("nts") ~= nil
             rebuild = tonumber(rebuild) or 0
             if util.compare_versions(version, "5.3.2") < 0 then
                 return
