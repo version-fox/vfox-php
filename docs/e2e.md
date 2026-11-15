@@ -77,7 +77,7 @@ For each PHP version, in this order:
 7. **NTS on Windows:** `vfox install php@<version>-nts` in a project of its own, where `PHP_ZTS` is 0.
 8. **Search:** `vfox search php` lists the version, with retries, since the list is fetched from the network.
 
-On Linux, one more run uses a `VFOX_HOME` with a space, `/root/vfox home`, and builds PHP without PCRE JIT. It runs the same checks as the other runs. It also checks that the install path links to a build directory without spaces, and that `vfox uninstall` removes both the link and the build directory.
+On Linux, one more run uses a `VFOX_HOME` with a space, `/root/vfox home`, and builds PHP without PCRE JIT. It runs the same checks as the other runs. It also checks that the install path links to a build directory without spaces, and that `vfox uninstall` removes both the link and the build directory. The run then copies its PHP to `/opt/php-system`, uninstalls vfox's copy, and checks that `vfox link --detect -y php` links the copy, that vfox runs it, and that uninstalling the link leaves the copy in place. The Windows suite does the same with the TS build in `C:\php-system`, for each PHP version.
 
 ## Local checks
 

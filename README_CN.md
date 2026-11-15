@@ -47,6 +47,7 @@ vfox install php@8.4.5-nts  # 仅 Windows：8.4.5 的 NTS 版本
 **使用插件**
 
 - [版本与命名](docs/zh-CN/versions.md)：版本如何匹配、列表从哪里来，以及可能出现的错误
+- [机器上已有的安装](docs/zh-CN/link.md)：`vfox link --detect php` 纳入已经安装好的 PHP
 - [平台](docs/zh-CN/platforms.md)：每个系统构建或下载什么，需要什么
 - [构建选项](docs/zh-CN/configuration.md)：改变 PHP 构建方式的环境变量
 - [问题排查](docs/zh-CN/troubleshooting.md)：可能看到的提示，以及对应的处理方法

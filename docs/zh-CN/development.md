@@ -10,6 +10,9 @@ hooks/available.lua     vfox search：发布版本列表
 hooks/pre_install.lua   vfox install：选定发布版本，返回 URL、安装名，以及 Linux 和 macOS 上的 sha256
 hooks/post_install.lua  下载之后：Linux 和 macOS 上编译 PHP；Windows 上写入 php.ini 并安装 Composer
 hooks/env_keys.lua      选中 PHP 的 PATH
+hooks/detect.lua        vfox link --detect php：找出机器上已有的 PHP 安装
+hooks/pre_uninstall.lua vfox uninstall：删除含空格安装路径背后的构建目录
+lib/detect_php.lua      在哪里查找 PHP 安装，以及如何为它们命名
 lib/releases.lua        发布列表：Linux 和 macOS 来自 php.net，Windows 来自 windows.php.net
 lib/constants.lua       那些列表的 URL
 lib/util.lua            版本比较和文件辅助函数
@@ -34,6 +37,7 @@ vfox 会加载 `metadata.lua`，在某个命令需要时调用对应的 hook，�
 | （下载之后） | `PostInstall` | Linux 和 macOS：运行 `bin/install`；Windows：写入 `php.ini` 并安装 Composer |
 | `vfox use php@8.4` | `EnvKeys` | 把 `PATH` 设为安装目录下的 `bin`；Windows 上设为安装目录本身 |
 | `vfox info php` | 无 | vfox 打印 `metadata.lua` 中的提示信息，其中有指向 README 的链接 |
+| `vfox link --detect php` | `Detect` | 列出机器上已有的 PHP 安装，来自 `lib/detect_php.lua`；链接它不会移动安装 |
 
 ## 那些要花时间才能找到的约定
 
@@ -56,7 +60,7 @@ bash tests/configure_options_test.sh
 bash tests/linux_options_test.sh
 ```
 
-`hooks_test.lua` 会替换 HTTP 客户端、JSON 和 HTML 模块以及文件函数，然后检查 hook 的返回值，包括带 NTS 构建的 Windows 发布列表。`windows_test.lua` 检查 Windows 上的安装：php.ini、Composer 安装器及其 sha384 校验，以及带空格路径的引号。`post_install_test.lua` 检查 Linux 和 macOS 的编译步骤，`pre_uninstall_test.lua` 检查删除 PHP 构建的步骤。shell 测试会替换 `uname`、`brew`、`ldconfig` 和编译器之后载入 `bin/install`：`configure_options_test.sh` 检查 macOS 的选项以及选中的 OpenSSL，`linux_options_test.sh` 检查 Linux 的选项，包括 PCRE JIT、gmp 和 sodium，以及含空格安装路径的构建目录（构建过程用桩替代）。容器套件见 [E2E 测试](e2e.md)。
+`hooks_test.lua` 会替换 HTTP 客户端、JSON 和 HTML 模块以及文件函数，然后检查 hook 的返回值，包括带 NTS 构建的 Windows 发布列表。`windows_test.lua` 检查 Windows 上的安装：php.ini、Composer 安装器及其 sha384 校验，以及带空格路径的引号。`post_install_test.lua` 检查 Linux 和 macOS 的编译步骤，`pre_uninstall_test.lua` 检查删除 PHP 构建的步骤。shell 测试会替换 `uname`、`brew`、`ldconfig` 和编译器之后载入 `bin/install`：`configure_options_test.sh` 检查 macOS 的选项以及选中的 OpenSSL，`linux_options_test.sh` 检查 Linux 的选项，包括 PCRE JIT、gmp 和 sodium，以及含空格安装路径的构建目录（构建过程用桩替代）。`detect_test.lua` 检查能找到机器上哪些 PHP 安装、如何为它们命名，以及哪些不纳入：共享的系统目录、shims、vfox 自己的安装，以及不回应 `php -v` 的 PHP。容器套件见 [E2E 测试](e2e.md)。
 
 ## 本地检查
 

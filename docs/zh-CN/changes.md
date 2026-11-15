@@ -15,6 +15,7 @@
 - Windows：安装路径可以含有空格，Composer 的各个步骤会给路径加引号。
 - Windows：Composer 安装器在运行前会与 Composer 公布的 sha384 核对，与 Linux 和 macOS 一致。
 - Windows：文件名带 rebuild 号的 NTS 构建（如 `8.5.12-1-nts`）现在会被列出，也能安装。
+- 所有平台：`vfox link --detect php` 可以找到机器上已有的 PHP 安装，并链接你选择的那些。它通过 `Detect` 钩子实现，需要 vfox 1.1.0 或更新版本。见[机器上已有的安装](link.md)。
 
 ## 0.3.2
 

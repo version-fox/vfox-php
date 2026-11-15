@@ -77,7 +77,7 @@ go test -v -timeout 55m -run TestE2E .\windows
 7. **Windows 上的 NTS**：在单独的项目中执行 `vfox install php@<version>-nts`，其 `PHP_ZTS` 为 0。
 8. **搜索**：`vfox search php` 列出该版本。列表从网络获取，所以会重试。
 
-在 Linux 上，另外还有一次运行使用含空格的 `VFOX_HOME`（`/root/vfox home`），并且构建时关闭了 PCRE JIT。它执行与其他运行相同的检查，还会检查安装路径是否链接到不含空格的构建目录，以及 `vfox uninstall` 是否同时删除了链接和构建目录。
+在 Linux 上，另外还有一次运行使用含空格的 `VFOX_HOME`（`/root/vfox home`），并且构建时关闭了 PCRE JIT。它执行与其他运行相同的检查，还会检查安装路径是否链接到不含空格的构建目录，以及 `vfox uninstall` 是否同时删除了链接和构建目录。这次运行还会把 PHP 复制到 `/opt/php-system`，卸载 vfox 自己的副本，并检查 `vfox link --detect -y php` 能否链接这份副本、vfox 能否运行它，以及卸载链接后副本是否仍在原处。Windows 套件对每个 PHP 版本做同样的事，使用的是 `C:\php-system` 中的 TS 构建。
 
 ## 本地检查
 

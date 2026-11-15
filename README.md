@@ -47,6 +47,7 @@ On Linux and macOS, PHP installation requires some dependencies: a compiler and 
 **Using the plugin**
 
 - [Versions and names](docs/versions.md): how a version is matched, the lists and the errors
+- [Installs already on the machine](docs/link.md): `vfox link --detect php` adopts a PHP that is already installed
 - [Platforms](docs/platforms.md): what each system builds or downloads, and what it needs
 - [Build options](docs/configuration.md): the environment variables that change how PHP is built
 - [Troubleshooting](docs/troubleshooting.md): the messages you may see and what to do about them

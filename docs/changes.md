@@ -15,6 +15,7 @@ What each release changed. The releases before 0.3.0 are on the [GitHub releases
 - Windows: install paths with spaces work. The Composer steps quote their paths.
 - Windows: the Composer installer is checked against the sha384 that Composer publishes before it runs, as on Linux and macOS.
 - Windows: NTS builds whose name carries a rebuild number, such as `8.5.12-1-nts`, are listed and can be installed.
+- All platforms: `vfox link --detect php` finds the PHP installs that are already on the machine and links the ones you pick, with a `Detect` hook. It needs vfox 1.1.0 or later. See [installs already on the machine](link.md).
 
 ## 0.3.2
 

@@ -73,6 +73,12 @@ PHP 的构建需要 Microsoft Visual C++ Redistributable，插件不会安装它
 
 插件无法用 `php.exe` 运行 Composer 的安装器。请先确认 PHP 能单独运行（`php -v`），以及 getcomposer.org 可以访问，然后重新安装。
 
+## 链接机器上已有的安装
+
+### `vfox link --detect` 找不到 PHP
+
+插件会查看常见的位置，[机器上已有的安装](link.md)列出了这些位置。与系统其他软件共享的目录里的 PHP 会被有意跳过：例如发行版装在 `/usr/bin` 下的 PHP，链接它就等于链接整个系统。这样的安装请手动链接：`vfox link php@<版本> <包含 bin 的目录>`。
+
 ## 其他
 
 ### 安装过程中出现了别的问题

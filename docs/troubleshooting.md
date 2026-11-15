@@ -73,6 +73,12 @@ The PHP builds need the Microsoft Visual C++ Redistributable, which the plugin d
 
 The plugin could not run Composer's installer with `php.exe`. Check that PHP runs on its own (`php -v`), and that getcomposer.org is reachable. Then install again.
 
+## Linking an install that is already on the machine
+
+### `vfox link --detect` finds no PHP
+
+The plugin looks in the usual places, which [installs already on the machine](link.md) lists. A PHP in a folder that the system shares with other software is skipped on purpose: a distribution's PHP under `/usr/bin`, for example, would link the whole system. Link such an install by hand, with `vfox link php@<version> <folder that holds bin>`.
+
 ## Other
 
 ### Something else went wrong during an install
