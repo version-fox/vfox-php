@@ -52,11 +52,22 @@ local function fetch_or_fail(url)
     return resp.body
 end
 
--- The builds load the Visual C++ runtime, which the plugin does not install.
--- Without it php.exe exits at once. Every check below runs php.exe, so this one
--- runs first: the install then names the runtime, rather than reporting an
--- installer that does not match.
-local function check_php_starts(path)
+-- The Redistributable records the runtime under this key, with Installed set to 0x1.
+-- A 32-bit build reads the x86 record through the 32-bit view of the registry.
+local function redist_installed(arch)
+    local key = "HKLM\\SOFTWARE\\Microsoft\\VisualStudio\\14.0\\VC\\Runtimes\\" .. (arch == "x86" and "X86" or "X64")
+    local handle = io.popen('reg query "' .. key .. '" /v Installed 2>nul', "r")
+    if not handle then
+        return false
+    end
+    local output = handle:read("*a") or ""
+    handle:close()
+    return output:match("REG_DWORD%s+0x1%s") ~= nil
+end
+
+-- Returns true when php.exe starts. It needs the runtime, so it runs after the runtime
+-- is known to be installed, or after it was installed.
+local function php_starts(path)
     local startBat = path .. "\\php_start.bat"
     local _, err = util.write_file(startBat, '"' .. path .. '\\php.exe" -n -r "exit(0);"')
     if err ~= nil then
@@ -64,20 +75,105 @@ local function check_php_starts(path)
     end
     local started = os.execute('""' .. startBat .. '""')
     os.remove(startBat)
-    if started ~= 0 then
-        local redist = RUNTIME.archType == "386" and "x86" or "x64"
+    return started == 0
+end
+
+-- Installs the runtime silently, run by a batch file. Exit 100: the installer is not
+-- signed by Microsoft, so it does not run. Exit 101: Windows does not start it, for
+-- instance because the permission prompt was declined. Any other code is the
+-- installer's own. Without administrator rights the installer starts elevated, which
+-- shows Windows' permission prompt.
+local INSTALL_REDIST_PS1 = [[
+param([string] $Installer)
+$signature = Get-AuthenticodeSignature -LiteralPath $Installer
+if ($signature.Status -ne 'Valid' -or $signature.SignerCertificate.Subject -notlike '*O=Microsoft Corporation*') { exit 100 }
+$admin = (New-Object Security.Principal.WindowsPrincipal ([Security.Principal.WindowsIdentity]::GetCurrent())).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+$start = @{ FilePath = $Installer; ArgumentList = @('/install', '/quiet', '/norestart'); Wait = $true; PassThru = $true }
+if (-not $admin) { $start['Verb'] = 'RunAs' }
+try {
+    $process = Start-Process @start
+} catch {
+    exit 101
+}
+exit $process.ExitCode
+]]
+
+-- Downloads the runtime that matches the PHP build, and installs it. The download is
+-- not pinned, because Microsoft's redirect moves with each update: the installer must
+-- carry Microsoft's signature instead. Exit 3010 means the runtime is installed and a
+-- restart is pending, so the php.exe check after this one decides.
+local function install_vc_redist(path, arch)
+    local url = "https://aka.ms/vs/17/release/vc_redist." .. arch .. ".exe"
+    local manual = string.format(
+        "Install the %s build from %s yourself, then install PHP again. Composer was not installed.",
+        arch,
+        url
+    )
+    local resp, err = http.get({ url = url })
+    if err ~= nil or resp == nil or resp.status_code ~= 200 then
         error(
             string.format(
-                "php.exe did not start. The PHP builds for Windows load the Microsoft Visual C++ 2015-2022 Redistributable, which the plugin does not install. Install the %s build from https://aka.ms/vs/17/release/vc_redist.%s.exe, then install PHP again. Composer was not installed.",
-                redist,
-                redist
+                "The Visual C++ Redistributable is not installed, and it could not be downloaded from %s. %s",
+                url,
+                manual
             )
         )
+    end
+
+    local installer = path .. "\\vc_redist." .. arch .. ".exe"
+    local script = path .. "\\install_vc_redist.ps1"
+    local runBat = path .. "\\install_vc_redist.bat"
+    _, err = util.write_file(script, INSTALL_REDIST_PS1)
+    if err ~= nil then
+        error(err)
+    end
+    local runCommand = string.format(
+        'powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "%s" -Installer "%s"',
+        script,
+        installer
+    )
+    _, err = util.write_file(runBat, runCommand)
+    if err ~= nil then
+        error(err)
+    end
+    -- The installer is an executable, so its bytes are written exactly as downloaded.
+    _, err = util.write_binary_file(installer, resp.body)
+    if err ~= nil then
+        error(err)
+    end
+    local code = os.execute('""' .. runBat .. '""')
+    os.remove(runBat)
+    os.remove(script)
+    os.remove(installer)
+    if code == 100 then
+        error(
+            "The Visual C++ Redistributable from "
+                .. url
+                .. " is not signed by Microsoft, so it was not run. "
+                .. manual
+        )
+    elseif code == 101 then
+        error(
+            "Windows did not start the Visual C++ Redistributable installer, for instance because its permission prompt was declined. "
+                .. manual
+        )
+    elseif code ~= 0 and code ~= 3010 then
+        error("The Visual C++ Redistributable installer exited with code " .. tostring(code) .. ". " .. manual)
     end
 end
 
 function InstallComposerForWin(path)
-    check_php_starts(path)
+    local arch = RUNTIME.archType == "386" and "x86" or "x64"
+    -- php.exe is not run while the runtime is missing: without it, Windows reports the
+    -- missing DLL in a message box, and the install must not wait for someone to close it.
+    if not redist_installed(arch) then
+        install_vc_redist(path, arch)
+    end
+    if not php_starts(path) then
+        error(
+            "php.exe does not start. The PHP builds need the Microsoft Visual C++ 2015-2022 Redistributable: restart Windows and install PHP again. If it still fails, repair the Redistributable from Apps & Features. Composer was not installed."
+        )
+    end
     local content, err = util.read_file(path .. "\\php.ini-development")
     if err ~= nil then
         error(err)

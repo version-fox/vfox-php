@@ -77,14 +77,24 @@ function util.read_file(filename)
     return content
 end
 
-function util.write_file(filename, content)
-    local file = io.open(filename, "w")
+local function write(filename, content, mode)
+    local file = io.open(filename, mode)
     if not file then
         return false, "Failed to open file for writing: " .. filename
     end
     file:write(content)
     file:close()
     return true
+end
+
+function util.write_file(filename, content)
+    return write(filename, content, "w")
+end
+
+-- Writes the bytes as they are. A text-mode file on Windows turns every LF into CRLF,
+-- which would damage an executable.
+function util.write_binary_file(filename, content)
+    return write(filename, content, "wb")
 end
 
 return util
