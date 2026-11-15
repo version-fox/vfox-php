@@ -64,6 +64,11 @@ func TestE2E(t *testing.T) {
 	platform := "linux/" + runtime.GOARCH
 	image := buildImage(ctx, t, root, platform)
 
+	// PHP cannot be installed into a path with spaces, so the plugin refuses one.
+	t.Run("VFOX_HOME with a space is refused", func(t *testing.T) {
+		runSpacedHome(ctx, t, image, platform)
+	})
+
 	sem := make(chan struct{}, jobs)
 	for _, c := range combos {
 		t.Run(c.Slug(), func(t *testing.T) {
@@ -72,6 +77,46 @@ func TestE2E(t *testing.T) {
 			defer func() { <-sem }()
 			runOne(ctx, t, image, platform, c, attempts)
 		})
+	}
+}
+
+// spacedHome is a VFOX_HOME with a space in it. PHP's make install cannot
+// install into such a path, so the plugin must stop before it compiles.
+const spacedHome = "/root/vfox home"
+
+// spacedPathMessage is the part of the refusal that names the reason.
+const spacedPathMessage = "cannot be installed into a path with spaces"
+
+// runSpacedHome starts a container whose VFOX_HOME holds a space, and checks
+// that the install stops with the reason. The archive download comes first, and
+// the refusal comes before the compile, so this takes about a minute.
+func runSpacedHome(ctx context.Context, t *testing.T, image, platform string) {
+	t.Helper()
+	ctr, err := tc.GenericContainer(ctx, tc.GenericContainerRequest{
+		ContainerRequest: tc.ContainerRequest{
+			Image:         image,
+			ImagePlatform: platform,
+			Name:          common.ContainerName("spaced-home"),
+			Env:           map[string]string{"VFOX_HOME": spacedHome},
+		},
+		Started: true,
+	})
+	if err != nil {
+		t.Fatalf("start container: %v", err)
+	}
+	t.Cleanup(func() { _ = ctr.Terminate(context.Background()) })
+
+	ctx, cancel := context.WithTimeout(ctx, comboBudget)
+	defer cancel()
+	s := &session{t: t, ctx: ctx, ctr: ctr}
+
+	// vfox adds a plugin into VFOX_HOME/plugin, and does not create the home itself.
+	s.ok("mkdir -p '" + spacedHome + "/plugin'")
+	s.ok("vfox add -s " + pluginZip)
+
+	code, out := s.run("vfox install php@8.3")
+	if code == 0 || !strings.Contains(common.StripANSI(out), spacedPathMessage) {
+		t.Fatalf("install into %q: exit %d, want a refusal that says why:\n%s", spacedHome, code, out)
 	}
 }
 
