@@ -1,0 +1,121 @@
+# Copyright 2026 Han Li and contributors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+name: E2E
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    - cron: 0 0 * * 5
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  # A new push to a pull request replaces the run of the push before it. Every
+  # commit on main gets a group of its own instead: in one shared group a newer
+  # commit cancels the run of the older, and re-running the older cancels the
+  # newer in turn, so one of the two never ends with a result.
+  group: e2e-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+# The Linux and Windows jobs run the Go suites under tests/e2e natively, on the
+# runner's Docker, which starts the containers: the suites are the same on every
+# host. macOS has no containers, so its job installs PHP on the runner itself.
+
+jobs:
+  e2e-linux:
+    if: github.repository == 'version-fox/vfox-php'
+    name: Linux container (${{ matrix.runs-on }})
+    strategy:
+      fail-fast: false
+      matrix:
+        runs-on: [ubuntu-latest, ubuntu-26.04-arm]
+    runs-on: ${{ matrix.runs-on }}
+    timeout-minutes: 60
+    env:
+      # Ryuk publishes a port on the host daemon and waits for the suite to dial
+      # back to it. The dev container disables it too, and the suites terminate
+      # every container explicitly through t.Cleanup instead.
+      TESTCONTAINERS_RYUK_DISABLED: "true"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6
+        with:
+          go-version: '1.27.1'
+          cache: false
+      - run: go test -v -timeout 55m -run TestE2E ./linux
+        working-directory: tests/e2e
+
+  e2e-windows:
+    if: github.repository == 'version-fox/vfox-php'
+    name: Windows container
+    runs-on: windows-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      # C: is a network-attached disk on these runners, where the servercore
+      # pull alone took minutes. Docker, Go's caches and the temp directory go to
+      # the local D: drive instead.
+      - run: pwsh -NoProfile -File tests/e2e/windows/use-local-disk.ps1
+      - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6
+        with:
+          go-version: '1.27.1'
+          cache: false
+      - run: go test -v -timeout 55m -run TestE2E ./windows
+        working-directory: tests/e2e
+
+  e2e-macos:
+    if: github.repository == 'version-fox/vfox-php'
+    name: macOS (native)
+    runs-on: macos-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - name: install vfox (MacOS)
+        run: |
+          brew tap version-fox/tap
+          brew install vfox
+
+      - name: Generate PHP plugin
+        run: |
+          zip -r php.zip ./
+
+      - name: Install packages
+        run: brew install autoconf automake bison freetype gd gettext icu4c krb5 libedit libiconv libjpeg libpng libxml2 libxslt libzip openssl@3 pkg-config re2c zlib
+
+      - name: Test
+        env:
+          MAKEFLAGS: -j2
+        shell: bash
+        run: |
+          vfox add -s php.zip
+          vfox install php@latest
+          eval "$(vfox activate bash)"
+          vfox use -p php@latest
+          eval "$(vfox env --shell bash)"
+          php_path=$(command -v php)
+          [[ "$php_path" == "$(pwd -P)/.vfox/sdks/php/bin/php" ]]
+          php -v
+          php -m
+          composer -V
