@@ -19,7 +19,7 @@ On Windows these variables do nothing: the plugin unpacks a prebuilt build and c
 
 With `PHP_WITHOUT_PCRE_JIT` unset, PCRE JIT is on, as PHP has it by default. Earlier builds had it off; [changes](changes.md) says why.
 
-On Linux and macOS the install path must not contain a space, whatever these variables are set to. See [platforms](platforms.md).
+On Linux and macOS an install path with a space is built in a directory without spaces, whatever these variables are set to. See [platforms](platforms.md#linux).
 
 ## PHP_CONFIGURE_OPTIONS
 

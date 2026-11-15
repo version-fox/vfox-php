@@ -19,7 +19,7 @@ MAKEFLAGS=-j8 PHP_WITHOUT_PEAR=yes vfox install php@8.4
 
 未设置 `PHP_WITHOUT_PCRE_JIT` 时，PCRE JIT 保持开启，与 PHP 的默认值一致。更早的构建曾关闭它，原因见[变更](changes.md)。
 
-在 Linux 和 macOS 上，无论这些变量如何设置，安装路径都不能含有空格，见[平台](platforms.md)。
+在 Linux 和 macOS 上，无论这些变量如何设置，含空格的安装路径都会在不含空格的目录里构建，见[平台](platforms.md#linux)。
 
 ## PHP_CONFIGURE_OPTIONS
 

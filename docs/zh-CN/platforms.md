@@ -22,7 +22,7 @@ sudo apt-get install --assume-yes autoconf bison build-essential ca-certificates
     re2c zip zlib1g-dev libgmp-dev libsodium-dev
 ```
 
-安装路径不能含有空格。PHP 的 `make install` 无法安装到这样的路径，所以 `bin/install` 会在编译之前拒绝它，并指出该路径。请把 `VFOX_HOME` 设为不含空格的路径，例如 `/opt/vfox`。主目录名含空格（如 `/home/John Doe`）时也需要这样做，因为默认的安装路径位于其下，也会含有空格。
+安装路径可以含有空格，例如 `/home/John Doe` 下的 `VFOX_HOME`。PHP 的 `make install` 以及 `pear`、`pecl` 脚本都不会给路径加引号，所以 PHP 无法直接构建或安装到这样的路径。因此 `bin/install` 会在不含空格的目录里构建 PHP，安装路径则链接到该目录。构建目录依次取以下第一个可用的：已设置且不含空格的 `$XDG_DATA_HOME/vfox-php`；不含空格的主目录下的 `~/.local/share/vfox-php`；若主目录也含空格，则为 `/var/tmp/vfox-php-<uid>`。`vfox uninstall` 会删除链接，连同构建目录一起删除。这需要 vfox 把安装路径传给 `PreUninstall` 钩子，vfox 1.1.0 会传。若 vfox 不传，请手动删除构建目录。
 
 JPEG 和 PNG 的支持来自系统的 libgd（`libgd-dev`），因为构建使用 `--with-external-gd`。E2E 套件会检查 gd 是否报告 JPEG 支持。
 
@@ -30,7 +30,7 @@ gmp 和 sodium 是可选的。`bin/install` 在对应的库和头文件都已安
 
 ## macOS
 
-与 Linux 一样，安装路径不能含有空格：`bin/install` 会在编译之前拒绝它。构建依赖 Homebrew。没有它，构建会以 `ERROR: Please install homebrew for OSX` 停止。请安装下面这些 formula：
+与 Linux 一样，含空格的安装路径会在不含空格的目录里构建，见 [Linux](#linux)。构建依赖 Homebrew。没有它，构建会以 `ERROR: Please install homebrew for OSX` 停止。请安装下面这些 formula：
 
 ```shell
 brew install autoconf automake bison freetype gd gettext icu4c krb5 libedit libiconv libjpeg libpng libxml2 libxslt libzip openssl@3 pkg-config re2c zlib

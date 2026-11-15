@@ -11,7 +11,7 @@ What each release changed. The releases before 0.3.0 are on the [GitHub releases
 - Linux and macOS: PCRE JIT is on by default, as in PHP. `PHP_WITHOUT_PCRE_JIT` turns it off. The variable was tested the wrong way round, so builds had JIT off by default.
 - Linux: gmp and sodium are found through the system library cache and their headers, without `locate`. JPEG and PNG come from the system libgd, as the build uses `--with-external-gd`, so the old `--with-jpeg-dir` and `--with-png-dir` options are gone.
 - Linux and macOS: the Composer installer is fetched into PHP's `bin` directory, not into the directory the install was started from.
-- Linux and macOS: an install path with a space is refused before the compile, with the reason. PHP's `make install` cannot install into such a path, and the build did not check for one before this change. Configure arguments are passed one by one.
+- Linux and macOS: an install path with a space works. PHP is built and installed in a directory without spaces (see [platforms](platforms.md#linux)), and the install path links to it. Before, PHP could not be built into such a path. `vfox uninstall` removes the build directory, through a new `PreUninstall` hook. Configure arguments are passed one by one.
 - Windows: install paths with spaces work. The Composer steps quote their paths.
 - Windows: the Composer installer is checked against the sha384 that Composer publishes before it runs, as on Linux and macOS.
 - Windows: NTS builds whose name carries a rebuild number, such as `8.5.12-1-nts`, are listed and can be installed.

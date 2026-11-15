@@ -22,7 +22,7 @@ sudo apt-get install --assume-yes autoconf bison build-essential ca-certificates
     re2c zip zlib1g-dev libgmp-dev libsodium-dev
 ```
 
-The install path must not contain a space. PHP's `make install` cannot install into such a path, so `bin/install` refuses it before the compile and names the path. Set `VFOX_HOME` to a path without spaces, such as `/opt/vfox`. A home directory with a space in its name, such as `/home/John Doe`, needs this too, because the default install path lies under it.
+An install path may hold a space, such as a `VFOX_HOME` under `/home/John Doe`. PHP's `make install` and the `pear` and `pecl` scripts do not quote their paths, so PHP cannot be built or installed under such a path. `bin/install` therefore builds PHP in a directory without spaces, and the install path becomes a link to it. That directory is `$XDG_DATA_HOME/vfox-php` when `XDG_DATA_HOME` is set and has no space; otherwise `~/.local/share/vfox-php` when the home directory has no space; otherwise `/var/tmp/vfox-php-<uid>`. `vfox uninstall` removes the link, and the build directory with it. That needs vfox to pass the install path to the `PreUninstall` hook, as vfox 1.1.0 does. With a vfox that does not, remove the build directory by hand.
 
 JPEG and PNG support come from the system libgd (`libgd-dev`), because the build uses `--with-external-gd`. The E2E suite checks that gd reports JPEG support.
 
@@ -30,7 +30,7 @@ gmp and sodium are optional. `bin/install` enables each one when its library and
 
 ## macOS
 
-As on Linux, the install path must not contain a space: `bin/install` refuses it before the compile. The build uses Homebrew. Without it, the build stops with `ERROR: Please install homebrew for OSX`. Install these formulae:
+As on Linux, an install path with a space is built in a directory without spaces; see [Linux](#linux). The build uses Homebrew. Without it, the build stops with `ERROR: Please install homebrew for OSX`. Install these formulae:
 
 ```shell
 brew install autoconf automake bison freetype gd gettext icu4c krb5 libedit libiconv libjpeg libpng libxml2 libxslt libzip openssl@3 pkg-config re2c zlib

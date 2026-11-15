@@ -56,7 +56,7 @@ bash tests/configure_options_test.sh
 bash tests/linux_options_test.sh
 ```
 
-`hooks_test.lua` 会替换 HTTP 客户端、JSON 和 HTML 模块以及文件函数，然后检查 hook 的返回值，包括带 NTS 构建的 Windows 发布列表。`windows_test.lua` 检查 Windows 上的安装：php.ini、Composer 安装器及其 sha384 校验，以及带空格路径的引号。`post_install_test.lua` 检查 Linux 和 macOS 的编译步骤，以及对含空格安装路径的拒绝。shell 测试会替换 `uname`、`brew`、`ldconfig` 和编译器之后载入 `bin/install`：`configure_options_test.sh` 检查 macOS 的选项以及选中的 OpenSSL，`linux_options_test.sh` 检查 Linux 的选项，包括 PCRE JIT、gmp 和 sodium，以及对含空格安装路径的拒绝。容器套件见 [E2E 测试](e2e.md)。
+`hooks_test.lua` 会替换 HTTP 客户端、JSON 和 HTML 模块以及文件函数，然后检查 hook 的返回值，包括带 NTS 构建的 Windows 发布列表。`windows_test.lua` 检查 Windows 上的安装：php.ini、Composer 安装器及其 sha384 校验，以及带空格路径的引号。`post_install_test.lua` 检查 Linux 和 macOS 的编译步骤，`pre_uninstall_test.lua` 检查删除 PHP 构建的步骤。shell 测试会替换 `uname`、`brew`、`ldconfig` 和编译器之后载入 `bin/install`：`configure_options_test.sh` 检查 macOS 的选项以及选中的 OpenSSL，`linux_options_test.sh` 检查 Linux 的选项，包括 PCRE JIT、gmp 和 sodium，以及含空格安装路径的构建目录（构建过程用桩替代）。容器套件见 [E2E 测试](e2e.md)。
 
 ## 本地检查
 

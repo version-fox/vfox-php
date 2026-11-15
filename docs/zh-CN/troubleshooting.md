@@ -27,9 +27,13 @@ PHP 没有为这个架构发布构建。在 Windows on ARM 上没有可以安装
 
 ## Linux 和 macOS
 
-### `PHP cannot be installed into a path with spaces`
+### `Failed to remove the PHP build behind <path>`
 
-安装路径含有空格，例如 `/home/John Doe/.vfox`。PHP 的 `make install` 无法安装到这样的路径，所以插件会在编译之前停止。请把 `VFOX_HOME` 设为不含空格的路径，例如 `/opt/vfox`，然后重新安装。见[平台](platforms.md#linux)。
+`vfox uninstall` 无法删除安装路径所链接的构建目录。构建目录位于 `~/.local/share/vfox-php/builds`；主目录含空格时，位于 `/var/tmp` 之下。请检查该目录的权限，手动删除它，然后重新卸载。见[平台](platforms.md#linux)。
+
+### `links to <target>, which is not a vfox-php build directory`
+
+安装路径是一个链接，但它指向的目录不是插件创建的，所以 `vfox uninstall` 不会删除该目录，并且会停止。请用 `ls -l` 检查这个链接，如果不需要它，就手动删除该链接。
 
 ## Linux
 
