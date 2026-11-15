@@ -61,13 +61,17 @@ PHP 7.x 和 8.0 需要 OpenSSL 1.1，而 Homebrew 已不再通过常规的 formu
 
 ## Windows
 
+### `php.exe did not start`
+
+PHP 的构建会加载 Microsoft Visual C++ 2015-2022 Redistributable，插件不会安装它；缺少它时 `php.exe` 会立即退出。请从 [Microsoft](https://aka.ms/vs/17/release/vc_redist.x64.exe) 安装 x64 版（x86 版 PHP 则安装 `vc_redist.x86.exe`），然后重新安装 PHP。
+
 ### `The Composer installer does not match the sha384 that Composer publishes`
 
-插件下载的安装器与 Composer 公布的不一致，所以安装在 Composer 装好之前就停止了。请重新安装。如果每次都失败，说明你和 getcomposer.org 之间有东西（比如改写 HTTPS 响应的代理）在改动文件。
+插件下载的安装器与 Composer 公布的不一致，所以安装在 Composer 装好之前就停止了。请重新安装。如果每次都失败，说明你和 getcomposer.org 之间有东西（比如改写 HTTPS 响应的代理）在改动文件。这条消息只针对下载：如果 `php.exe` 无法启动，安装会改为报告上面那条错误。
 
 ### `The code execution cannot proceed because VCRUNTIME140.dll was not found`
 
-PHP 的构建需要 Microsoft Visual C++ Redistributable，插件不会安装它。请从 Microsoft 安装后再运行 PHP。
+你自己启动 `php.exe` 时，如果缺少 Microsoft Visual C++ Redistributable（插件不会安装它），Windows 会显示这条提示。请从 [Microsoft](https://aka.ms/vs/17/release/vc_redist.x64.exe) 安装 x64 版（x86 版 PHP 则安装 `vc_redist.x86.exe`），然后重新运行 PHP。
 
 ### `Failed to install composer.`
 

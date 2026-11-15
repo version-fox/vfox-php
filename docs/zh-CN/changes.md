@@ -14,6 +14,7 @@
 - Linux 和 macOS：安装路径可以含有空格。PHP 在不含空格的目录里构建和安装，安装路径链接到该目录（见[平台](platforms.md#linux)）。此前 PHP 无法构建到这样的路径。`vfox uninstall` 通过新增的 `PreUninstall` 钩子删除构建目录。configure 参数逐个传递。
 - Windows：安装路径可以含有空格，Composer 的各个步骤会给路径加引号。
 - Windows：Composer 安装器在运行前会与 Composer 公布的 sha384 核对，与 Linux 和 macOS 一致。
+- Windows：安装先运行 `php.exe`，再核对 Composer 的安装器。没有 Visual C++ 运行库时 `php.exe` 无法启动，此前安装会报告 sha384 不一致；现在安装会停止，并指出需要安装的 Redistributable（见[问题排查](troubleshooting.md#windows)）。
 - Windows：文件名带 rebuild 号的 NTS 构建（如 `8.5.12-1-nts`）现在会被列出，也能安装。
 - 所有平台：`vfox link --detect php` 可以找到机器上已有的 PHP 安装，并链接你选择的那些。它通过 `Detect` 钩子实现，需要 vfox 1.1.0 或更新版本。见[机器上已有的安装](link.md)。
 

@@ -14,6 +14,7 @@ What each release changed. The releases before 0.3.0 are on the [GitHub releases
 - Linux and macOS: an install path with a space works. PHP is built and installed in a directory without spaces (see [platforms](platforms.md#linux)), and the install path links to it. Before, PHP could not be built into such a path. `vfox uninstall` removes the build directory, through a new `PreUninstall` hook. Configure arguments are passed one by one.
 - Windows: install paths with spaces work. The Composer steps quote their paths.
 - Windows: the Composer installer is checked against the sha384 that Composer publishes before it runs, as on Linux and macOS.
+- Windows: the install runs `php.exe` before it checks Composer's installer. Without the Visual C++ runtime, `php.exe` does not start, and the install used to report a sha384 mismatch. It now stops and names the Redistributable to install. See [troubleshooting](troubleshooting.md#windows).
 - Windows: NTS builds whose name carries a rebuild number, such as `8.5.12-1-nts`, are listed and can be installed.
 - All platforms: `vfox link --detect php` finds the PHP installs that are already on the machine and links the ones you pick, with a `Detect` hook. It needs vfox 1.1.0 or later. See [installs already on the machine](link.md).
 
