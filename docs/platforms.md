@@ -57,16 +57,17 @@ If you set `PHP_CONFIGURE_OPTIONS`, the plugin does not choose the OpenSSL path 
 
 ## Windows
 
-Windows needs no compiler, but the builds need the Microsoft Visual C++ 2015-2022 Redistributable, which the plugin does not install. Install the x64 build from [Microsoft](https://aka.ms/vs/17/release/vc_redist.x64.exe), or the x86 build (`vc_redist.x86.exe`) for x86 PHP, before you install PHP. The plugin unpacks the build from windows.php.net and then:
+Windows needs no compiler. The builds load the Microsoft Visual C++ 2015-2022 Redistributable, and the install adds it when it is missing. The plugin unpacks the build from windows.php.net and then:
 
-- runs `php.exe` once. If it does not start, the install stops there and names the Redistributable to install, before it writes anything or downloads Composer;
+- installs the Redistributable when the registry does not record it. The plugin downloads the x64 build from [Microsoft](https://aka.ms/vs/17/release/vc_redist.x64.exe), or the x86 build (`vc_redist.x86.exe`) for x86 PHP, checks that Microsoft signed it, and runs it silently. The installer needs administrator rights, so Windows asks for permission first. If the download or the install fails, the install stops and names the link to install the build yourself;
+- runs `php.exe` once. If it does not start, the install stops there and says how to repair the Redistributable, before it writes anything or downloads Composer;
 - writes `php.ini` next to `php.exe`, from `php.ini-development`. It sets `extension_dir` to the absolute `ext` folder and enables `openssl`, so Composer can fetch packages over HTTPS;
 - downloads Composer's installer from getcomposer.org and checks it against the sha384 that Composer publishes. If they differ, the install stops and Composer is not installed. The check is made by PHP, which is already in place at that point;
 - runs the installer with `php.exe`, and writes a `composer.bat` next to it.
 
 Install paths may hold spaces, as a Windows user profile often does. The plugin quotes them: CI installs into `C:\vfox home`.
 
-If Windows reports that `VCRUNTIME140.dll` was not found when you start `php.exe` yourself, the Redistributable is missing: install it as described above.
+If you start `php.exe` yourself and Windows reports that `VCRUNTIME140.dll` was not found, the Redistributable is missing for that PHP. Install the build named above, then run `php.exe` again.
 
 ## Composer
 

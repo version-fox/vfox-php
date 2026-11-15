@@ -65,9 +65,25 @@ PHP 7.x 和 8.0 需要 OpenSSL 1.1，而 Homebrew 已不再通过常规的 formu
 
 ## Windows
 
-### `php.exe did not start`
+### `The Visual C++ Redistributable is not installed, and it could not be downloaded`
 
-PHP 的构建会加载 Microsoft Visual C++ 2015-2022 Redistributable，插件不会安装它；缺少它时 `php.exe` 会立即退出。请从 [Microsoft](https://aka.ms/vs/17/release/vc_redist.x64.exe) 安装 x64 版（x86 版 PHP 则安装 `vc_redist.x86.exe`），然后重新安装 PHP。
+注册表中没有记录该运行库时，插件会从 aka.ms 下载 Microsoft Visual C++ 2015-2022 Redistributable。下载失败，所以安装在写入任何内容之前就停止了。请检查网络和代理，然后重新安装。若想自己安装，请从 [Microsoft](https://aka.ms/vs/17/release/vc_redist.x64.exe) 安装 x64 版（x86 版 PHP 则安装 `vc_redist.x86.exe`），然后重新安装 PHP。错误信息中会给出适用于你的 PHP 的构建。
+
+### `Windows did not start the Visual C++ Redistributable installer`
+
+安装程序需要管理员权限，所以 Windows 会询问是否允许。如果你拒绝了提示，或 Windows 不允许提升权限，请重新安装并允许提示。你也可以按上面的方法自己安装该构建。
+
+### `The Visual C++ Redistributable installer exited with code`
+
+安装程序运行后失败，并返回了该退出码。请按错误信息中的链接自己安装该构建，然后重新安装 PHP。
+
+### `is not signed by Microsoft, so it was not run`
+
+下载的文件没有 Microsoft 的签名，所以插件没有运行它。改写 HTTPS 响应的代理或安全软件可能导致这种情况。请按错误信息中的链接自己安装该构建；如果这条消息再次出现，请检查代理。
+
+### `php.exe does not start`
+
+注册表已记录该运行库（或刚刚安装了它），但 `php.exe` 仍无法启动。请重启 Windows，然后重新安装 PHP。如果仍然失败，请在“应用和功能”中修复 Redistributable（x64 或 x86 项），然后重新安装 PHP。
 
 ### `The Composer installer does not match the sha384 that Composer publishes`
 
@@ -75,7 +91,7 @@ PHP 的构建会加载 Microsoft Visual C++ 2015-2022 Redistributable，插件�
 
 ### `The code execution cannot proceed because VCRUNTIME140.dll was not found`
 
-你自己启动 `php.exe` 时，如果缺少 Microsoft Visual C++ Redistributable（插件不会安装它），Windows 会显示这条提示。请从 [Microsoft](https://aka.ms/vs/17/release/vc_redist.x64.exe) 安装 x64 版（x86 版 PHP 则安装 `vc_redist.x86.exe`），然后重新运行 PHP。
+你自己启动 `php.exe` 时，如果该 PHP 缺少 Microsoft Visual C++ Redistributable，Windows 会显示这条提示。请从 [Microsoft](https://aka.ms/vs/17/release/vc_redist.x64.exe) 安装 x64 版（x86 版 PHP 则安装 `vc_redist.x86.exe`），然后重新运行 PHP。`vfox install` 会在安装过程中补装它。
 
 ### `Failed to install composer.`
 

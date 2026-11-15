@@ -36,7 +36,7 @@ vfox install php@8.4.5-zts  # 仅 Linux 和 macOS：8.4.5 的 ZTS（线程安全
 
 ## 前置条件
 
-在 Linux 和 macOS 上安装 PHP 需要一些依赖：编译器，以及 PHP 编译时要链接的开发库。每个系统需要的软件包见 [docs/zh-CN/platforms.md](docs/zh-CN/platforms.md)。在 Windows 上，构建需要 Microsoft Visual C++ 2015-2022 Redistributable（x64；x86 版 PHP 需要 x86 版），插件不会安装它。见 [docs/zh-CN/platforms.md](docs/zh-CN/platforms.md#windows)。
+在 Linux 和 macOS 上安装 PHP 需要一些依赖：编译器，以及 PHP 编译时要链接的开发库。每个系统需要的软件包见 [docs/zh-CN/platforms.md](docs/zh-CN/platforms.md)。在 Windows 上，构建需要 Microsoft Visual C++ 2015-2022 Redistributable（x64；x86 版 PHP 需要 x86 版）。缺少时安装会补装它，过程中 Windows 会先询问是否允许运行 Microsoft 的安装程序。见 [docs/zh-CN/platforms.md](docs/zh-CN/platforms.md#windows)。
 
 ## 平台
 
