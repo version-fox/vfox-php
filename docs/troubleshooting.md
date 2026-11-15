@@ -15,7 +15,7 @@ Invoke-Expression "$(vfox activate pwsh)"   # PowerShell
 
 ## `PHP version not found: <version>`
 
-No release matches the version you wrote. Compare it with the list from `vfox search php`. Remember that `-nts` only exists on Windows, and that the NTS form needs a full release, `8.4.5-nts`, not `8.4-nts`. See [versions and names](versions.md).
+No release matches the version you wrote. Compare it with the list from `vfox search php`. Remember that `-nts` only exists on Windows and `-zts` only on Linux and macOS, and that either suffix needs a full release, such as `8.4.5-zts`, not `8.4-zts`. See [versions and names](versions.md).
 
 ## `No PHP releases found for windows/arm64`
 

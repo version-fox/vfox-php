@@ -100,12 +100,22 @@ func checkUse(s *session, spec string) string {
 // JIT row that phpinfo prints (pcreJIT is pcreJITEnabled or pcreJITNotCompiled),
 // the php.ini that bin/install leaves in the install, composer, pear, and what
 // vfox lists.
-func checkRuntime(s *session, version, pcreJIT string) {
+func checkRuntime(s *session, c common.Combo, version, pcreJIT string) {
 	s.t.Helper()
 
 	banner := s.ok(project() + "php -v")
 	if !strings.HasPrefix(banner, "PHP "+version+" (cli)") {
 		s.t.Fatalf("php -v does not start with PHP %s (cli):\n%s", version, banner)
+	}
+
+	// PHP_ZTS is 1 for the thread-safe build that vfox names -zts, and 0 for the NTS
+	// build that a plain version gives on Linux.
+	wantZTS := "0"
+	if c.ZTS() {
+		wantZTS = "1"
+	}
+	if zts := strings.TrimSpace(s.ok(project() + "php -r 'echo (int) PHP_ZTS;'")); zts != wantZTS {
+		s.t.Fatalf("PHP_ZTS = %q for %s, want %s", zts, c.Spec, wantZTS)
 	}
 
 	modules := s.ok(project() + "php -m")
@@ -140,8 +150,24 @@ func checkRuntime(s *session, version, pcreJIT string) {
 	}
 
 	listed := s.ok(project() + "vfox list php")
-	if !common.ListsVersion(listed, version) {
-		s.t.Fatalf("vfox list php does not list %s:\n%s", version, listed)
+	if name := c.InstalledName(version); !common.ListsVersion(listed, name) {
+		s.t.Fatalf("vfox list php does not list %s:\n%s", name, listed)
+	}
+}
+
+// checkLineSkipsZTS checks that a line of the release does not select the
+// thread-safe install of it. Only the -zts build is installed in this container,
+// so `vfox use` of the line must fail as not installed: a line takes the plain
+// build of its release, and never a build of another type.
+func checkLineSkipsZTS(s *session, version string) {
+	s.t.Helper()
+	line := version[:strings.LastIndex(version, ".")]
+	code, out := s.run(fmt.Sprintf(`cd %s && eval "$(vfox activate bash)" && vfox use -p php@%s`, workDir, line))
+	if code == 0 {
+		s.t.Fatalf("vfox use php@%s selected the thread-safe install of %s:\n%s", line, version, out)
+	}
+	if !strings.Contains(common.StripANSI(out), "not installed") {
+		s.t.Fatalf("vfox use php@%s failed without saying it is not installed:\n%s", line, out)
 	}
 }
 

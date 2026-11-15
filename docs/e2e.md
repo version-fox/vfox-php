@@ -2,7 +2,7 @@
 
 [中文](zh-CN/e2e.md) | [English](e2e.md)
 
-The end-to-end suites install PHP with vfox inside containers, and check what a user would check. They are Go tests in `tests/e2e`: `linux` and `windows` each run one container per PHP version, and `common` holds what the two share.
+The end-to-end suites install PHP with vfox inside containers, and check what a user would check. They are Go tests in `tests/e2e`: `linux` and `windows` each run one container per PHP version, and `common` holds what the two share. The Linux suite runs one more container, for `8.3.12-zts`, the thread-safe build, which Windows does not have. In that container, `vfox use` of the line `8.3` must fail as not installed, so the line does not take the thread-safe build.
 
 The offline Lua tests and the Go tests of `bin/install` run in the Test Plugin workflow, described in [development](development.md).
 
@@ -72,7 +72,7 @@ For each PHP version, in this order:
 2. **Unknown version:** `vfox install php@99.0.0` fails and names the version: `PHP version not found: 99.0.0`.
 3. **Install:** `vfox install` succeeds. On Linux, its output shows `Verifying checksum`, because PreInstall passes php.net's sha256.
 4. **Selection:** `vfox use -p` selects the version. On Linux, `php` resolves to `.vfox/sdks/php/bin/php` in the project, and `PHP_VERSION` matches the version asked for.
-5. **Runtime on Linux:** `php -v` starts with the release, `php -m` lists the modules that `bin/install` enables (`LinuxModules` in `tests/e2e/common/common.go`, including gmp and sodium, which the image installs), PCRE JIT is enabled (`not compiled in` in the spaced run, which passes `--without-pcre-jit`), gd reports JPEG support, `conf.d/php.ini` is there next to `bin/`, `composer -V` and `pear version` run, and `vfox list` shows the version.
+5. **Runtime on Linux:** `php -v` starts with the release, `php -m` lists the modules that `bin/install` enables (`LinuxModules` in `tests/e2e/common/common.go`, including gmp and sodium, which the image installs), PCRE JIT is enabled (`not compiled in` in the spaced run, which passes `--without-pcre-jit`), `PHP_ZTS` is 1 in the `-zts` container and 0 in the others, gd reports JPEG support, `conf.d/php.ini` is there next to `bin/`, `composer -V` and `pear version` run, and `vfox list` shows the version.
 6. **Runtime on Windows:** the same banner check, with `PHP_ZTS` equal to 1 for the TS build, `openssl` loaded, the `php.ini` the plugin wrote as the one PHP loads, an absolute `extension_dir`, and `composer.bat` working. The suite runs with `VFOX_HOME` set to `C:\vfox home`, a path with a space, so the quoting of install paths is tested.
 7. **NTS on Windows:** `vfox install php@<version>-nts` in a project of its own, where `PHP_ZTS` is 0.
 8. **Search:** `vfox search php` lists the version, with retries, since the list is fetched from the network.

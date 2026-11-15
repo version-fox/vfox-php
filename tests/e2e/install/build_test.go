@@ -219,6 +219,18 @@ func TestPlainInstallPathIsBuiltInPlace(t *testing.T) {
 	}
 }
 
+// TestZTSBuildIsConfiguredWithTheZTSOption checks that a thread-safe build reaches
+// configure with the option of its PHP version, as the plugin asks with --zts.
+func TestZTSBuildIsConfiguredWithTheZTSOption(t *testing.T) {
+	s := newSession(t, linuxHost())
+	source := filepath.Join(s.work, "cache", "php", "v-8.4.5-zts")
+	fakeSource(t, source)
+	requireStatus(t, s.run("PHP_ZTS=yes\nPHP_VERSION=8.4.5\n(install_php "+shellQuote(source)+")"), 0)
+	if args := s.readArguments(); !hasLine(args, "--enable-zts") {
+		t.Errorf("configure was not given --enable-zts:\n%s", args)
+	}
+}
+
 // TestRemoveBuildRemovesOnlyTheBuildOfALink checks the uninstall step: it removes
 // the build directory that a link points to, and leaves the link, which vfox
 // removes itself, and every other directory alone.

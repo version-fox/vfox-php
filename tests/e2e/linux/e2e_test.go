@@ -18,6 +18,7 @@ import (
 	"context"
 	"os"
 	"runtime"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -60,6 +61,11 @@ func TestE2E(t *testing.T) {
 	combos, err := common.Matrix()
 	if err != nil {
 		t.Fatal(err)
+	}
+	// The Linux suite installs the thread-safe build as well. Windows has no -zts
+	// build, so its suite keeps to the matrix.
+	if !slices.ContainsFunc(combos, func(c common.Combo) bool { return c.Spec == common.ZTSSpec }) {
+		combos = append(combos, common.Combo{Spec: common.ZTSSpec})
 	}
 	jobs, err := common.MaxJobs()
 	if err != nil {
@@ -129,7 +135,7 @@ func runSpacedHome(ctx context.Context, t *testing.T, image, platform string, at
 	checkInstall(s, spacedSpec)
 	checkBuildLink(s)
 	version := checkUse(s, spacedSpec)
-	checkRuntime(s, version, pcreJITNotCompiled)
+	checkRuntime(s, common.Combo{Spec: spacedSpec}, version, pcreJITNotCompiled)
 	checkSystemCopy(s)
 	checkSearch(ctx, s, version, attempts)
 	checkUninstall(s, version)
@@ -233,6 +239,9 @@ func runOne(ctx context.Context, t *testing.T, image, platform string, c common.
 	checkUnknownVersion(s)
 	checkInstall(s, c.Spec)
 	version := checkUse(s, c.Spec)
-	checkRuntime(s, version, pcreJITEnabled)
+	checkRuntime(s, c, version, pcreJITEnabled)
+	if c.ZTS() {
+		checkLineSkipsZTS(s, version)
+	}
 	checkSearch(ctx, s, version, attempts)
 }

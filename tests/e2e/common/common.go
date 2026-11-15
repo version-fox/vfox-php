@@ -62,6 +62,10 @@ const (
 // release, and the newest patch of 8.3.
 var DefaultPHPVersions = []string{"latest", "8.3"}
 
+// ZTSSpec is the thread-safe build of a full release, which the Linux suite
+// installs on top of the matrix. Windows has no -zts build, so its suite does not.
+const ZTSSpec = "8.3.12-zts"
+
 // PassThroughEnvs are copied from the host into every Linux container when set.
 var PassThroughEnvs = []string{"MAKEFLAGS"}
 
@@ -76,21 +80,36 @@ var LinuxModules = []string{
 // the plugin writes enables openssl.
 var WindowsModules = []string{"openssl"}
 
-// specPattern accepts latest, a major, a major.minor or a full release.
-var specPattern = regexp.MustCompile(`^(latest|[0-9]+(\.[0-9]+){0,2})$`)
+// specPattern accepts latest, a major, a major.minor or a full release, and a full
+// release with -zts, the thread-safe build of Linux and macOS.
+var specPattern = regexp.MustCompile(`^(latest|[0-9]+(\.[0-9]+){0,2}|[0-9]+\.[0-9]+\.[0-9]+-zts)$`)
 
 // ansiPattern matches the colour and cursor sequences vfox prints.
 var ansiPattern = regexp.MustCompile(`\x1b\[[0-9;?]*[ -/]*[@-~]`)
 
 // Combo is one PHP version, installed and checked by one container.
 type Combo struct {
-	// Spec is the version handed to vfox: latest, 8.3 or 8.3.12.
+	// Spec is the version handed to vfox: latest, 8.3, 8.3.12 or 8.3.12-zts.
 	Spec string
 }
 
 // Slug names the combo in test names and container names.
 func (c Combo) Slug() string {
 	return "php-" + strings.NewReplacer(".", "_").Replace(c.Spec)
+}
+
+// ZTS reports whether the combo is the thread-safe build of its release.
+func (c Combo) ZTS() bool {
+	return strings.HasSuffix(c.Spec, "-zts")
+}
+
+// InstalledName is the name vfox gives the install of a release: the release
+// itself, or the release with -zts for the thread-safe build.
+func (c Combo) InstalledName(release string) string {
+	if c.ZTS() {
+		return release + "-zts"
+	}
+	return release
 }
 
 // Matrix returns one combo per PHP version that PHP_VERSION selects, in the
@@ -159,7 +178,7 @@ func ContainerName(slug string) string {
 
 // VersionPattern matches what `php -r 'echo PHP_VERSION;'` prints for a spec:
 // latest is any release, a major.minor any patch of it, and a full release
-// itself.
+// itself. A -zts spec is its release, since PHP_VERSION does not show the build.
 func VersionPattern(spec string) (*regexp.Regexp, error) {
 	if !specPattern.MatchString(spec) {
 		return nil, fmt.Errorf("%q is not latest, a major, a major.minor or a full release", spec)
@@ -167,15 +186,16 @@ func VersionPattern(spec string) (*regexp.Regexp, error) {
 	if spec == "latest" {
 		return regexp.Compile(`^[0-9]+\.[0-9]+\.[0-9]+$`)
 	}
+	release := strings.TrimSuffix(spec, "-zts")
 	var b strings.Builder
 	b.WriteString("^")
-	for i, part := range strings.Split(spec, ".") {
+	for i, part := range strings.Split(release, ".") {
 		if i > 0 {
 			b.WriteString(`\.`)
 		}
 		b.WriteString(regexp.QuoteMeta(part))
 	}
-	for parts := strings.Count(spec, ".") + 1; parts < 3; parts++ {
+	for parts := strings.Count(release, ".") + 1; parts < 3; parts++ {
 		b.WriteString(`\.[0-9]+`)
 	}
 	b.WriteString("$")

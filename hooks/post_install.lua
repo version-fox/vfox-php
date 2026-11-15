@@ -15,6 +15,16 @@
 local http = require("http")
 local util = require("util")
 
+-- Splits the name of an install into its release and whether it is a thread-safe
+-- build: "8.4.5-zts" is the ZTS build of 8.4.5. Any other name is returned as it is.
+local function split_zts(name)
+    local release = name:match("^(%d+%.%d+%.%d+)%-zts$")
+    if release then
+        return release, true
+    end
+    return name, false
+end
+
 --- Extension point, called after PreInstall, can perform additional operations,
 --- such as file operations for the SDK installation directory or compile source code
 --- Currently can be left unimplemented!
@@ -24,7 +34,8 @@ function PLUGIN:PostInstall(ctx)
     if RUNTIME.osType == "windows" then
         InstallComposerForWin(path)
     else
-        CompileInstallPHP(path, sdkInfo.version)
+        local release, zts = split_zts(sdkInfo.version)
+        CompileInstallPHP(path, release, zts)
     end
 end
 
@@ -133,13 +144,15 @@ function InstallComposerForWin(path)
     util.write_file(path .. "\\composer.bat", '@php "%~dp0composer.phar" %*')
 end
 
-function CompileInstallPHP(path, version)
+function CompileInstallPHP(path, version, zts)
     if not version:match("^%d+%.%d+%.%d+$") then
         error("Invalid PHP source version: " .. tostring(version))
     end
     local install = RUNTIME.pluginDirPath .. "/bin/install"
     os.execute('chmod +x "' .. install .. '"')
-    local code = os.execute('"' .. install .. '" "' .. path .. '" ' .. version)
+    -- --zts comes before the install path, which bin/install reads first.
+    local option = zts and "--zts " or ""
+    local code = os.execute('"' .. install .. '" ' .. option .. '"' .. path .. '" ' .. version)
     if code ~= 0 then
         error("Compilation Failure.")
     end

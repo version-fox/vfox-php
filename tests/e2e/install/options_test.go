@@ -179,6 +179,32 @@ func TestPCREJITFollowsPHPWithoutPCREJIT(t *testing.T) {
 	}
 }
 
+// TestZTSFollowsThePHPVersion checks the configure option of a thread-safe build:
+// PHP 8.0 and later take --enable-zts, PHP 5.x and 7.x take --enable-maintainer-zts,
+// and an NTS build takes neither.
+func TestZTSFollowsThePHPVersion(t *testing.T) {
+	for _, tc := range []struct {
+		name, script, want string
+	}{
+		{"8.4", "PHP_ZTS=yes\nPHP_VERSION=8.4.5", "--enable-zts"},
+		{"8.0", "PHP_ZTS=yes\nPHP_VERSION=8.0.30", "--enable-zts"},
+		{"7.4", "PHP_ZTS=yes\nPHP_VERSION=7.4.33", "--enable-maintainer-zts"},
+		{"5.6", "PHP_ZTS=yes\nPHP_VERSION=5.6.40", "--enable-maintainer-zts"},
+		{"nts", "PHP_ZTS=no\nPHP_VERSION=8.4.5", ""},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			s := newSession(t, linuxHost())
+			r := s.run(tc.script + "\nconstruct_configure_options /fake/php")
+			requireStatus(t, r, 0)
+			for _, flag := range []string{"--enable-zts", "--enable-maintainer-zts"} {
+				if got, want := hasLine(r.stdout, flag), flag == tc.want; got != want {
+					t.Errorf("%s in the arguments = %t, want %t:\n%s", flag, got, want, r.stdout)
+				}
+			}
+		})
+	}
+}
+
 // TestGmpAndSodiumNeedTheirLibraryAndHeader checks that gmp and sodium are enabled
 // when the library and its header are there, and that without the header they are
 // left out, with a message.

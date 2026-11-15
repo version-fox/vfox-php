@@ -52,7 +52,7 @@ func TestMatrix(t *testing.T) {
 		t.Fatalf("matrix = %v, want %v: repeats dropped, order kept", got, want)
 	}
 
-	for _, bad := range []string{"php", "8.4;rm", "8..4", "8.4.1.2", "$(id)"} {
+	for _, bad := range []string{"php", "8.4;rm", "8..4", "8.4.1.2", "$(id)", "8.4-zts", "latest-zts"} {
 		t.Setenv(EnvPHPVersion, bad)
 		if _, err := Matrix(); err == nil {
 			t.Errorf("PHP_VERSION=%q: no error", bad)
@@ -61,7 +61,7 @@ func TestMatrix(t *testing.T) {
 }
 
 func TestSlug(t *testing.T) {
-	for spec, want := range map[string]string{"latest": "php-latest", "8.3": "php-8_3", "8.3.12": "php-8_3_12"} {
+	for spec, want := range map[string]string{"latest": "php-latest", "8.3": "php-8_3", "8.3.12": "php-8_3_12", "8.3.12-zts": "php-8_3_12-zts"} {
 		if got := (Combo{Spec: spec}).Slug(); got != want {
 			t.Errorf("Slug(%q) = %q, want %q", spec, got, want)
 		}
@@ -94,6 +94,41 @@ func TestVersionPattern(t *testing.T) {
 	}
 	if _, err := VersionPattern("8.3;rm"); err == nil {
 		t.Error("VersionPattern accepted a spec with a shell character")
+	}
+}
+
+// TestZTSCombo checks the -zts spec: it is a full release with the thread-safe
+// suffix, its install is named with the suffix, and PHP_VERSION shows the release.
+func TestZTSCombo(t *testing.T) {
+	t.Setenv(EnvPHPVersion, "8.3.12-zts")
+	combos, err := Matrix()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := specsOf(combos); !slices.Equal(got, []string{"8.3.12-zts"}) {
+		t.Fatalf("matrix = %v, want [8.3.12-zts]", got)
+	}
+
+	zts := Combo{Spec: "8.3.12-zts"}
+	if !zts.ZTS() || (Combo{Spec: "8.3.12"}).ZTS() {
+		t.Fatal("ZTS reports the wrong build")
+	}
+	if got := zts.InstalledName("8.3.12"); got != "8.3.12-zts" {
+		t.Errorf("InstalledName = %q, want 8.3.12-zts", got)
+	}
+	if got := (Combo{Spec: "8.3.12"}).InstalledName("8.3.12"); got != "8.3.12" {
+		t.Errorf("InstalledName = %q, want 8.3.12", got)
+	}
+
+	pattern, err := VersionPattern("8.3.12-zts")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !pattern.MatchString("8.3.12") || pattern.MatchString("8.3.120") {
+		t.Errorf("VersionPattern(8.3.12-zts) = %v, want the release 8.3.12", pattern)
+	}
+	if _, err := VersionPattern("8.3-zts"); err == nil {
+		t.Error("VersionPattern accepts 8.3-zts, which is not a release")
 	}
 }
 

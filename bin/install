@@ -265,6 +265,15 @@ construct_configure_options() {
     extra_args+=(--without-pcre-jit)
   fi
 
+  # A thread-safe (ZTS) build. PHP 5.x and 7.x configure it with
+  # --enable-maintainer-zts; PHP 8.0 and later with --enable-zts.
+  if [ "${PHP_ZTS:-no}" = "yes" ]; then
+    case "${PHP_VERSION:-}" in
+      5.* | 7.*) extra_args+=(--enable-maintainer-zts) ;;
+      *) extra_args+=(--enable-zts) ;;
+    esac
+  fi
+
   printf '%s\n' "${platform_args[@]}" "${global_args[@]}" "${extra_args[@]}"
 }
 
@@ -526,6 +535,13 @@ if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
   if [ "${1:-}" = "--remove-build" ]; then
     remove_build "$2"
     exit
+  fi
+  # --zts builds a thread-safe PHP, the build vfox names with -zts. Without it,
+  # PHP is built NTS, as before.
+  PHP_ZTS=no
+  if [ "${1:-}" = "--zts" ]; then
+    PHP_ZTS=yes
+    shift
   fi
   PHP_VERSION=${2:-$(sed -n 's/^#define PHP_VERSION "\([^"]*\)"/\1/p' "$1/main/php_version.h")}
   install_php "$1"
