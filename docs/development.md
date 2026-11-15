@@ -42,7 +42,7 @@ vfox loads `metadata.lua`, calls a hook when a command needs it, and puts `PLUGI
 ## Contracts that cost time to find
 
 - `PreInstall` returns `version`, which becomes the install's name, and `url`. On Linux and macOS it also returns `sha256`, and vfox checks the download against it. The Windows builds come with no checksum here, so vfox has nothing to check.
-- `PostInstall` reads `ctx.sdkInfo['php']`, for its `path` and `version`. `CompileInstallPHP` accepts only `x.y.z` versions and fails for anything else.
+- `PostInstall` reads `ctx.sdkInfo['php']`, for its `path` and `version`. `CompileInstallPHP` takes the `x.y.z` release, and `-zts` on the name asks for a thread-safe build (`bin/install --zts`). Anything else fails.
 - An unknown version is refused by name: `PHP version not found: <version>`. The E2E suites check that message.
 - `lib/releases.lua` fails with `No PHP releases found for <os>/<arch>` when a platform has no builds, which is how Windows on ARM reports itself.
 - The Windows list has a TS and an NTS entry for each release. The TS entry sorts first, which is why a line picks TS and `latest` is TS.

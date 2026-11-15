@@ -29,9 +29,10 @@ vfox install php@latest     # the newest release
 vfox install php@8.4        # the newest 8.4.x
 vfox install php@8.4.5      # exactly 8.4.5
 vfox install php@8.4.5-nts  # Windows only: the NTS build of 8.4.5
+vfox install php@8.4.5-zts  # Linux and macOS only: the thread-safe (ZTS) build of 8.4.5
 ```
 
-On Windows a plain version is the thread-safe (TS) build, and `-nts` selects the non-thread-safe (NTS) build. See [docs/versions.md](docs/versions.md) for how a version is matched, where the lists come from and the errors you may see.
+On Windows a plain version is the thread-safe (TS) build, and `-nts` selects the non-thread-safe (NTS) build. On Linux and macOS a plain version is the NTS build, and `-zts` selects the thread-safe one. See [docs/versions.md](docs/versions.md) for how a version is matched, where the lists come from and the errors you may see.
 
 ## Prerequisites
 

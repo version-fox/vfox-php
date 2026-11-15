@@ -42,7 +42,7 @@ vfox 会加载 `metadata.lua`，在某个命令需要时调用对应的 hook，�
 ## 那些要花时间才能找到的约定
 
 - `PreInstall` 返回 `version`（它会成为安装的名字）和 `url`。在 Linux 和 macOS 上，它还返回 `sha256`，vfox 用它校验下载的文件。Windows 的构建这里没有校验和，所以 vfox 没有可以校验的内容。
-- `PostInstall` 读取 `ctx.sdkInfo['php']` 中的 `path` 和 `version`。`CompileInstallPHP` 只接受 `x.y.z` 形式的版本，其他形式都会失败。
+- `PostInstall` 读取 `ctx.sdkInfo['php']` 中的 `path` 和 `version`。`CompileInstallPHP` 接受 `x.y.z` 形式的发布版本，名字上的 `-zts` 表示线程安全构建（即 `bin/install --zts`），其他形式都会失败。
 - 未知版本会被按名字拒绝：`PHP version not found: <version>`。端到端套件会检查这条消息。
 - 某个平台没有任何构建时，`lib/releases.lua` 会报 `No PHP releases found for <os>/<arch>`，Windows on ARM 就是这样报错的。
 - Windows 列表中每个发布版本都有 TS 和 NTS 两项。TS 排在前面，所以版本系列选的是 TS，`latest` 也是 TS。

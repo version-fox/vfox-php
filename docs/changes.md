@@ -18,6 +18,7 @@ What each release changed. The releases before 0.3.0 are on the [GitHub releases
 - Windows: the install runs `php.exe` before it checks Composer's installer. Without the Visual C++ runtime, `php.exe` does not start, and the install used to report a sha384 mismatch. It now stops and names the Redistributable to install. See [troubleshooting](troubleshooting.md#windows).
 - Windows: NTS builds whose name carries a rebuild number, such as `8.5.12-1-nts`, are listed and can be installed.
 - All platforms: `vfox link --detect php` finds the PHP installs that are already on the machine and links the ones you pick, with a `Detect` hook. It needs vfox 1.1.0 or later. See [installs already on the machine](link.md).
+- Linux and macOS: `vfox install php@<version>-zts` builds the thread-safe (ZTS) PHP of a release from its source. A plain version is still the NTS build. PHP 8.0 and later are configured with `--enable-zts`, PHP 5.x and 7.x with `--enable-maintainer-zts`.
 
 ## 0.3.2
 

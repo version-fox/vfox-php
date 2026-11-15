@@ -18,6 +18,7 @@
 - Windows：安装先运行 `php.exe`，再核对 Composer 的安装器。没有 Visual C++ 运行库时 `php.exe` 无法启动，此前安装会报告 sha384 不一致；现在安装会停止，并指出需要安装的 Redistributable（见[问题排查](troubleshooting.md#windows)）。
 - Windows：文件名带 rebuild 号的 NTS 构建（如 `8.5.12-1-nts`）现在会被列出，也能安装。
 - 所有平台：`vfox link --detect php` 可以找到机器上已有的 PHP 安装，并链接你选择的那些。它通过 `Detect` 钩子实现，需要 vfox 1.1.0 或更新版本。见[机器上已有的安装](link.md)。
+- Linux 和 macOS：`vfox install php@<版本>-zts` 用发布版本的源码构建线程安全（ZTS）的 PHP。不带后缀的版本仍是 NTS 构建。PHP 8.0 及以后用 `--enable-zts` 配置，PHP 5.x 和 7.x 用 `--enable-maintainer-zts` 配置。
 
 ## 0.3.2
 

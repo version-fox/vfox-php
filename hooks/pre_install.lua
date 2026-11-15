@@ -26,6 +26,23 @@ function PLUGIN:PreInstall(ctx)
     if type(version) ~= "string" then
         error("PHP version must be provided")
     end
+    -- On Linux and macOS, -zts names the thread-safe build of a full release. It is
+    -- built from the release's own source, so the list does not show it separately.
+    -- Windows has no -zts build: there, the plain version is TS.
+    local base = RUNTIME.osType ~= "windows" and version:match("^(%d+%.%d+%.%d+)%-zts$")
+    if base then
+        for _, entry in ipairs(versions) do
+            if entry.version == base then
+                local build = {}
+                for key, value in pairs(entry) do
+                    build[key] = value
+                end
+                build.version = version
+                return build
+            end
+        end
+        error("PHP version not found: " .. version)
+    end
     -- Exact matches must win over prefixes, especially for Windows TS/NTS.
     for _, release in ipairs(versions) do
         if release.version == version then

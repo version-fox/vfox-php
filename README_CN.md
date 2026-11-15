@@ -29,9 +29,10 @@ vfox install php@latest     # 最新发布版本
 vfox install php@8.4        # 最新的 8.4.x
 vfox install php@8.4.5      # 精确到 8.4.5
 vfox install php@8.4.5-nts  # 仅 Windows：8.4.5 的 NTS 版本
+vfox install php@8.4.5-zts  # 仅 Linux 和 macOS：8.4.5 的 ZTS（线程安全）版本
 ```
 
-在 Windows 上，不带后缀的版本是线程安全（TS）版本，`-nts` 选择非线程安全（NTS）版本。版本如何匹配、列表来自哪里，以及可能看到的错误，见 [docs/zh-CN/versions.md](docs/zh-CN/versions.md)。
+在 Windows 上，不带后缀的版本是线程安全（TS）版本，`-nts` 选择非线程安全（NTS）版本。在 Linux 和 macOS 上，不带后缀的版本是 NTS 版本，`-zts` 选择线程安全版本。版本如何匹配、列表来自哪里，以及可能看到的错误，见 [docs/zh-CN/versions.md](docs/zh-CN/versions.md)。
 
 ## 前置条件
 
