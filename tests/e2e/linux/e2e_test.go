@@ -37,8 +37,22 @@ const (
 	comboBudget = 45 * time.Minute
 )
 
+const (
+	// spacedHome is a VFOX_HOME whose name holds a space, as a home directory
+	// with a space gives one.
+	spacedHome = "/root/vfox home"
+	// spacedSpec is the PHP version that the spaced home installs.
+	spacedSpec = "latest"
+	// spacedSlug names the spaced-home run in the test output.
+	spacedSlug = "VFOX_HOME with a space"
+	// buildBase is the directory bin/install builds PHP in for that home: the
+	// data directory under HOME, which has no space.
+	buildBase = "/root/.local/share/vfox-php"
+)
+
 // TestE2E builds the image from tests/e2e/linux/Dockerfile and runs one
-// container per PHP version of the matrix.
+// container for a VFOX_HOME with a space, and one container per PHP version of
+// the matrix.
 func TestE2E(t *testing.T) {
 	if testing.Short() {
 		t.Skip("container E2E skipped in -short mode")
@@ -64,12 +78,13 @@ func TestE2E(t *testing.T) {
 	platform := "linux/" + runtime.GOARCH
 	image := buildImage(ctx, t, root, platform)
 
-	// PHP cannot be installed into a path with spaces, so the plugin refuses one.
-	t.Run("VFOX_HOME with a space is refused", func(t *testing.T) {
-		runSpacedHome(ctx, t, image, platform)
-	})
-
 	sem := make(chan struct{}, jobs)
+	t.Run(spacedSlug, func(t *testing.T) {
+		t.Parallel()
+		sem <- struct{}{}
+		defer func() { <-sem }()
+		runSpacedHome(ctx, t, image, platform, attempts)
+	})
 	for _, c := range combos {
 		t.Run(c.Slug(), func(t *testing.T) {
 			t.Parallel()
@@ -80,24 +95,21 @@ func TestE2E(t *testing.T) {
 	}
 }
 
-// spacedHome is a VFOX_HOME with a space in it. PHP's make install cannot
-// install into such a path, so the plugin must stop before it compiles.
-const spacedHome = "/root/vfox home"
-
-// spacedPathMessage is the part of the refusal that names the reason.
-const spacedPathMessage = "cannot be installed into a path with spaces"
-
-// runSpacedHome starts a container whose VFOX_HOME holds a space, and checks
-// that the install stops with the reason. The archive download comes first, and
-// the refusal comes before the compile, so this takes about a minute.
-func runSpacedHome(ctx context.Context, t *testing.T, image, platform string) {
+// runSpacedHome installs PHP into a VFOX_HOME with a space. The build turns PCRE
+// JIT off, so the opt-out is checked by the same install. The run then checks
+// that the install path links to a build directory outside the space, and that
+// uninstall removes both the link and the build directory.
+func runSpacedHome(ctx context.Context, t *testing.T, image, platform string, attempts int) {
 	t.Helper()
+	env := common.ContainerEnv()
+	env["VFOX_HOME"] = spacedHome
+	env["PHP_WITHOUT_PCRE_JIT"] = "yes"
 	ctr, err := tc.GenericContainer(ctx, tc.GenericContainerRequest{
 		ContainerRequest: tc.ContainerRequest{
 			Image:         image,
 			ImagePlatform: platform,
 			Name:          common.ContainerName("spaced-home"),
-			Env:           map[string]string{"VFOX_HOME": spacedHome},
+			Env:           env,
 		},
 		Started: true,
 	})
@@ -112,11 +124,39 @@ func runSpacedHome(ctx context.Context, t *testing.T, image, platform string) {
 
 	// vfox adds a plugin into VFOX_HOME/plugin, and does not create the home itself.
 	s.ok("mkdir -p '" + spacedHome + "/plugin'")
-	s.ok("vfox add -s " + pluginZip)
+	checkPlugin(s)
+	checkUnknownVersion(s)
+	checkInstall(s, spacedSpec)
+	checkBuildLink(s)
+	version := checkUse(s, spacedSpec)
+	checkRuntime(s, version, pcreJITNotCompiled)
+	checkSearch(ctx, s, version, attempts)
+	checkUninstall(s, version)
+}
 
-	code, out := s.run("vfox install php@8.3")
-	if code == 0 || !strings.Contains(common.StripANSI(out), spacedPathMessage) {
-		t.Fatalf("install into %q: exit %d, want a refusal that says why:\n%s", spacedHome, code, out)
+// checkBuildLink checks that the install path in the spaced home is the one
+// link there, and that it points at a build directory without spaces.
+func checkBuildLink(s *session) {
+	s.t.Helper()
+	targets := strings.TrimSpace(s.ok("find '" + spacedHome + "' -type l -exec readlink {} +"))
+	if !strings.HasPrefix(targets, buildBase+"/builds/") || strings.ContainsAny(targets, " \n") {
+		s.t.Fatalf("the install path should link to one build directory without spaces, got:\n%s", targets)
+	}
+}
+
+// checkUninstall removes the version, and checks that the link and the build
+// directory it pointed to are both gone.
+func checkUninstall(s *session, version string) {
+	s.t.Helper()
+	if code, out := s.run("vfox uninstall php@" + version); code != 0 {
+		s.t.Fatalf("vfox uninstall php@%s: exit %d:\n%s", version, code, out)
+	}
+	if links := strings.TrimSpace(s.ok("find '" + spacedHome + "' -type l")); links != "" {
+		s.t.Fatalf("links left after uninstall:\n%s", links)
+	}
+	builds := s.ok("if [ -d '" + buildBase + "/builds' ]; then ls -A '" + buildBase + "/builds'; fi")
+	if strings.TrimSpace(builds) != "" {
+		s.t.Fatalf("build directories left after uninstall:\n%s", builds)
 	}
 }
 
@@ -191,6 +231,6 @@ func runOne(ctx context.Context, t *testing.T, image, platform string, c common.
 	checkUnknownVersion(s)
 	checkInstall(s, c.Spec)
 	version := checkUse(s, c.Spec)
-	checkRuntime(s, version)
+	checkRuntime(s, version, pcreJITEnabled)
 	checkSearch(ctx, s, version, attempts)
 }

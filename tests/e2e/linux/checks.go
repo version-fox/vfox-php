@@ -28,6 +28,14 @@ const pluginZip = "/opt/php-plugin.zip"
 // workDir is the project each container selects PHP in.
 const workDir = "/work"
 
+// The values that phpinfo prints for PCRE JIT. A build that keeps JIT prints
+// whether it is on. A build made with --without-pcre-jit has no JIT code at all,
+// and prints that it is not compiled in.
+const (
+	pcreJITEnabled     = "enabled"
+	pcreJITNotCompiled = "not compiled in"
+)
+
 // project is the prefix of a check: it moves into the project and activates
 // vfox there, as a shell does when a prompt starts in that directory.
 func project() string {
@@ -88,9 +96,11 @@ func checkUse(s *session, spec string) string {
 	return version
 }
 
-// checkRuntime checks the PHP that was selected: its banner, its modules, the
-// php.ini that bin/install leaves in the install, composer, and what vfox lists.
-func checkRuntime(s *session, version string) {
+// checkRuntime checks the PHP that was selected: its banner, its modules, the PCRE
+// JIT row that phpinfo prints (pcreJIT is pcreJITEnabled or pcreJITNotCompiled),
+// the php.ini that bin/install leaves in the install, composer, pear, and what
+// vfox lists.
+func checkRuntime(s *session, version, pcreJIT string) {
 	s.t.Helper()
 
 	banner := s.ok(project() + "php -v")
@@ -103,9 +113,10 @@ func checkRuntime(s *session, version string) {
 		s.t.Fatalf("php -m lacks %v:\n%s", missing, modules)
 	}
 
-	// PCRE JIT is on unless the build opted out, and gd takes JPEG from the system libgd.
-	if jit := strings.TrimSpace(s.ok(project() + "php -i | grep 'PCRE JIT Support'")); !strings.HasSuffix(jit, "=> enabled") {
-		s.t.Fatalf("PCRE JIT is not enabled in the build: %q", jit)
+	// The build's PCRE JIT row is the one the build was asked for, and gd takes
+	// JPEG from the system libgd.
+	if got := strings.TrimSpace(s.ok(project() + "php -i | grep 'PCRE JIT Support'")); !strings.HasSuffix(got, "=> "+pcreJIT) {
+		s.t.Fatalf("PCRE JIT Support should be %q in the build: %q", pcreJIT, got)
 	}
 	if jpeg := strings.TrimSpace(s.ok(project() + `php -r 'echo gd_info()["JPEG Support"] ? "yes" : "no";'`)); jpeg != "yes" {
 		s.t.Fatalf("gd reports no JPEG support: %q", jpeg)
@@ -120,6 +131,12 @@ func checkRuntime(s *session, version string) {
 	}
 	if out := s.ok(project() + "composer -V"); !strings.Contains(out, "Composer version") {
 		s.t.Fatalf("composer -V printed %q", out)
+	}
+
+	// pear and pecl are shell wrappers that name the install directory, so they
+	// only run when that name is quoted correctly.
+	if out := s.ok(project() + "pear version"); !strings.Contains(out, "PEAR Version") {
+		s.t.Fatalf("pear version printed %q", out)
 	}
 
 	listed := s.ok(project() + "vfox list php")
