@@ -171,6 +171,7 @@ func runOne(ctx context.Context, t *testing.T, image string, c common.Combo, att
 	version := checkUse(s, c.Spec)
 	checkRuntime(s, version)
 	checkNTS(s, version)
+	checkDetectedLink(s, version)
 	checkSearch(ctx, s, version, attempts)
 
 	t.Logf("php@%s: all checks passed (%s)", c.Spec, strings.TrimSpace(version))

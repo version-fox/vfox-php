@@ -145,6 +145,42 @@ func checkRuntime(s *session, version, pcreJIT string) {
 	}
 }
 
+// systemPHP is a folder of its own under /opt, where a PHP installed by hand would
+// be. The spaced run keeps a copy of its PHP there, so that `vfox link --detect`
+// has an install to find that vfox did not make.
+const systemPHP = "/opt/php-system"
+
+// checkSystemCopy copies the PHP that vfox selected into systemPHP, and checks
+// that the copy runs.
+func checkSystemCopy(s *session) {
+	s.t.Helper()
+	s.ok(fmt.Sprintf(`cp -a "$(readlink -f %[1]s/.vfox/sdks/php)" %[2]s`, workDir, systemPHP))
+	if out := s.ok(systemPHP + "/bin/php -v"); !strings.HasPrefix(out, "PHP ") {
+		s.t.Fatalf("the copy in %s does not run PHP:\n%s", systemPHP, out)
+	}
+}
+
+// checkDetectedLink checks that `vfox link --detect` finds the copy in systemPHP and
+// links it under the version name, that vfox runs it, and that uninstalling the
+// link leaves the copy where it is.
+func checkDetectedLink(s *session, version string) {
+	s.t.Helper()
+	linked := common.StripANSI(s.ok("vfox link --detect -y php"))
+	if !strings.Contains(linked, systemPHP) {
+		s.t.Fatalf("vfox link --detect did not link %s:\n%s", systemPHP, linked)
+	}
+	listed := common.StripANSI(s.ok("vfox list php"))
+	if !strings.Contains(listed, "linked") || !strings.Contains(listed, systemPHP) {
+		s.t.Fatalf("vfox list php does not show the link to %s:\n%s", systemPHP, listed)
+	}
+	s.ok(fmt.Sprintf(`cd %s && eval "$(vfox activate bash)" && vfox use -p php@%s`, workDir, version))
+	if got := strings.TrimSpace(s.ok(project() + `php -r 'echo PHP_VERSION;'`)); got != version {
+		s.t.Fatalf("the linked PHP runs %q, want %q", got, version)
+	}
+	s.ok("vfox uninstall php@" + version)
+	s.ok("test -x " + systemPHP + "/bin/php")
+}
+
 // checkSearch checks that `vfox search` lists the installed version. The
 // listing asks php.net, so it gets the retries.
 func checkSearch(ctx context.Context, s *session, version string, attempts int) {

@@ -130,8 +130,10 @@ func runSpacedHome(ctx context.Context, t *testing.T, image, platform string, at
 	checkBuildLink(s)
 	version := checkUse(s, spacedSpec)
 	checkRuntime(s, version, pcreJITNotCompiled)
+	checkSystemCopy(s)
 	checkSearch(ctx, s, version, attempts)
 	checkUninstall(s, version)
+	checkDetectedLink(s, version)
 }
 
 // checkBuildLink checks that the install path in the spaced home is the one
