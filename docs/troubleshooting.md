@@ -65,9 +65,29 @@ Information only. GMP is optional, so the build continues without it. Install `g
 
 ## Windows
 
-### `php.exe did not start`
+### `The Visual C++ Redistributable is not installed, and it could not be downloaded`
 
-The PHP builds load the Microsoft Visual C++ 2015-2022 Redistributable, which the plugin does not install, and `php.exe` exits at once without it. Install the x64 build from [Microsoft](https://aka.ms/vs/17/release/vc_redist.x64.exe), or the x86 build (`vc_redist.x86.exe`) for x86 PHP, then install PHP again.
+The plugin downloads the Microsoft Visual C++ 2015-2022 Redistributable from aka.ms when the registry does not record it. The download failed, so the install stopped before it wrote anything. Check the connection and any proxy, then install again. To install the build yourself, use the x64 build from [Microsoft](https://aka.ms/vs/17/release/vc_redist.x64.exe), or `vc_redist.x86.exe` for x86 PHP, then install PHP again. The message names the build for your PHP.
+
+### `Windows did not start the Visual C++ Redistributable installer`
+
+The installer needs administrator rights, so Windows asks for permission. If the prompt was declined, or Windows does not allow the elevation, install again and allow the prompt. You can also install the build yourself, as above.
+
+### `PowerShell could not check or start the Visual C++ Redistributable installer`
+
+Windows PowerShell failed before it could check or run the installer, so the plugin did not install the runtime, and the install stopped before it wrote anything. Install the build yourself from the link in the message, then install PHP again.
+
+### `The Visual C++ Redistributable installer exited with code`
+
+The installer ran and failed with that exit code. Install the build yourself from the link in the message, then install PHP again.
+
+### `is not signed by Microsoft, so it was not run`
+
+The downloaded file is not signed by Microsoft, so the plugin did not run it. A proxy or security software that rewrites HTTPS responses can cause this. Install the build yourself from the link in the message. If the message comes back, check the proxy.
+
+### `php.exe does not start`
+
+The runtime is recorded, or was just installed, but `php.exe` still does not start. Restart Windows and install PHP again. If it still fails, repair the Redistributable from Apps & Features (the x64 or x86 entry), then install PHP again.
 
 ### `The Composer installer does not match the sha384 that Composer publishes`
 
@@ -75,7 +95,7 @@ The installer that the plugin downloaded is not the one Composer publishes, so t
 
 ### `The code execution cannot proceed because VCRUNTIME140.dll was not found`
 
-Windows shows this when you start `php.exe` yourself without the Visual C++ Redistributable, which the plugin does not install. Install the x64 build from [Microsoft](https://aka.ms/vs/17/release/vc_redist.x64.exe), or `vc_redist.x86.exe` for x86 PHP, and run PHP again.
+Windows shows this when you start `php.exe` yourself and the Visual C++ Redistributable is missing for that PHP. Install the x64 build from [Microsoft](https://aka.ms/vs/17/release/vc_redist.x64.exe), or `vc_redist.x86.exe` for x86 PHP, and run PHP again. The plugin installs the Redistributable during `vfox install`.
 
 ### `Failed to install composer.`
 

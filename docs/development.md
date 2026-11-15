@@ -8,7 +8,7 @@
 metadata.lua            plugin name, version, homepage, notes and the minimum vfox version
 hooks/available.lua     vfox search: the list of releases
 hooks/pre_install.lua   vfox install: choose the release, return its URL, name and checksum
-hooks/post_install.lua  after the download: compile PHP on Linux and macOS; on Windows, write php.ini and install Composer
+hooks/post_install.lua  after the download: compile PHP on Linux and macOS; on Windows, install the Visual C++ runtime when it is missing, write php.ini and install Composer
 hooks/env_keys.lua      PATH of the selected PHP
 hooks/pre_use.lua       vfox use: the installed PHP that a version names; a line takes its default build
 hooks/detect.lua        vfox link --detect php: finds the PHP installs already on the machine
@@ -35,7 +35,7 @@ vfox loads `metadata.lua`, calls a hook when a command needs it, and puts `PLUGI
 | --- | --- | --- |
 | `vfox search php` | `Available` | lists the releases, from `lib/releases.lua` |
 | `vfox install php@8.4` | `PreInstall` | resolves the version; returns the URL, the install name and, on Linux and macOS, the sha256 |
-| (after the download) | `PostInstall` | Linux and macOS: runs `bin/install`; Windows: writes `php.ini` and installs Composer |
+| (after the download) | `PostInstall` | Linux and macOS: runs `bin/install`; Windows: installs the Visual C++ runtime when the registry does not record it, writes `php.ini` and installs Composer |
 | `vfox use php@8.4` | `PreUse` | the installed name that the version selects, from `hooks/pre_use.lua`; a line takes its default build |
 | `vfox use php@8.4` | `EnvKeys` | sets `PATH` to the `bin` folder of the install; on Windows, to the install folder itself |
 | `vfox info php` | none | vfox prints the notes from `metadata.lua`, which link the README |
@@ -63,7 +63,7 @@ go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/detect_test.lua
 go test -C tests/e2e -count=1 -v ./install/
 ```
 
-`hooks_test.lua` replaces the HTTP client, the JSON and HTML modules and the file functions, then checks what the hooks return, including the Windows release list with its NTS builds, and what `PreUse` picks among the installed names. `windows_test.lua` checks the Windows install: the php.ini, the Composer installer and its sha384 check, and the quoting of paths that hold spaces. `post_install_test.lua` checks the Linux and macOS compile step, and `pre_uninstall_test.lua` checks the step that removes a PHP build. `tests/e2e/install` runs `bin/install` in bash with its host faked: `uname`, `brew`, `ldconfig`, `cc`, `locate`, `make`, `autoconf`, `pkg-config` and `curl` are symlinks to the test binary, which answers as the command it was called as, and so are the `buildconf` and `configure` of a fake PHP source tree. It checks the macOS options and the OpenSSL it picks, the Linux options, including PCRE JIT, gmp and sodium, the build dependencies of Linux (a missing one stops the install before anything is compiled, and the install hint names its package), and the build directory of an install path with spaces, which is removed when a build fails or when PHP is uninstalled. On macOS, `TestHomebrewOfThisMac` also checks the options against the Homebrew of the Mac. `detect_test.lua` checks which PHP installs on the machine are found, how they are named, and which are left alone: shared system folders, shims, vfox's own installs, and a PHP that does not answer `php -v`. The container suites are described in [E2E tests](e2e.md).
+`hooks_test.lua` replaces the HTTP client, the JSON and HTML modules and the file functions, then checks what the hooks return, including the Windows release list with its NTS builds, and what `PreUse` picks among the installed names. `windows_test.lua` checks the Windows install: the runtime (the registry query, the download, the signature check of the installer, its exit codes, and the x86 record), the php.ini, the Composer installer and its sha384 check, and the quoting of paths that hold spaces. `post_install_test.lua` checks the Linux and macOS compile step, and `pre_uninstall_test.lua` checks the step that removes a PHP build. `tests/e2e/install` runs `bin/install` in bash with its host faked: `uname`, `brew`, `ldconfig`, `cc`, `locate`, `make`, `autoconf`, `pkg-config` and `curl` are symlinks to the test binary, which answers as the command it was called as, and so are the `buildconf` and `configure` of a fake PHP source tree. It checks the macOS options and the OpenSSL it picks, the Linux options, including PCRE JIT, gmp and sodium, the build dependencies of Linux (a missing one stops the install before anything is compiled, and the install hint names its package), and the build directory of an install path with spaces, which is removed when a build fails or when PHP is uninstalled. On macOS, `TestHomebrewOfThisMac` also checks the options against the Homebrew of the Mac. `detect_test.lua` checks which PHP installs on the machine are found, how they are named, and which are left alone: shared system folders, shims, vfox's own installs, and a PHP that does not answer `php -v`. The container suites are described in [E2E tests](e2e.md).
 
 ## Local checks
 

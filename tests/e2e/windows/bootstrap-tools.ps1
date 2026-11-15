@@ -14,8 +14,9 @@
  limitations under the License.
 #>
 
-# Provisions the Windows E2E image (tests/e2e/windows/Dockerfile): PowerShell 7,
-# vfox from its release, and the Visual C++ runtime that the PHP builds load.
+# Provisions the Windows E2E image (tests/e2e/windows/Dockerfile): PowerShell 7 and
+# vfox from its release. The image has no Visual C++ runtime, on purpose: the PHP
+# builds load it, and the install of the plugin must bring it in (see checks.go).
 # The versions and the sha256 of the PowerShell and vfox archives come from the
 # Dockerfile's ARG lines, which are also the place to move them.
 
@@ -58,18 +59,8 @@ if (-not $vfoxExe) { throw 'FAIL the vfox release has no vfox.exe' }
 Copy-Item -Path $vfoxExe.FullName -Destination (Join-Path $vfoxBin 'vfox.exe') -Force
 Remove-Item -Recurse -Force $vfoxExtract, $vfoxZip
 
-# PHP's Windows builds load the Visual C++ runtime, which a Windows container
-# does not ship. Microsoft's redirect moves with each update, so this download
-# is not pinned; the installer is signed by Microsoft.
-$vcRedist = Join-Path $env:TEMP 'vc_redist.x64.exe'
-& curl.exe -fsSL --retry 3 --retry-delay 5 --retry-all-errors -o $vcRedist 'https://aka.ms/vs/17/release/vc_redist.x64.exe'
-if ($LASTEXITCODE -ne 0) { throw 'FAIL the Visual C++ runtime download' }
-$install = Start-Process -FilePath $vcRedist -ArgumentList '/install', '/quiet', '/norestart' -Wait -PassThru
-if ($install.ExitCode -notin 0, 3010) { throw "FAIL the Visual C++ runtime installer exited $($install.ExitCode)" }
-Remove-Item $vcRedist
-
 $machinePath = [Environment]::GetEnvironmentVariable('PATH', 'Machine')
 [Environment]::SetEnvironmentVariable('PATH', "$machinePath;$pwshHome;$vfoxBin", 'Machine')
 New-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem' -Name 'LongPathsEnabled' -Value 1 -PropertyType DWORD -Force | Out-Null
 
-Write-Output 'PASS the Windows E2E image has PowerShell 7, vfox and the Visual C++ runtime'
+Write-Output 'PASS the Windows E2E image has PowerShell 7 and vfox, and no Visual C++ runtime'

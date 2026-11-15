@@ -57,16 +57,17 @@ PHP 8.1 及更新的版本使用 `openssl@3` 编译。PHP 7.x 和 8.0 需要 Ope
 
 ## Windows
 
-Windows 不需要编译器，但这些构建需要 Microsoft Visual C++ 2015-2022 Redistributable，插件不会安装它。请在安装 PHP 之前先从 [Microsoft](https://aka.ms/vs/17/release/vc_redist.x64.exe) 安装 x64 版（x86 版 PHP 则安装 `vc_redist.x86.exe`）。插件从 windows.php.net 解压构建，然后：
+Windows 不需要编译器。这些构建会加载 Microsoft Visual C++ 2015-2022 Redistributable，缺少时安装会把它补装上。插件从 windows.php.net 解压构建，然后：
 
-- 运行一次 `php.exe`。如果它无法启动，安装在此停止，并指出需要安装的 Redistributable，在此之前不会写入任何内容，也不会下载 Composer；
+- 注册表中没有记录 Redistributable 时，就安装它。插件从 [Microsoft](https://aka.ms/vs/17/release/vc_redist.x64.exe) 下载 x64 版（x86 版 PHP 则下载 `vc_redist.x86.exe`），核对它确由 Microsoft 签名，然后静默运行。安装程序需要管理员权限，所以 Windows 会先询问是否允许。如果下载或安装失败，安装停止，并给出可以自行安装该构建的链接；
+- 运行一次 `php.exe`。如果它无法启动，安装在此停止，并说明如何修复 Redistributable，在此之前不会写入任何内容，也不会下载 Composer；
 - 在 `php.exe` 旁边写入 `php.ini`，内容来自 `php.ini-development`。它把 `extension_dir` 设为绝对路径的 `ext` 目录，并启用 `openssl`，让 Composer 能通过 HTTPS 下载包；
 - 从 getcomposer.org 下载 Composer 的安装器，并与 Composer 公布的 sha384 核对。两者不一致时，安装停止，Composer 不会被安装。核对由 PHP 完成，此时 PHP 已经就位；
 - 用 `php.exe` 运行安装器，并在旁边写入 `composer.bat`。
 
 安装路径可能含有空格，Windows 的用户目录常常如此。插件会给路径加引号；CI 就安装到 `C:\vfox home`。
 
-如果你自己启动 `php.exe` 时 Windows 提示找不到 `VCRUNTIME140.dll`，说明缺少这个运行库，请按上面的方法安装。
+如果你自己启动 `php.exe` 时 Windows 提示找不到 `VCRUNTIME140.dll`，说明该 PHP 缺少这个运行库。请安装上面所说的构建，然后再次运行 `php.exe`。
 
 ## Composer
 

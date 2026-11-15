@@ -130,9 +130,9 @@ func buildImage(ctx context.Context, t *testing.T, root string) string {
 }
 
 // runOne starts the container of one combo and runs its checks in order: the
-// plugin, an unknown version, the install, the selection, the TS runtime, the
-// NTS build and the search. Each step asserts what it finds, and a failure
-// stops the combo.
+// plugin, an unknown version, the Visual C++ runtime before the install, the
+// install, the runtime after it, the selection, the TS runtime, the NTS build
+// and the search. Each step asserts what it finds, and a failure stops the combo.
 func runOne(ctx context.Context, t *testing.T, image string, c common.Combo, attempts int) {
 	t.Helper()
 
@@ -167,7 +167,10 @@ func runOne(ctx context.Context, t *testing.T, image string, c common.Combo, att
 
 	checkPlugin(s)
 	checkUnknownVersion(s)
-	checkInstall(s, c.Spec)
+	checkRuntimeOnPath(s, false)
+	install := checkInstall(s, c.Spec)
+	checkRuntimeOnPath(s, true)
+	checkRedistInstalled(s, install)
 	version := checkUse(s, c.Spec)
 	checkRuntime(s, version)
 	checkNTS(s, version)

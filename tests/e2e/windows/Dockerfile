@@ -14,7 +14,8 @@
 # limitations under the License.
 
 # The Windows E2E image (see docs/e2e.md): servercore with PowerShell 7, vfox
-# from its release, the Visual C++ runtime, and this checkout as the plugin.
+# from its release, and this checkout as the plugin. The Visual C++ runtime is left
+# out on purpose: the plugin installs it, and the suite checks that it does.
 # tests/e2e/windows starts one container per PHP version and drives each one
 # through pwsh exec calls.
 ARG BASE_IMAGE=mcr.microsoft.com/windows/servercore:ltsc2025-KB5122871-amd64
