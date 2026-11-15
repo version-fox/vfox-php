@@ -55,6 +55,10 @@ Available versions:
 
 vfox 用发布版本给已安装的 PHP 命名：`8.5.12`，Windows 上的 NTS 构建是 `8.5.12-nts`，Linux 和 macOS 上的线程安全构建是 `8.5.12-zts`。`vfox list php` 显示已安装的名字，`vfox use php@8.5.12` 使用的也是同样的名字。
 
+## 使用已安装的 PHP
+
+`vfox use` 给出的版本系列或主版本，选的是已安装的、默认类型中最新的构建，即不带后缀的名字：在 Linux 和 macOS 上是 NTS 构建，在 Windows 上是 TS 构建。所以即使装了更新的 8.4 的 `-zts` 或 `-nts` 构建，`vfox use php@8.4` 也不会选它。要选它，就把名字写出来，如 `vfox use php@8.4.5-zts`。未安装的版本会提示未安装，`vfox use` 不会改用其他类型的构建。
+
 ## 错误
 
 - `PHP version not found: 8.4.9`：没有匹配的发布版本。请对照 `vfox search php` 检查拼写。

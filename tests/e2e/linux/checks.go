@@ -155,6 +155,22 @@ func checkRuntime(s *session, c common.Combo, version, pcreJIT string) {
 	}
 }
 
+// checkLineSkipsZTS checks that a line of the release does not select the
+// thread-safe install of it. Only the -zts build is installed in this container,
+// so `vfox use` of the line must fail as not installed: a line takes the plain
+// build of its release, and never a build of another type.
+func checkLineSkipsZTS(s *session, version string) {
+	s.t.Helper()
+	line := version[:strings.LastIndex(version, ".")]
+	code, out := s.run(fmt.Sprintf(`cd %s && eval "$(vfox activate bash)" && vfox use -p php@%s`, workDir, line))
+	if code == 0 {
+		s.t.Fatalf("vfox use php@%s selected the thread-safe install of %s:\n%s", line, version, out)
+	}
+	if !strings.Contains(common.StripANSI(out), "not installed") {
+		s.t.Fatalf("vfox use php@%s failed without saying it is not installed:\n%s", line, out)
+	}
+}
+
 // systemPHP is a folder of its own under /opt, where a PHP installed by hand would
 // be. The spaced run keeps a copy of its PHP there, so that `vfox link --detect`
 // has an install to find that vfox did not make.

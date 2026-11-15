@@ -2,7 +2,7 @@
 
 [中文](zh-CN/e2e.md) | [English](e2e.md)
 
-The end-to-end suites install PHP with vfox inside containers, and check what a user would check. They are Go tests in `tests/e2e`: `linux` and `windows` each run one container per PHP version, and `common` holds what the two share. The Linux suite runs one more container, for `8.3.12-zts`, the thread-safe build, which Windows does not have.
+The end-to-end suites install PHP with vfox inside containers, and check what a user would check. They are Go tests in `tests/e2e`: `linux` and `windows` each run one container per PHP version, and `common` holds what the two share. The Linux suite runs one more container, for `8.3.12-zts`, the thread-safe build, which Windows does not have. In that container, `vfox use` of the line `8.3` must fail as not installed, so the line does not take the thread-safe build.
 
 The offline Lua tests and the Go tests of `bin/install` run in the Test Plugin workflow, described in [development](development.md).
 

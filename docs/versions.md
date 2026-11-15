@@ -55,6 +55,10 @@ If the list cannot be fetched, the plugin reports the address it tried. It does 
 
 vfox names an installed PHP after its release: `8.5.12`, `8.5.12-nts` for an NTS build on Windows, or `8.5.12-zts` for a thread-safe build on Linux and macOS. `vfox list php` shows the installed names, and `vfox use php@8.5.12` takes the same names.
 
+## Using an installed PHP
+
+A line or a major given to `vfox use` takes the newest installed build of the default type, which is the plain name: the NTS build on Linux and macOS, the TS build on Windows. So `vfox use php@8.4` does not select a `-zts` or `-nts` build of 8.4, even one that is installed and newer. To select one, name it: `vfox use php@8.4.5-zts`. A version that is not installed is reported as not installed, and `vfox use` does not take a build of another type instead.
+
 ## Errors
 
 - `PHP version not found: 8.4.9`: no release matches. Check the spelling against `vfox search php`.

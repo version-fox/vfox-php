@@ -2,7 +2,7 @@
 
 [中文](e2e.md) | [English](../e2e.md)
 
-端到端套件在容器里用 vfox 安装 PHP，检查的是用户会检查的内容。它们是 `tests/e2e` 里的 Go 测试：`linux` 和 `windows` 各自为每个 PHP 版本运行一个容器，`common` 放两者共用的部分。Linux 套件还多运行一个容器，对应 `8.3.12-zts`，即线程安全构建，Windows 没有这个构建。
+端到端套件在容器里用 vfox 安装 PHP，检查的是用户会检查的内容。它们是 `tests/e2e` 里的 Go 测试：`linux` 和 `windows` 各自为每个 PHP 版本运行一个容器，`common` 放两者共用的部分。Linux 套件还多运行一个容器，对应 `8.3.12-zts`，即线程安全构建，Windows 没有这个构建。在这个容器里，`vfox use` 的版本系列 `8.3` 必须以未安装失败，即版本系列不会选中线程安全构建。
 
 离线的 Lua 测试和 `bin/install` 的 Go 测试在 Test Plugin 工作流中运行，见[开发](development.md)。
 

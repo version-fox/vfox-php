@@ -240,5 +240,8 @@ func runOne(ctx context.Context, t *testing.T, image, platform string, c common.
 	checkInstall(s, c.Spec)
 	version := checkUse(s, c.Spec)
 	checkRuntime(s, c, version, pcreJITEnabled)
+	if c.ZTS() {
+		checkLineSkipsZTS(s, version)
+	}
 	checkSearch(ctx, s, version, attempts)
 }

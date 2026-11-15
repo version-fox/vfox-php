@@ -133,4 +133,34 @@ state.failure = nil
 fails(function()
     PLUGIN:PreInstall({ version = "99.0.0" })
 end, "not found")
+-- vfox use: a line or a major takes the newest installed build of the default type,
+-- its plain name. A name with -zts or -nts is taken as it is, and a version that is
+-- not installed is returned as typed, never replaced by a build of another type.
+dofile("hooks/pre_use.lua")
+local function use(version, names)
+    local sdks = {}
+    for _, name in ipairs(names) do
+        sdks[name] = { name = "php", version = name, path = "/opt/php/" .. name }
+    end
+    local result = PLUGIN:PreUse({ version = version, installedSdks = sdks })
+    return result and result.version
+end
+local linux = { "8.4.4", "8.4.5", "8.4.5-zts", "8.4.6-zts" }
+assert(use("8.4", linux) == "8.4.5", "8.4 takes the newest plain build, not 8.4.6-zts")
+assert(use("8", linux) == "8.4.5", "8 takes the newest plain build too")
+assert(use("8.4.5", linux) == "8.4.5")
+assert(use("8.4.5-zts", linux) == "8.4.5-zts")
+assert(use("8.4.6-zts", linux) == "8.4.6-zts")
+assert(use("8.4.6", linux) == "8.4.6", "8.4.6 is not installed, and is not taken from 8.4.6-zts")
+assert(use("8.5", linux) == "8.5", "8.5 is not installed, and is not taken from another build")
+assert(use("8.4-zts", linux) == "8.4-zts", "a line with a suffix is not a version")
+local windows = { "8.4.4", "8.4.5", "8.4.5-nts" }
+assert(use("8.4", windows) == "8.4.5", "a line takes the TS build, not the NTS one")
+assert(use("8.4.5-nts", windows) == "8.4.5-nts")
+local numeric = { "8.4.9", "8.4.10" }
+assert(use("8.4", numeric) == "8.4.10", "the newest patch is the highest number, not the last name")
+assert(use("8.4", {}) == "8.4", "nothing installed: the version as typed")
+assert(use("", linux) == nil, "no version gives no result, so vfox keeps its own matching")
+print("vfox use takes the default build of a line, and never a build of another type")
+
 print("PHP release discovery, ordering, architecture and failure cases passed")
