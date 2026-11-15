@@ -22,13 +22,15 @@ sudo apt-get install --assume-yes autoconf bison build-essential ca-certificates
     re2c zip zlib1g-dev libgmp-dev libsodium-dev
 ```
 
+安装路径不能含有空格。PHP 的 `make install` 无法安装到这样的路径，所以 `bin/install` 会在编译之前拒绝它，并指出该路径。请把 `VFOX_HOME` 设为不含空格的路径，例如 `/opt/vfox`。主目录名含空格（如 `/home/John Doe`）时也需要这样做，因为默认的安装路径位于其下，也会含有空格。
+
 JPEG 和 PNG 的支持来自系统的 libgd（`libgd-dev`），因为构建使用 `--with-external-gd`。E2E 套件会检查 gd 是否报告 JPEG 支持。
 
 gmp 和 sodium 是可选的。`bin/install` 在对应的库和头文件都已安装时启用它：用 `ldconfig` 检查库，用编译器检查头文件，两者都要满足。缺少时，构建会打印 `gmp not found, not including in installation`（或 sodium 的那一行）并继续。上面列表中的 `libgmp-dev` 和 `libsodium-dev` 提供了这两者。
 
 ## macOS
 
-构建依赖 Homebrew。没有它，构建会以 `ERROR: Please install homebrew for OSX` 停止。请安装下面这些 formula：
+与 Linux 一样，安装路径不能含有空格：`bin/install` 会在编译之前拒绝它。构建依赖 Homebrew。没有它，构建会以 `ERROR: Please install homebrew for OSX` 停止。请安装下面这些 formula：
 
 ```shell
 brew install autoconf automake bison freetype gd gettext icu4c krb5 libedit libiconv libjpeg libpng libxml2 libxslt libzip openssl@3 pkg-config re2c zlib
@@ -50,7 +52,7 @@ Windows 不需要编译器。插件从 windows.php.net 解压构建，然后：
 - 从 getcomposer.org 下载 Composer 的安装器，并与 Composer 公布的 sha384 核对。两者不一致时，安装停止，Composer 不会被安装。核对由 PHP 完成，此时 PHP 已经就位；
 - 用 `php.exe` 运行安装器，并在旁边写入 `composer.bat`。
 
-安装路径可能含有空格，Windows 的用户目录常常如此。插件会给路径加引号，所以 `C:\Users\John Doe\.vfox` 可以正常使用。
+安装路径可能含有空格，Windows 的用户目录常常如此。插件会给路径加引号；CI 就安装到 `C:\vfox home`。
 
 这些构建依赖 Microsoft Visual C++ Redistributable，插件不会安装它。如果 `php.exe` 提示找不到 `VCRUNTIME140.dll`，请从 Microsoft 安装这个运行库。
 

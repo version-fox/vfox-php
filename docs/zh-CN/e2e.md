@@ -77,6 +77,8 @@ go test -v -timeout 55m -run TestE2E .\windows
 7. **Windows 上的 NTS**：在单独的项目中执行 `vfox install php@<version>-nts`，其 `PHP_ZTS` 为 0。
 8. **搜索**：`vfox search php` 列出该版本。列表从网络获取，所以会重试。
 
+在 Linux 上，另外还有一项检查，每次运行只做一次，并且在所有版本之前执行：把 `VFOX_HOME` 设为含有空格的 `/root/vfox home`，`vfox install` 必须失败，并报出 `cannot be installed into a path with spaces`。拒绝发生在编译之前，所以这项检查只需一分钟左右。
+
 ## 本地检查
 
 lint、格式和 license 检查在开发容器里运行，命令见[开发](development.md#本地检查)。没有这些工具的主机上，license 检查也可以用容器运行：

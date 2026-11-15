@@ -22,13 +22,15 @@ sudo apt-get install --assume-yes autoconf bison build-essential ca-certificates
     re2c zip zlib1g-dev libgmp-dev libsodium-dev
 ```
 
+The install path must not contain a space. PHP's `make install` cannot install into such a path, so `bin/install` refuses it before the compile and names the path. Set `VFOX_HOME` to a path without spaces, such as `/opt/vfox`. A home directory with a space in its name, such as `/home/John Doe`, needs this too, because the default install path lies under it.
+
 JPEG and PNG support come from the system libgd (`libgd-dev`), because the build uses `--with-external-gd`. The E2E suite checks that gd reports JPEG support.
 
 gmp and sodium are optional. `bin/install` enables each one when its library and its header are installed, and checks both: the library with `ldconfig`, the header with the compiler. Without them, the build prints `gmp not found, not including in installation` (or the sodium line) and carries on. The `libgmp-dev` and `libsodium-dev` packages in the list above provide them.
 
 ## macOS
 
-The build uses Homebrew. Without it, the build stops with `ERROR: Please install homebrew for OSX`. Install these formulae:
+As on Linux, the install path must not contain a space: `bin/install` refuses it before the compile. The build uses Homebrew. Without it, the build stops with `ERROR: Please install homebrew for OSX`. Install these formulae:
 
 ```shell
 brew install autoconf automake bison freetype gd gettext icu4c krb5 libedit libiconv libjpeg libpng libxml2 libxslt libzip openssl@3 pkg-config re2c zlib
@@ -50,7 +52,7 @@ Windows needs no compiler. The plugin unpacks the build from windows.php.net and
 - downloads Composer's installer from getcomposer.org and checks it against the sha384 that Composer publishes. If they differ, the install stops and Composer is not installed. The check is made by PHP, which is already in place at that point;
 - runs the installer with `php.exe`, and writes a `composer.bat` next to it.
 
-Install paths may hold spaces, as a Windows user profile often does. The plugin quotes them, so `C:\Users\John Doe\.vfox` works.
+Install paths may hold spaces, as a Windows user profile often does. The plugin quotes them: CI installs into `C:\vfox home`.
 
 The builds load the Microsoft Visual C++ Redistributable, which the plugin does not install. If `php.exe` reports a missing `VCRUNTIME140.dll`, install the redistributable from Microsoft.
 

@@ -17,7 +17,9 @@ MAKEFLAGS=-j8 PHP_WITHOUT_PEAR=yes vfox install php@8.4
 
 在 Windows 上这些变量不起作用：插件解压的是预编译构建，不做编译。
 
-此前，在 Linux 和 macOS 上未设置 `PHP_WITHOUT_PCRE_JIT` 时，构建会关闭 JIT，因为这个变量的判断条件写反了。现在构建会保持 JIT 开启，与 PHP 一致。如果需要旧的结果，请设置 `PHP_WITHOUT_PCRE_JIT=yes`。
+未设置 `PHP_WITHOUT_PCRE_JIT` 时，PCRE JIT 保持开启，与 PHP 的默认值一致。更早的构建曾关闭它，原因见[变更](changes.md)。
+
+在 Linux 和 macOS 上，无论这些变量如何设置，安装路径都不能含有空格，见[平台](platforms.md)。
 
 ## PHP_CONFIGURE_OPTIONS
 

@@ -25,6 +25,12 @@ PHP 没有为这个架构发布构建。在 Windows on ARM 上没有可以安装
 
 插件无法读取发布列表。地址就是它尝试访问的那个。用浏览器或 `curl` 打开它，确认能否访问。在代理后面时，请像配置其他下载一样配置 vfox 的代理。如果地址可以访问，再试一次：请求偶尔失败一次，第二次往往就成功了。
 
+## Linux 和 macOS
+
+### `PHP cannot be installed into a path with spaces`
+
+安装路径含有空格，例如 `/home/John Doe/.vfox`。PHP 的 `make install` 无法安装到这样的路径，所以插件会在编译之前停止。请把 `VFOX_HOME` 设为不含空格的路径，例如 `/opt/vfox`，然后重新安装。见[平台](platforms.md#linux)。
+
 ## Linux
 
 ### `Compilation Failure.`

@@ -25,6 +25,12 @@ PHP publishes no build for this architecture. On Windows on ARM there is nothing
 
 The plugin could not read the release list. The address is the one it tried. Open it in a browser, or with `curl`, to see whether it is reachable. Behind a proxy, configure vfox's proxy as you would for any download. If the address answers, retry: a request that fails once often works the second time.
 
+## Linux and macOS
+
+### `PHP cannot be installed into a path with spaces`
+
+The install path holds a space, such as `/home/John Doe/.vfox`. PHP's `make install` cannot install into such a path, so the plugin stops before it compiles. Set `VFOX_HOME` to a path without spaces, such as `/opt/vfox`, then install again. See [platforms](platforms.md#linux).
+
 ## Linux
 
 ### `Compilation Failure.`

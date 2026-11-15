@@ -77,6 +77,8 @@ For each PHP version, in this order:
 7. **NTS on Windows:** `vfox install php@<version>-nts` in a project of its own, where `PHP_ZTS` is 0.
 8. **Search:** `vfox search php` lists the version, with retries, since the list is fetched from the network.
 
+On Linux, one more check runs once, before the versions: with `VFOX_HOME` set to `/root/vfox home`, a path with a space, `vfox install` must fail and say `cannot be installed into a path with spaces`. The refusal comes before the compile, so the check takes about a minute.
+
 ## Local checks
 
 The lint, format and license checks run in the dev container, and the commands are in [development](development.md#local-checks). The license checks also run as containers, on a host without the tools:
