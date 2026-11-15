@@ -61,7 +61,7 @@ PHP 7.x 和 8.0 需要 OpenSSL 1.1，而 Homebrew 已不再通过常规的 formu
 
 ## Windows
 
-### `php.exe did not start (exit code ...)`
+### `php.exe did not start`
 
 PHP 的构建会加载 Microsoft Visual C++ 2015-2022 Redistributable，插件不会安装它；缺少它时 `php.exe` 会立即退出。请从 [Microsoft](https://aka.ms/vs/17/release/vc_redist.x64.exe) 安装 x64 版（x86 版 PHP 则安装 `vc_redist.x86.exe`），然后重新安装 PHP。
 

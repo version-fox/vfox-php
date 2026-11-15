@@ -57,8 +57,7 @@ local function check_php_starts(path)
         local redist = RUNTIME.archType == "386" and "x86" or "x64"
         error(
             string.format(
-                "php.exe did not start (exit code %s). The PHP builds for Windows load the Microsoft Visual C++ 2015-2022 Redistributable, which the plugin does not install. Install the %s build from https://aka.ms/vs/17/release/vc_redist.%s.exe, then install PHP again. Composer was not installed.",
-                tostring(started),
+                "php.exe did not start. The PHP builds for Windows load the Microsoft Visual C++ 2015-2022 Redistributable, which the plugin does not install. Install the %s build from https://aka.ms/vs/17/release/vc_redist.%s.exe, then install PHP again. Composer was not installed.",
                 redist,
                 redist
             )

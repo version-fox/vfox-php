@@ -61,7 +61,7 @@ Information only. GMP is optional, so the build continues without it. Install `g
 
 ## Windows
 
-### `php.exe did not start (exit code ...)`
+### `php.exe did not start`
 
 The PHP builds load the Microsoft Visual C++ 2015-2022 Redistributable, which the plugin does not install, and `php.exe` exits at once without it. Install the x64 build from [Microsoft](https://aka.ms/vs/17/release/vc_redist.x64.exe), or the x86 build (`vc_redist.x86.exe`) for x86 PHP, then install PHP again.
 
