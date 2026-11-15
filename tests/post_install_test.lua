@@ -13,7 +13,7 @@
 -- limitations under the License.
 
 -- The Linux and macOS compile step: the commands it runs, the install paths it
--- refuses, and the failures it reports. The Windows steps are in windows_test.lua.
+-- passes on, and the failures it reports. The Windows steps are in windows_test.lua.
 package.path = "./lib/?.lua;" .. package.path
 PLUGIN = {}
 RUNTIME = { osType = "linux", pluginDirPath = "/plugins/php" }
@@ -38,24 +38,22 @@ local function post_install(path, version)
     PLUGIN:PostInstall({ sdkInfo = { php = { path = path, version = version } } })
 end
 
--- A path without spaces: the script and the paths are quoted anyway.
+-- A path without spaces: the script and the path are quoted.
 post_install("/home/user/.vfox/sdks/php-8.5.12", "8.5.12")
 assert(S.commands[1] == 'chmod +x "/plugins/php/bin/install"', S.commands[1])
 assert(S.commands[2] == '"/plugins/php/bin/install" "/home/user/.vfox/sdks/php-8.5.12" 8.5.12', S.commands[2])
 print("Linux compile quotes the install path")
 
--- PHP's make install cannot install into a path with spaces, so the compile is
--- refused before anything runs, and the message says how to fix it.
+-- A path with spaces is passed on whole, quoted. bin/install builds PHP in a
+-- directory without spaces and links the path to it, so the hook does not refuse it.
 S.commands = {}
-local ok, err = pcall(post_install, "/home/John Doe/.vfox/sdks/php-8.5.12", "8.5.12")
-assert(not ok and tostring(err):find("cannot be installed into a path with spaces", 1, true), tostring(err))
-assert(tostring(err):find("VFOX_HOME", 1, true), tostring(err))
-assert(#S.commands == 0, "nothing may run for a path with spaces")
-print("Linux compile refuses an install path with spaces")
+post_install("/home/John Doe/.vfox/sdks/php-8.5.12", "8.5.12")
+assert(S.commands[2] == '"/plugins/php/bin/install" "/home/John Doe/.vfox/sdks/php-8.5.12" 8.5.12', S.commands[2])
+print("Linux compile passes an install path with spaces on whole")
 
 -- A version that is not x.y.z is refused before anything runs.
 S.commands = {}
-ok, err = pcall(post_install, "/x", "8.5")
+local ok, err = pcall(post_install, "/x", "8.5")
 assert(not ok and tostring(err):find("Invalid PHP source version", 1, true), tostring(err))
 assert(#S.commands == 0, "nothing may run for a version that is refused")
 print("Linux compile refuses a version that is not x.y.z")
