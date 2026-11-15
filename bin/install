@@ -17,21 +17,81 @@
 
 set -eo pipefail
 
+# Prints the directory under which PHP is built for an install path that holds a
+# space. It is the first of these without a space: the XDG data directory, the
+# data directory under $HOME, or /var/tmp for this user.
+build_base() {
+  local candidate
+  for candidate in \
+    "${XDG_DATA_HOME:+$XDG_DATA_HOME/vfox-php}" \
+    "${HOME:+$HOME/.local/share/vfox-php}" \
+    "/var/tmp/vfox-php-$(id -u)"; do
+    if [ -n "$candidate" ] && [[ ! "$candidate" =~ [[:space:]] ]]; then
+      echo "$candidate"
+      return 0
+    fi
+  done
+  echo "ERROR: no directory without spaces to build PHP in" >&2
+  return 1
+}
+
+# Prints the build directory of an install path with a space. Its name is a
+# checksum of the install path, so two VFOX_HOMEs never share one.
+build_dir_for() {
+  local install_path=$1 base
+  base=$(build_base) || return 1
+  echo "$base/builds/$(printf '%s' "$install_path" | cksum | cut -d' ' -f1)"
+}
+
+# Removes what install_php leaves behind when it fails: the link at the install
+# path, the build directory and the source directory.
+discard_build() {
+  local install_path=$1 build_dir=$2 source_path=$3
+  if [ -L "$install_path" ]; then
+    rm -f "$install_path"
+  fi
+  rm -rf "$build_dir" "$source_path"
+}
+
+# Removes the build directory that an install path with a space links to. vfox
+# removes the link itself; this only removes what the link points to.
+remove_build() {
+  local install_path=$1 target
+  if [ ! -L "$install_path" ]; then
+    return 0
+  fi
+  target=$(readlink "$install_path")
+  case "$target" in
+    */vfox-php*/builds/[0-9]*)
+      rm -rf "$target"
+      ;;
+    *)
+      echo "ERROR: $install_path links to $target, which is not a vfox-php build directory" >&2
+      return 1
+      ;;
+  esac
+}
+
 install_php() {
   local install_path=$1
+  local prefix=$install_path
+  local source_path="${install_path}_source"
+  local build_dir=""
 
-  # PHP's make install cannot install into a path with a space: it splits the
-  # destination, and install-cli, install-cgi and install-fpm fail. Stop here,
-  # before the compile, which takes minutes, and say why.
+  # PHP's make install does not quote its paths, and neither do the pear and pecl
+  # scripts it writes, so PHP cannot be built or installed under a path with a
+  # space. Such an install path becomes a link to a build directory without spaces.
   if [[ "$install_path" =~ [[:space:]] ]]; then
-    echo "ERROR: PHP cannot be installed into a path with spaces: $install_path" >&2
-    echo "ERROR: Set VFOX_HOME to a path without spaces, then install again." >&2
-    return 1
+    build_dir=$(build_dir_for "$install_path") || return 1
+    prefix=$build_dir
+    source_path="$build_dir.source"
+    rm -rf "$build_dir" "$source_path"
+    mkdir -p "$(dirname "$build_dir")"
+    trap "discard_build $(printf '%q ' "$install_path" "$build_dir" "$source_path")" EXIT
   fi
 
-  local source_path="${install_path}_source"
   local configured
-  configured="$(construct_configure_options "$install_path")" || return 1
+  configured="$(construct_configure_options "$prefix")" || return 1
   # One argument per line, so that each argument stays whole.
   local -a configure_args=()
   local option
@@ -89,6 +149,9 @@ install_php() {
   # working directory.
   (
     mv "$install_path" "$source_path"
+    if [ -n "$build_dir" ]; then
+      ln -s "$build_dir" "$install_path"
+    fi
     cd "$source_path"
 
     # Target is OS-specific
@@ -373,7 +436,14 @@ os_based_configure_options() {
 }
 
 if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+  if [ "${1:-}" = "--remove-build" ]; then
+    remove_build "$2"
+    exit
+  fi
   PHP_VERSION=${2:-$(sed -n 's/^#define PHP_VERSION "\([^"]*\)"/\1/p' "$1/main/php_version.h")}
   install_php "$1"
   install_composer "$1"
+  # Both steps are done. Until now a failure in either removes the build of an
+  # install path with a space, because vfox cannot reach it.
+  trap - EXIT
 fi
