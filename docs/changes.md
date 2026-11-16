@@ -2,9 +2,9 @@
 
 [中文](zh-CN/changes.md) | [English](changes.md)
 
-What each release changed. The releases before 0.3.0 are on the [GitHub releases page](https://github.com/version-fox/vfox-php/releases).
+What each release changed. Dates are in UTC: the day each release was published on GitHub. The releases before 0.3.0 are on the [GitHub releases page](https://github.com/version-fox/vfox-php/releases).
 
-## Unreleased
+## 0.3.3 (2026-11-15)
 
 - Development: a dev container, Go E2E suites for Linux and Windows that install PHP with vfox inside containers, lint, format and license-header checks in CI, and documentation in English and Chinese.
 - Linux: `bin/install` checks the build dependencies before it compiles: the compiler, `make`, `autoconf`, `pkg-config` and `curl`, and the libraries that the configure options use. A missing one stops the install at once, and the message names each missing item and its Debian or Ubuntu package. Before, the install failed in configure or make, after a long build. See [platforms](platforms.md#linux).
@@ -21,18 +21,18 @@ What each release changed. The releases before 0.3.0 are on the [GitHub releases
 - Linux and macOS: `vfox install php@<version>-zts` builds the thread-safe (ZTS) PHP of a release from its source. A plain version is still the NTS build. PHP 8.0 and later are configured with `--enable-zts`, PHP 5.x and 7.x with `--enable-maintainer-zts`.
 - Linux, macOS and Windows: `vfox use` of a line or a major takes the default build of its release, the plain name, as `vfox install` does, and never a `-zts` or `-nts` build. A `-zts` or `-nts` build is selected by naming it.
 
-## 0.3.2
+## 0.3.2 (2026-09-12)
 
 - Optional dependency diagnostics, such as `gmp not found`, are printed to stderr and no longer end up in the configure arguments.
 
-## 0.3.1
+## 0.3.1 (2026-09-12)
 
 - Restored PHP release discovery and platform installation.
 - Releases are published by the shared plugin workflow.
 - CI initialises vfox before it selects PHP, and it verifies the managed PHP.
 - CI no longer keeps an empty legacy config file.
 
-## 0.3.0
+## 0.3.0 (2025-09-29)
 
 - Linux supports the LTS releases.
 - Downloads use the redirected URLs.

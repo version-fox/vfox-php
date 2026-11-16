@@ -38,7 +38,7 @@ There is no dev container for Windows, because the Dev Containers specification 
 
 | Variable | Default | Meaning |
 | --- | --- | --- |
-| `PHP_VERSION` | `latest 8.3` | the PHP versions to install, separated by spaces; each is `latest`, a major, a major.minor or a full release |
+| `PHP_VERSION` | `latest 8.3` | the PHP versions to install, separated by spaces; each is `latest`, a major, a major.minor or a full release; on Linux a full release may end in `-zts` |
 | `E2E_MAX_JOBS` | `2` | containers that run at once |
 | `E2E_RETRY_ATTEMPTS` | `3` | attempts for `vfox search`, with a backoff of 10 seconds per attempt |
 | `MAKEFLAGS` | `-j2` | build parallelism inside the Linux containers; a value set on the host is passed through |

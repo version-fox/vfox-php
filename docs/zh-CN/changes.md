@@ -2,9 +2,9 @@
 
 [中文](changes.md) | [English](../changes.md)
 
-每个版本改了什么。0.3.0 之前的版本见 [GitHub Releases 页面](https://github.com/version-fox/vfox-php/releases)。
+每个版本改了什么。日期以 UTC 计，是每个版本在 GitHub 上发布的那一天。0.3.0 之前的版本见 [GitHub Releases 页面](https://github.com/version-fox/vfox-php/releases)。
 
-## 未发布
+## 0.3.3（2026-11-15）
 
 - 开发：开发容器；Linux 和 Windows 的 Go 端到端套件，在容器里用 vfox 安装 PHP；CI 中的 lint、格式和 license 头检查；中英文文档。
 - Linux：`bin/install` 在编译之前检查构建依赖：编译器、`make`、`autoconf`、`pkg-config` 和 `curl`，以及 configure 选项所用的库。缺少任何一项，安装会立即停止，消息会列出每个缺失的项目及其 Debian 或 Ubuntu 软件包。此前，安装要等到长时间编译之后才会在 configure 或 make 中失败。见[平台](platforms.md#linux)。
@@ -21,18 +21,18 @@
 - Linux 和 macOS：`vfox install php@<版本>-zts` 用发布版本的源码构建线程安全（ZTS）的 PHP。不带后缀的版本仍是 NTS 构建。PHP 8.0 及以后用 `--enable-zts` 配置，PHP 5.x 和 7.x 用 `--enable-maintainer-zts` 配置。
 - Linux、macOS 和 Windows：`vfox use` 给出版本系列或主版本时，选的是该发布版本的默认类型构建（即不带后缀的名字），和 `vfox install` 一致，不会选中 `-zts` 或 `-nts` 构建。要选它们，需要把名字写出来。
 
-## 0.3.2
+## 0.3.2（2026-09-12）
 
 - 可选依赖的诊断信息（如 `gmp not found`）改为输出到 stderr，不再混进 configure 参数里。
 
-## 0.3.1
+## 0.3.1（2026-09-12）
 
 - 恢复了 PHP 版本发现和平台安装。
 - 发布改由共享的插件工作流完成。
 - CI 在选择 PHP 之前先初始化 vfox，并校验 vfox 管理的 PHP。
 - CI 不再保留空的旧版配置文件。
 
-## 0.3.0
+## 0.3.0（2025-09-29）
 
 - Linux 支持 LTS 版本。
 - 下载使用重定向后的 URL。

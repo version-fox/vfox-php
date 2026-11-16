@@ -38,7 +38,7 @@ Windows 没有开发容器，因为 Dev Containers 规范不支持 Windows 容�
 
 | 变量 | 默认值 | 含义 |
 | --- | --- | --- |
-| `PHP_VERSION` | `latest 8.3` | 要安装的 PHP 版本，用空格分隔；每一项可以是 `latest`、主版本、主.次版本或完整版本 |
+| `PHP_VERSION` | `latest 8.3` | 要安装的 PHP 版本，用空格分隔；每一项可以是 `latest`、主版本、主.次版本或完整版本；在 Linux 上，完整版本可以带 `-zts` 后缀 |
 | `E2E_MAX_JOBS` | `2` | 同时运行的容器数 |
 | `E2E_RETRY_ATTEMPTS` | `3` | `vfox search` 的尝试次数，每次失败后等待 10 秒的递增时间 |
 | `MAKEFLAGS` | `-j2` | Linux 容器内的编译并行度；宿主机上设置的值会传入容器 |

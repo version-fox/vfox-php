@@ -29,7 +29,7 @@ PHP 没有为这个架构发布构建。在 Windows on ARM 上没有可以安装
 
 ### `Failed to remove the PHP build behind <path>`
 
-`vfox uninstall` 无法删除安装路径所链接的构建目录。构建目录位于 `~/.local/share/vfox-php/builds`；主目录含空格时，位于 `/var/tmp` 之下。请检查该目录的权限，手动删除它，然后重新卸载。见[平台](platforms.md#linux)。
+`vfox uninstall` 无法删除安装路径所链接的构建目录。构建目录是下列路径之一下的 `builds/<校验和>`，取其中第一个已设置且不含空格的：`$XDG_DATA_HOME/vfox-php`、`~/.local/share/vfox-php` 或 `/var/tmp/vfox-php-<uid>`。请检查该目录的权限，手动删除它，然后重新卸载。见[平台](platforms.md#linux)。
 
 ### `links to <target>, which is not a vfox-php build directory`
 
@@ -43,7 +43,7 @@ PHP 没有为这个架构发布构建。在 Windows on ARM 上没有可以安装
 
 ### `Compilation Failure.`
 
-编译中途停止了，这条消息上方的输出会说明原因。现在构建开始前就会检查缺失的软件包，所以缺包时通常会在上面那条消息处停止。
+编译中途停止了，这条消息上方的输出会说明原因。构建开始前会检查缺失的软件包，所以缺包时通常会在上面那条消息处停止。
 
 ### `Installer corrupt`
 
@@ -75,7 +75,7 @@ PHP 7.x 和 8.0 需要 OpenSSL 1.1，而 Homebrew 已不再通过常规的 formu
 
 ### `PowerShell could not check or start the Visual C++ Redistributable installer`
 
-Windows PowerShell 在核对或运行安装程序之前就失败了，所以插件没有安装运行库，安装在写入任何内容之前就停止了。请按错误信息中的链接自己安装该构建，然后重新安装 PHP。
+Windows PowerShell 在核对或运行安装程序之前就失败了，所以插件没有安装运行库，安装在写入 `php.ini` 或 Composer 之前就停止了。请按错误信息中的链接自己安装该构建，然后重新安装 PHP。
 
 ### `The Visual C++ Redistributable installer exited with code`
 

@@ -17,7 +17,7 @@ MAKEFLAGS=-j8 PHP_WITHOUT_PEAR=yes vfox install php@8.4
 
 On Windows these variables do nothing: the plugin unpacks a prebuilt build and compiles nothing.
 
-With `PHP_WITHOUT_PCRE_JIT` unset, PCRE JIT is on, as PHP has it by default. Earlier builds had it off; [changes](changes.md) says why.
+With `PHP_WITHOUT_PCRE_JIT` unset, PCRE JIT is on, as PHP has it by default.
 
 On Linux and macOS an install path with a space is built in a directory without spaces, whatever these variables are set to. See [platforms](platforms.md#linux).
 
