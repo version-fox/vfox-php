@@ -24,6 +24,9 @@ end
 
 local function output_of(command)
     local handle = io.popen(command, "r")
+    if handle == nil then
+        return ""
+    end
     local text = handle:read("*a") or ""
     handle:close()
     return (string.gsub(text, "%s+$", ""))
