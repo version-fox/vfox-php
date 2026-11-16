@@ -196,14 +196,29 @@ install_composer() {
   )
 }
 
+# Succeeds when PHP_VERSION is at least MAJOR.MINOR. A version that cannot be read
+# counts as the newest PHP, so the options of the newest PHP are used.
+php_at_least() {
+  local want_major=$1 want_minor=$2 major minor
+  if [[ ! "${PHP_VERSION:-}" =~ ^([0-9]+)\.([0-9]+) ]]; then
+    return 0
+  fi
+  major=${BASH_REMATCH[1]}
+  minor=${BASH_REMATCH[2]}
+  (( major > want_major || (major == want_major && minor >= want_minor) ))
+}
+
+# Succeeds when PHP_VERSION is older than MAJOR.MINOR.
+php_before() {
+  ! php_at_least "$@"
+}
+
 # Prints the configure arguments for PHP built into install_path, one per line.
 construct_configure_options() {
   local install_path=$1
   local -a platform_args=()
   local -a extra_args=()
 
-  # many options included below are not applicable to newer PHP versions
-  # including these will trigger a build warning, but will not break the build
   local -a global_args=(
     "--prefix=$install_path"
     --enable-bcmath
@@ -212,10 +227,7 @@ construct_configure_options() {
     --enable-exif
     --enable-fpm
     --enable-ftp
-    --enable-gd
-    --enable-gd-native-ttf
     --enable-intl
-    --enable-mbregex
     --enable-mbstring
     --enable-mysqlnd
     --enable-pcntl
@@ -225,25 +237,38 @@ construct_configure_options() {
     --enable-sysvmsg
     --enable-sysvsem
     --enable-sysvshm
-    --enable-wddx
-    --enable-zip
     "--sysconfdir=$install_path"
     "--with-config-file-path=$install_path"
     "--with-config-file-scan-dir=$install_path/conf.d"
     --with-curl
-    --with-external-gd
     --with-fpm-group=www-data
     --with-fpm-user=www-data
-    --with-gd
     --with-mhash
-    --with-mysql=mysqlnd
     --with-mysqli=mysqlnd
     --with-pdo-mysql=mysqlnd
-    --with-xmlrpc
-    --with-zip
     --with-zlib
     --without-snmp
   )
+
+  # configure ignores an option that the PHP version does not take, and most versions
+  # warn about it. So each option below is passed only to the versions that take it.
+  if php_at_least 5 4; then
+    global_args+=(--enable-mbregex)
+  fi
+  if php_before 7 4; then
+    global_args+=(--enable-wddx --enable-zip --with-gd)
+  else
+    global_args+=(--enable-gd --with-external-gd --with-zip)
+  fi
+  if php_before 8 0; then
+    global_args+=(--with-xmlrpc)
+  fi
+  if php_before 7 2; then
+    global_args+=(--enable-gd-native-ttf)
+  fi
+  if php_before 7 0; then
+    global_args+=(--with-mysql=mysqlnd)
+  fi
 
   if [ "$PHP_CONFIGURE_OPTIONS" = "" ]; then
     local platform_options
@@ -253,6 +278,9 @@ construct_configure_options() {
     read -r -a platform_args <<<"$PHP_CONFIGURE_OPTIONS" || true
   fi
 
+  # PHP 7.4 and later warn that --with-pear is deprecated, and PHP 8.4 and later warn
+  # that --with-mhash is. Both stay: PEAR is installed only when --with-pear is given,
+  # and the mhash functions are built only with --with-mhash, as they always were.
   if [ "${PHP_WITHOUT_PEAR:-no}" != "no" ]; then
     extra_args+=(--without-pear)
   else
@@ -260,8 +288,8 @@ construct_configure_options() {
   fi
 
   # PCRE JIT is on in PHP's own configuration, so it stays on unless
-  # PHP_WITHOUT_PCRE_JIT asks for --without-pcre-jit.
-  if [ "${PHP_WITHOUT_PCRE_JIT:-no}" != "no" ]; then
+  # PHP_WITHOUT_PCRE_JIT asks for --without-pcre-jit. PHP 5.x does not take that option.
+  if [ "${PHP_WITHOUT_PCRE_JIT:-no}" != "no" ] && php_at_least 7 0; then
     extra_args+=(--without-pcre-jit)
   fi
 
@@ -445,13 +473,20 @@ os_based_configure_options() {
       echo "gmp not found, not including in installation" >&2
     fi
 
-    if [ -n "$sodium_path" ]; then
-      configure_options="$configure_options --with-sodium=$sodium_path"
-    else
-      echo "sodium not found, not including in installation" >&2
+    # The sodium extension came with PHP 7.2, and an older configure does not take the option.
+    if php_at_least 7 2; then
+      if [ -n "$sodium_path" ]; then
+        configure_options="$configure_options --with-sodium=$sodium_path"
+      else
+        echo "sodium not found, not including in installation" >&2
+      fi
     fi
 
-    if [ -n "$freetype_path" ]; then
+    # Each option here is taken only by some PHP versions, and configure ignores the
+    # rest: --with-freetype-dir, --with-icu-dir, --with-jpeg-dir, --with-png-dir and
+    # --with-libxml-dir up to PHP 7.3; --with-webp-dir from 7.0 to 7.3; --with-libzip
+    # from 5.6 to 7.3; --with-zlib-dir up to PHP 8.3.
+    if [ -n "$freetype_path" ] && php_before 7 4; then
       configure_options="$configure_options --with-freetype-dir=$freetype_path"
     fi
 
@@ -459,19 +494,19 @@ os_based_configure_options() {
       configure_options="$configure_options --with-gettext=$gettext_path"
     fi
 
-    if [ -n "$icu4c_path" ]; then
+    if [ -n "$icu4c_path" ] && php_before 7 4; then
       configure_options="$configure_options --with-icu-dir=$icu4c_path"
     fi
 
-    if [ -n "$jpeg_path" ]; then
+    if [ -n "$jpeg_path" ] && php_before 7 4; then
       configure_options="$configure_options --with-jpeg-dir=$jpeg_path"
     fi
 
-    if [ -n "$webp_path" ]; then
+    if [ -n "$webp_path" ] && php_at_least 7 0 && php_before 7 4; then
       configure_options="$configure_options --with-webp-dir=$webp_path"
     fi
 
-    if [ -n "$libpng_path" ]; then
+    if [ -n "$libpng_path" ] && php_before 7 4; then
       configure_options="$configure_options --with-png-dir=$libpng_path"
     fi
 
@@ -479,7 +514,7 @@ os_based_configure_options() {
       configure_options="$configure_options --with-openssl=$openssl_path"
     fi
 
-    if [ -n "$libxml2_path" ]; then
+    if [ -n "$libxml2_path" ] && php_before 7 4; then
       configure_options="$configure_options --with-libxml-dir=$libxml2_path"
     fi
 
@@ -487,11 +522,11 @@ os_based_configure_options() {
       configure_options="$configure_options --with-xsl=$libxslt_path"
     fi
 
-    if [ -n "$zlib_path" ]; then
+    if [ -n "$zlib_path" ] && php_before 8 4; then
       configure_options="$configure_options --with-zlib-dir=$zlib_path"
     fi
 
-    if [ -n "$libzip_path" ]; then
+    if [ -n "$libzip_path" ] && php_at_least 5 6 && php_before 7 4; then
       configure_options="$configure_options --with-libzip=$libzip_path"
     fi
 
@@ -521,10 +556,13 @@ os_based_configure_options() {
       echo "gmp not found, not including in installation" >&2
     fi
 
-    if have_system_library libsodium.so sodium.h; then
-      configure_options="$configure_options --with-sodium"
-    else
-      echo "sodium not found, not including in installation" >&2
+    # The sodium extension came with PHP 7.2, and an older configure does not take the option.
+    if php_at_least 7 2; then
+      if have_system_library libsodium.so sodium.h; then
+        configure_options="$configure_options --with-sodium"
+      else
+        echo "sodium not found, not including in installation" >&2
+      fi
     fi
   fi
 

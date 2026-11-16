@@ -8,7 +8,7 @@ On Linux and macOS, `bin/install` compiles PHP when `vfox install` runs. It read
 | --- | --- |
 | `PHP_CONFIGURE_OPTIONS` | Replaces the platform options, the ones for the system libraries (OpenSSL, curl, readline and so on). The global options are still added after them. |
 | `PHP_WITHOUT_PEAR` | Any value other than `no` builds without PEAR (`--without-pear`). Unset or `no` builds with PEAR (`--with-pear`). |
-| `PHP_WITHOUT_PCRE_JIT` | Any value other than `no` builds without PCRE JIT (`--without-pcre-jit`). Unset or `no` keeps PHP's default, PCRE JIT on. |
+| `PHP_WITHOUT_PCRE_JIT` | Any value other than `no` builds without PCRE JIT (`--without-pcre-jit`). PHP 5.x has no such option, so the variable has no effect there. Unset or `no` keeps PHP's default, PCRE JIT on. |
 | `MAKEFLAGS` | Passed to `make`, which compiles PHP, for example `MAKEFLAGS=-j8`. |
 
 ```shell
