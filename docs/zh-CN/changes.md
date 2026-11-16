@@ -4,6 +4,10 @@
 
 每个版本改了什么。日期以 UTC 计，是每个版本在 GitHub 上发布的那一天。0.3.0 之前的版本见 [GitHub Releases 页面](https://github.com/version-fox/vfox-php/releases)。
 
+## Unreleased
+
+- Linux 和 macOS：`bin/install` 只传入所构建的 PHP 版本所接受的 configure 选项，覆盖 PHP 5.3 到 8.5。此前每个版本都会传入全部选项。configure 会忽略它不认识的选项，但会发出警告，因此 PHP 8 的构建会打印 PHP 8 已不再有的选项的警告，例如 `--enable-wddx`、`--with-xmlrpc` 和 `--with-mysql`。构建得到的扩展不变。`--with-pear` 和 `--with-mhash` 仍会传入：PHP 会警告它们已弃用，但它们分别安装 PEAR 和 mhash 函数，插件一直如此。
+
 ## 0.3.3（2026-11-15）
 
 - 开发：开发容器；Linux 和 Windows 的 Go 端到端套件，在容器里用 vfox 安装 PHP；CI 中的 lint、格式和 license 头检查；中英文文档。

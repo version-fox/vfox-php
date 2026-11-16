@@ -260,6 +260,150 @@ func TestJPEGAndPNGComeFromTheSystemLibgd(t *testing.T) {
 	}
 }
 
+// sampleVersions are one release of each PHP line that bin/install builds, from 5.3,
+// the oldest that the plugin offers, to 8.5.
+var sampleVersions = []string{
+	"5.3.29", "5.4.45", "5.6.40", "7.0.33", "7.1.33", "7.2.34", "7.3.33", "7.4.33",
+	"8.0.30", "8.4.27", "8.5.12",
+}
+
+// versionedOption is a configure option that only some PHP versions take, with the
+// sample versions that take it. configure ignores an option that a version does not
+// take, and most versions warn about it, so bin/install passes it to those versions.
+type versionedOption struct {
+	flag   string
+	takers []string
+}
+
+// linuxVersionedOptions lists the Linux options, as the configure script of each
+// release accepts them.
+var linuxVersionedOptions = []versionedOption{
+	{"--enable-mbregex", []string{"5.4.45", "5.6.40", "7.0.33", "7.1.33", "7.2.34", "7.3.33", "7.4.33", "8.0.30", "8.4.27", "8.5.12"}},
+	{"--enable-wddx", []string{"5.3.29", "5.4.45", "5.6.40", "7.0.33", "7.1.33", "7.2.34", "7.3.33"}},
+	{"--enable-zip", []string{"5.3.29", "5.4.45", "5.6.40", "7.0.33", "7.1.33", "7.2.34", "7.3.33"}},
+	{"--with-gd", []string{"5.3.29", "5.4.45", "5.6.40", "7.0.33", "7.1.33", "7.2.34", "7.3.33"}},
+	{"--enable-gd", []string{"7.4.33", "8.0.30", "8.4.27", "8.5.12"}},
+	{"--with-external-gd", []string{"7.4.33", "8.0.30", "8.4.27", "8.5.12"}},
+	{"--with-zip", []string{"7.4.33", "8.0.30", "8.4.27", "8.5.12"}},
+	{"--with-xmlrpc", []string{"5.3.29", "5.4.45", "5.6.40", "7.0.33", "7.1.33", "7.2.34", "7.3.33", "7.4.33"}},
+	{"--enable-gd-native-ttf", []string{"5.3.29", "5.4.45", "5.6.40", "7.0.33", "7.1.33"}},
+	{"--with-mysql=mysqlnd", []string{"5.3.29", "5.4.45", "5.6.40"}},
+}
+
+// darwinVersionedOptions lists the Homebrew options, which take a prefix as a value.
+var darwinVersionedOptions = []versionedOption{
+	{"--with-freetype-dir", []string{"5.3.29", "5.4.45", "5.6.40", "7.0.33", "7.1.33", "7.2.34", "7.3.33"}},
+	{"--with-icu-dir", []string{"5.3.29", "5.4.45", "5.6.40", "7.0.33", "7.1.33", "7.2.34", "7.3.33"}},
+	{"--with-jpeg-dir", []string{"5.3.29", "5.4.45", "5.6.40", "7.0.33", "7.1.33", "7.2.34", "7.3.33"}},
+	{"--with-png-dir", []string{"5.3.29", "5.4.45", "5.6.40", "7.0.33", "7.1.33", "7.2.34", "7.3.33"}},
+	{"--with-libxml-dir", []string{"5.3.29", "5.4.45", "5.6.40", "7.0.33", "7.1.33", "7.2.34", "7.3.33"}},
+	{"--with-webp-dir", []string{"7.0.33", "7.1.33", "7.2.34", "7.3.33"}},
+	{"--with-libzip", []string{"5.6.40", "7.0.33", "7.1.33", "7.2.34", "7.3.33"}},
+	{"--with-zlib-dir", []string{"5.3.29", "5.4.45", "5.6.40", "7.0.33", "7.1.33", "7.2.34", "7.3.33", "7.4.33", "8.0.30"}},
+	{"--with-sodium", []string{"7.2.34", "7.3.33", "7.4.33", "8.0.30", "8.4.27", "8.5.12"}},
+}
+
+// takenBy reports whether the version is one of the takers.
+func takenBy(version string, takers []string) bool {
+	for _, taker := range takers {
+		if taker == version {
+			return true
+		}
+	}
+	return false
+}
+
+// TestVersionedOptionsFollowThePHPVersion checks that each Linux option that only some
+// PHP versions take is passed to those versions and to no others. PEAR and mhash are
+// passed to every version: PHP warns that they are deprecated, but they still build.
+func TestVersionedOptionsFollowThePHPVersion(t *testing.T) {
+	for _, version := range sampleVersions {
+		t.Run(version, func(t *testing.T) {
+			s := newSession(t, linuxHost()).with("PHP_VERSION=" + version)
+			r := s.run("construct_configure_options /fake/php")
+			requireStatus(t, r, 0)
+			for _, opt := range linuxVersionedOptions {
+				want := takenBy(version, opt.takers)
+				if got := hasLine(r.stdout, opt.flag); got != want {
+					t.Errorf("%s in the arguments = %t, want %t:\n%s", opt.flag, got, want, r.stdout)
+				}
+			}
+			for _, flag := range []string{"--with-mhash", "--with-pear"} {
+				if !hasLine(r.stdout, flag) {
+					t.Errorf("%s is missing from the arguments:\n%s", flag, r.stdout)
+				}
+			}
+		})
+	}
+}
+
+// TestDarwinVersionedOptionsFollowThePHPVersion checks that each Homebrew option is
+// passed with its prefix to the PHP versions that take it, and to no others.
+func TestDarwinVersionedOptionsFollowThePHPVersion(t *testing.T) {
+	formulae := darwinFormulae(true, true)
+	formulae["openssl@1.1"] = "/fake/openssl@1.1"
+	for _, version := range sampleVersions {
+		t.Run(version, func(t *testing.T) {
+			s := newSession(t, darwinHost(formulae)).with("PHP_VERSION=" + version)
+			r := s.run("construct_configure_options /fake/php")
+			requireStatus(t, r, 0)
+			for _, opt := range darwinVersionedOptions {
+				want := takenBy(version, opt.takers)
+				if got := hasLinePrefix(r.stdout, opt.flag+"="); got != want {
+					t.Errorf("%s in the arguments = %t, want %t:\n%s", opt.flag, got, want, r.stdout)
+				}
+			}
+		})
+	}
+}
+
+// TestSodiumNeedsPHP72 checks that sodium is passed to PHP 7.2 and later only. The
+// sodium extension came with PHP 7.2, so an older configure does not take the option,
+// and bin/install does not report sodium as missing for a PHP without it.
+func TestSodiumNeedsPHP72(t *testing.T) {
+	libraries := "libsodium.so.23 (libc6,x86-64) => /lib/libsodium.so.23"
+	for _, tc := range []struct {
+		version string
+		want    bool
+	}{
+		{"7.1.33", false},
+		{"7.2.34", true},
+	} {
+		t.Run(tc.version, func(t *testing.T) {
+			s := newSession(t, linuxWith(libraries, "sodium.h")).with("PHP_VERSION=" + tc.version)
+			r := s.run("construct_configure_options /fake/php")
+			requireStatus(t, r, 0)
+			if got := hasLine(r.stdout, "--with-sodium"); got != tc.want {
+				t.Errorf("--with-sodium in the arguments = %t, want %t:\n%s", got, tc.want, r.stdout)
+			}
+			if !tc.want && strings.Contains(r.stderr, "sodium") {
+				t.Errorf("a message about sodium for PHP %s:\n%s", tc.version, r.stderr)
+			}
+		})
+	}
+}
+
+// TestPCREJITOffNeedsPHP70 checks that PHP 5.x, which has no --without-pcre-jit, is not
+// given it even when PHP_WITHOUT_PCRE_JIT asks for it.
+func TestPCREJITOffNeedsPHP70(t *testing.T) {
+	for _, tc := range []struct {
+		version string
+		want    bool
+	}{
+		{"5.6.40", false},
+		{"7.0.33", true},
+	} {
+		t.Run(tc.version, func(t *testing.T) {
+			s := newSession(t, linuxHost()).with("PHP_WITHOUT_PCRE_JIT=yes", "PHP_VERSION="+tc.version)
+			r := s.run("construct_configure_options /fake/php")
+			requireStatus(t, r, 0)
+			if got := hasLine(r.stdout, "--without-pcre-jit"); got != tc.want {
+				t.Errorf("--without-pcre-jit in the arguments = %t, want %t:\n%s", got, tc.want, r.stdout)
+			}
+		})
+	}
+}
+
 // TestLocateIsNotUsed checks that bin/install finds the libraries with ldconfig and
 // the compiler, and never with locate.
 func TestLocateIsNotUsed(t *testing.T) {

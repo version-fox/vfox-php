@@ -22,32 +22,38 @@ import (
 )
 
 // homebrewArguments pairs the Homebrew formulae that bin/install asks about on a
-// Mac with the configure argument that carries the prefix of each.
-var homebrewArguments = []struct{ formula, flag string }{
-	{"bzip2", "--with-bz2"},
-	{"freetype", "--with-freetype-dir"},
-	{"gettext", "--with-gettext"},
-	{"icu4c", "--with-icu-dir"},
-	{"jpeg", "--with-jpeg-dir"},
-	{"libedit", "--with-libedit"},
-	{"libiconv", "--with-iconv"},
-	{"libpng", "--with-png-dir"},
-	{"libxml2", "--with-libxml-dir"},
-	{"libxslt", "--with-xsl"},
-	{"libzip", "--with-libzip"},
-	{"openssl@3", "--with-openssl"},
-	{"readline", "--with-readline"},
-	{"webp", "--with-webp-dir"},
-	{"zlib", "--with-zlib-dir"},
-	{"gmp", "--with-gmp"},
-	{"libsodium", "--with-sodium"},
+// Mac with the configure argument that carries the prefix of each. taken says whether
+// PHP 8.5, the version that the test builds, takes the argument: bin/install passes an
+// argument only to the PHP versions that take it.
+var homebrewArguments = []struct {
+	formula, flag string
+	taken         bool
+}{
+	{"bzip2", "--with-bz2", true},
+	{"freetype", "--with-freetype-dir", false},
+	{"gettext", "--with-gettext", true},
+	{"icu4c", "--with-icu-dir", false},
+	{"jpeg", "--with-jpeg-dir", false},
+	{"libedit", "--with-libedit", true},
+	{"libiconv", "--with-iconv", true},
+	{"libpng", "--with-png-dir", false},
+	{"libxml2", "--with-libxml-dir", false},
+	{"libxslt", "--with-xsl", true},
+	{"libzip", "--with-libzip", false},
+	{"openssl@3", "--with-openssl", true},
+	{"readline", "--with-readline", true},
+	{"webp", "--with-webp-dir", false},
+	{"zlib", "--with-zlib-dir", false},
+	{"gmp", "--with-gmp", true},
+	{"libsodium", "--with-sodium", true},
 }
 
 // TestHomebrewOfThisMac checks that the configure arguments carry the Homebrew
 // prefixes of the Mac the test runs on: a formula that Homebrew reports installed
 // has its argument with its prefix, and a formula that is not installed has none.
-// Nothing is faked here: bin/install runs with the real uname and the real brew.
-// It runs only on macOS with brew installed.
+// An argument that PHP 8.5 does not take is never passed. Nothing is faked here:
+// bin/install runs with the real uname and the real brew. It runs only on macOS with
+// brew installed.
 func TestHomebrewOfThisMac(t *testing.T) {
 	if runtime.GOOS != "darwin" {
 		t.Skip("reads the Homebrew of a Mac")
@@ -65,14 +71,19 @@ func TestHomebrewOfThisMac(t *testing.T) {
 
 	for _, want := range homebrewArguments {
 		prefix := brewPrefix(t, brew, want.formula)
-		if prefix == "" {
+		switch {
+		case !want.taken:
+			if hasLinePrefix(r.stdout, want.flag+"=") {
+				t.Errorf("PHP 8.5 does not take %s, yet its argument is there:\n%s", want.flag, r.stdout)
+			}
+		case prefix == "":
 			if hasLinePrefix(r.stdout, want.flag+"=") {
 				t.Errorf("%s is not installed, yet its argument is there:\n%s", want.formula, r.stdout)
 			}
-			continue
-		}
-		if !hasLine(r.stdout, want.flag+"="+prefix) {
-			t.Errorf("want %s=%s for %s in the arguments:\n%s", want.flag, prefix, want.formula, r.stdout)
+		default:
+			if !hasLine(r.stdout, want.flag+"="+prefix) {
+				t.Errorf("want %s=%s for %s in the arguments:\n%s", want.flag, prefix, want.formula, r.stdout)
+			}
 		}
 	}
 }
