@@ -7,12 +7,13 @@
 | 变量 | 作用 |
 | --- | --- |
 | `PHP_CONFIGURE_OPTIONS` | 替换平台选项，即针对系统库（OpenSSL、curl、readline 等）的那些选项。全局选项仍会追加在它们后面。 |
-| `PHP_WITHOUT_PEAR` | 仅对 PHP 5.3 到 7.3 有效。设为除 `no` 以外的任何值，构建时不带 PEAR（`--without-pear`）。未设置或设为 `no`，则带 PEAR（`--with-pear`）。PHP 7.4 及以后的版本从不带 PEAR，因为 PHP 已弃用 `--with-pear`，所以该变量对它们无效。 |
+| `PHP_WITHOUT_PEAR` | 仅对 PHP 5.3 到 7.3 有效。设为除 `no` 以外的任何值，构建时不带 PEAR（`--without-pear`）。未设置或设为 `no`，则带 PEAR（`--with-pear`）。 |
+| `PHP_WITH_PEAR` | 仅对 PHP 7.4 及以后的版本有效。设为除 `no` 以外的任何值，构建时带 PEAR（`--with-pear`），从而安装 `pear` 和 `pecl`。PHP 7.4 已弃用 `--with-pear`，因此 configure 会对此发出警告。未设置或设为 `no`，则不带 PEAR。 |
 | `PHP_WITHOUT_PCRE_JIT` | 设为除 `no` 以外的任何值，构建时不带 PCRE JIT（`--without-pcre-jit`）。PHP 5.x 没有这个选项，所以该变量在它上面不起作用。未设置或设为 `no`，保持 PHP 的默认值，即开启 PCRE JIT。 |
 | `MAKEFLAGS` | 传给编译 PHP 的 `make`，例如 `MAKEFLAGS=-j8`。 |
 
 ```shell
-MAKEFLAGS=-j8 PHP_WITHOUT_PEAR=yes vfox install php@7.3
+MAKEFLAGS=-j8 PHP_WITH_PEAR=yes vfox install php@8.5
 ```
 
 在 Windows 上这些变量不起作用：插件解压的是预编译构建，不做编译。

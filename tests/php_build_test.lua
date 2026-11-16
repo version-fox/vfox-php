@@ -532,23 +532,41 @@ assert(set["--enable-bcmath"] and set["--with-zlib"], "the global options stay")
 assert(#H.commands == 0, "the libraries are not probed when the options are given")
 print("PHP_CONFIGURE_OPTIONS replaces the platform options")
 
--- 6. PEAR, PCRE JIT and ZTS. PEAR is deprecated from PHP 7.4, so a build from 7.4 takes no PEAR
--- option, whatever PHP_WITHOUT_PEAR says. PHP 5.x has no --without-pcre-jit, and PHP 5.x and 7.x
--- take --enable-maintainer-zts.
+-- 6. PEAR, PCRE JIT and ZTS. PEAR is deprecated from PHP 7.4: the default build of PHP 7.4 and
+-- later has none, and PHP_WITH_PEAR asks for it. PHP 5.x has no --without-pcre-jit, and PHP 5.x
+-- and 7.x take --enable-maintainer-zts.
 fresh({ env = { HOME = "/home/user", PHP_WITHOUT_PEAR = "yes", PHP_WITHOUT_PCRE_JIT = "yes" } })
 set = configure_of("7.3.33")
 assert(set["--without-pear"] and not set["--with-pear"], "PHP_WITHOUT_PEAR builds PHP 7.3 without PEAR")
 assert(set["--without-pcre-jit"], "PHP_WITHOUT_PCRE_JIT builds without PCRE JIT")
 set = configure_of("8.5.12")
-assert(not set["--without-pear"] and not set["--with-pear"], "PHP 8.5 takes no PEAR option")
+assert(not set["--without-pear"] and not set["--with-pear"], "PHP_WITHOUT_PEAR does not apply to PHP 8.5")
 assert(set["--without-pcre-jit"], "PHP_WITHOUT_PCRE_JIT builds without PCRE JIT")
 set = configure_of("5.6.40")
 assert(not set["--without-pcre-jit"], "PHP 5.x does not take --without-pcre-jit")
+-- PHP_WITH_PEAR asks for PEAR from PHP 7.4, and does nothing before 7.4, where PEAR is built anyway.
+fresh({ env = { HOME = "/home/user", PHP_WITH_PEAR = "yes" } })
+for _, version in ipairs({ "7.4.33", "8.0.30", "8.5.12" }) do
+    set = configure_of(version)
+    assert(set["--with-pear"] and not set["--without-pear"], "PHP_WITH_PEAR builds PHP " .. version .. " with PEAR")
+end
+set = configure_of("7.3.33")
+assert(set["--with-pear"] and not set["--without-pear"], "PHP 7.3 is built with PEAR, and PHP_WITH_PEAR does not apply")
+fresh({ env = { HOME = "/home/user", PHP_WITH_PEAR = "no" } })
+set = configure_of("8.5.12")
+assert(not set["--with-pear"], "PHP_WITH_PEAR=no builds PHP 8.5 without PEAR")
+-- The two switches do not overlap: PHP_WITHOUT_PEAR decides PHP 7.3, and PHP_WITH_PEAR decides PHP 8.5.
+fresh({ env = { HOME = "/home/user", PHP_WITH_PEAR = "yes", PHP_WITHOUT_PEAR = "yes" } })
+set = configure_of("7.3.33")
+assert(set["--without-pear"] and not set["--with-pear"], "PHP_WITHOUT_PEAR decides PHP 7.3")
+set = configure_of("8.5.12")
+assert(set["--with-pear"] and not set["--without-pear"], "PHP_WITH_PEAR decides PHP 8.5")
 fresh()
+set = configure_of("8.5.12")
+assert(not set["--with-pear"] and not set["--without-pear"], "the default build of PHP 8.5 has no PEAR option")
+assert(not set["--with-mhash"], "PHP 8.5 takes no --with-mhash")
 local _, pear73 = configure_of("7.3.33")
-assert(pear73[#pear73] == "--with-pear", "PEAR is built before PHP 7.4 unless the switch is set: " .. pear73[#pear73])
-local set85 = configure_of("8.5.12")
-assert(not set85["--with-pear"] and not set85["--with-mhash"], "PHP 8.5 takes neither --with-pear nor --with-mhash")
+assert(pear73[#pear73] == "--with-pear", "the default build of PHP 7.3 is built with PEAR: " .. pear73[#pear73])
 local set81 = configure_of("8.1.34")
 assert(not set81["--with-mhash"], "PHP 8.1 takes no --with-mhash")
 local set80 = configure_of("8.0.30")

@@ -17,6 +17,7 @@ package linux
 import (
 	"context"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/version-fox/vfox-php/tests/e2e/common"
@@ -96,10 +97,17 @@ func checkUse(s *session, spec string) string {
 	return version
 }
 
+// wantsPEAR reports whether PHP_WITH_PEAR asks for PEAR, as the build reads it: an unset or
+// empty variable, and "no", ask for nothing.
+func wantsPEAR() bool {
+	v := os.Getenv("PHP_WITH_PEAR")
+	return v != "" && v != "no"
+}
+
 // checkRuntime checks the PHP that was selected: its banner, its modules, the PCRE
 // JIT row that phpinfo prints (pcreJIT is pcreJITEnabled or pcreJITNotCompiled),
-// the php.ini that the build leaves in the install, composer, PEAR (none from
-// PHP 7.4 on), and what vfox lists.
+// the php.ini that the build leaves in the install, composer, PEAR (from PHP 7.4 on,
+// only when PHP_WITH_PEAR asks for it), and what vfox lists.
 func checkRuntime(s *session, c common.Combo, version, pcreJIT string) {
 	s.t.Helper()
 
@@ -143,16 +151,24 @@ func checkRuntime(s *session, c common.Combo, version, pcreJIT string) {
 		s.t.Fatalf("composer -V printed %q", out)
 	}
 
-	// PHP 7.4 deprecates --with-pear, so from 7.4 the build installs neither pear nor
-	// pecl. Before 7.4 pear version runs: pear and pecl are shell wrappers that name the
-	// install directory, so they only run when that name is quoted correctly.
+	// PHP 7.4 deprecates --with-pear, so from 7.4 the build installs pear and pecl only
+	// when PHP_WITH_PEAR asks for them. Before 7.4 pear version runs: pear and pecl are
+	// shell wrappers that name the install directory, so they only run when that name is
+	// quoted correctly.
 	var major, minor int
 	if _, err := fmt.Sscanf(version, "%d.%d", &major, &minor); err != nil {
 		s.t.Fatalf("PHP version %q has no major.minor part: %v", version, err)
 	}
 	if major > 7 || (major == 7 && minor >= 4) {
 		for _, tool := range []string{"pear", "pecl"} {
-			s.ok(project() + `test ! -e "$(dirname "$(command -v php)")/` + tool + `"`)
+			path := `"$(dirname "$(command -v php)")/` + tool + `"`
+			if wantsPEAR() {
+				if out := s.ok(project() + path + " version"); !strings.Contains(out, "PEAR Version") {
+					s.t.Fatalf("%s version printed %q", tool, out)
+				}
+			} else {
+				s.ok(project() + "test ! -e " + path)
+			}
 		}
 	} else if out := s.ok(project() + "pear version"); !strings.Contains(out, "PEAR Version") {
 		s.t.Fatalf("pear version printed %q", out)

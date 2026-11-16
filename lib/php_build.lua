@@ -401,14 +401,17 @@ function php_build.configure_arguments(prefix, version, zts)
     local args = extend(platform, global_options(prefix, version))
     extend(args, version_options(version))
 
-    -- PHP 7.4 deprecates --with-pear, and PEAR is built only when that flag is given. So PHP
-    -- 7.4 and later are built without PEAR, and PHP_WITHOUT_PEAR applies to PHP 5.3 to 7.3.
+    -- PEAR, which installs pear and pecl. Before PHP 7.4 it is built unless PHP_WITHOUT_PEAR asks
+    -- for --without-pear. PHP 7.4 deprecates --with-pear, so from 7.4 the default build leaves
+    -- PEAR out, and PHP_WITH_PEAR asks for it. Each switch applies only to its own versions.
     if php_build.before(version, 7, 4) then
         if switch("PHP_WITHOUT_PEAR") ~= "no" then
             table.insert(args, "--without-pear")
         else
             table.insert(args, "--with-pear")
         end
+    elseif switch("PHP_WITH_PEAR") ~= "no" then
+        table.insert(args, "--with-pear")
     end
 
     -- PCRE JIT is on in PHP's own configuration, so it stays on unless PHP_WITHOUT_PCRE_JIT
