@@ -2,7 +2,7 @@
 
 [中文](zh-CN/configuration.md) | [English](configuration.md)
 
-On Linux and macOS, `bin/install` compiles PHP when `vfox install` runs. It reads these environment variables from the shell that runs `vfox install`:
+On Linux and macOS, the plugin compiles PHP when `vfox install` runs. It reads these environment variables from the shell that runs `vfox install`:
 
 | Variable | Effect |
 | --- | --- |
@@ -33,4 +33,4 @@ The `--with-openssl` above is the option that enables HTTPS. Without it, PHP is 
 
 ## The options that always apply
 
-`construct_configure_options` in `bin/install` lists the options added to every build: the `--enable-` extensions, the `--with-` options that do not depend on the system, and the configuration paths under the install directory. To see what a PHP was built with, run `php -i` and read the Configure Command line.
+`global_options` and `version_options` in `lib/php_build.lua` list the options added to every build: the `--enable-` extensions, the `--with-` options that do not depend on the system, and the configuration paths under the install directory. To see what a PHP was built with, run `php -i` and read the Configure Command line.

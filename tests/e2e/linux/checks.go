@@ -98,7 +98,7 @@ func checkUse(s *session, spec string) string {
 
 // checkRuntime checks the PHP that was selected: its banner, its modules, the PCRE
 // JIT row that phpinfo prints (pcreJIT is pcreJITEnabled or pcreJITNotCompiled),
-// the php.ini that bin/install leaves in the install, composer, pear, and what
+// the php.ini that the build leaves in the install, composer, pear, and what
 // vfox lists.
 func checkRuntime(s *session, c common.Combo, version, pcreJIT string) {
 	s.t.Helper()
@@ -132,7 +132,7 @@ func checkRuntime(s *session, c common.Combo, version, pcreJIT string) {
 		s.t.Fatalf("gd reports no JPEG support: %q", jpeg)
 	}
 
-	// bin/install writes conf.d/php.ini into the install, next to bin/.
+	// The build writes conf.d/php.ini into the install, next to bin/.
 	s.ok(project() + `test -f "$(dirname "$(dirname "$(command -v php)")")/conf.d/php.ini"`)
 
 	composer := strings.TrimSpace(s.ok(project() + "command -v composer"))

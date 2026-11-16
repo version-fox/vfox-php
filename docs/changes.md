@@ -6,12 +6,13 @@ What each release changed. Dates are in UTC: the day each release was published 
 
 ## Unreleased
 
-- Linux and macOS: `bin/install` passes only the configure options that the PHP version being built takes, from PHP 5.3 to 8.5. It used to pass every option to every version. configure ignores an option it does not know, but warns about it, so PHP 8 builds printed warnings for options that PHP 8 no longer has, such as `--enable-wddx`, `--with-xmlrpc` and `--with-mysql`. The extensions that a build gets do not change. `--with-pear` and `--with-mhash` are still passed: PHP warns that they are deprecated, but they install PEAR and the mhash functions, as the plugin always has.
+- Linux and macOS: the plugin passes only the configure options that the PHP version being built takes, from PHP 5.3 to 8.5. It used to pass every option to every version. configure ignores an option it does not know, but warns about it, so PHP 8 builds printed warnings for options that PHP 8 no longer has, such as `--enable-wddx`, `--with-xmlrpc` and `--with-mysql`. The extensions that a build gets do not change. `--with-pear` and `--with-mhash` are still passed: PHP warns that they are deprecated, but they install PEAR and the mhash functions, as the plugin always has.
+- Linux and macOS: the build of PHP is written in Lua (`lib/php_build.lua`), and the shell script `bin/install` is removed. The options, the dependency checks, the build and Composer work as before. The Go tests of `bin/install` are replaced by Lua tests: `tests/php_build_test.lua` runs on a fake machine, and `tests/php_build_brew_test.lua` checks the options against Homebrew on macOS.
 
 ## 0.3.3 (2026-11-15)
 
 - Development: a dev container, Go E2E suites for Linux and Windows that install PHP with vfox inside containers, lint, format and license-header checks in CI, and documentation in English and Chinese.
-- Linux: `bin/install` checks the build dependencies before it compiles: the compiler, `make`, `autoconf`, `pkg-config` and `curl`, and the libraries that the configure options use. A missing one stops the install at once, and the message names each missing item and its Debian or Ubuntu package. Before, the install failed in configure or make, after a long build. See [platforms](platforms.md#linux).
+- Linux: the plugin checks the build dependencies before it compiles: the compiler, `make`, `autoconf`, `pkg-config` and `curl`, and the libraries that the configure options use. A missing one stops the install at once, and the message names each missing item and its Debian or Ubuntu package. Before, the install failed in configure or make, after a long build. See [platforms](platforms.md#linux).
 - The Lua and shell sources carry the Apache-2.0 license header.
 - Linux and macOS: PCRE JIT is on by default, as in PHP. `PHP_WITHOUT_PCRE_JIT` turns it off. The variable was tested the wrong way round, so builds had JIT off by default.
 - Linux: gmp and sodium are found through the system library cache and their headers, without `locate`. JPEG and PNG come from the system libgd, as the build uses `--with-external-gd`, so the old `--with-jpeg-dir` and `--with-png-dir` options are gone.

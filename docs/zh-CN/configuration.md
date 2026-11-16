@@ -2,7 +2,7 @@
 
 [中文](configuration.md) | [English](../configuration.md)
 
-在 Linux 和 macOS 上，`vfox install` 运行时由 `bin/install` 编译 PHP。它读取运行 `vfox install` 的那个 Shell 里的以下环境变量：
+在 Linux 和 macOS 上，`vfox install` 运行时由插件编译 PHP。它读取运行 `vfox install` 的那个 Shell 里的以下环境变量：
 
 | 变量 | 作用 |
 | --- | --- |
@@ -33,4 +33,4 @@ PHP_CONFIGURE_OPTIONS="--with-openssl=/opt/openssl --with-curl" vfox install php
 
 ## 始终生效的选项
 
-`bin/install` 里的 `construct_configure_options` 列出了每次构建都会加上的选项：`--enable-` 开头的扩展、与系统无关的 `--with-` 选项，以及安装目录下的配置路径。想知道某个 PHP 是怎么编译出来的，运行 `php -i`，看 Configure Command 那一行。
+`lib/php_build.lua` 里的 `global_options` 和 `version_options` 列出了每次构建都会加上的选项：`--enable-` 开头的扩展、与系统无关的 `--with-` 选项，以及安装目录下的配置路径。想知道某个 PHP 是怎么编译出来的，运行 `php -i`，看 Configure Command 那一行。

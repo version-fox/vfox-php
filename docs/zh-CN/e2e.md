@@ -4,7 +4,7 @@
 
 端到端套件在容器里用 vfox 安装 PHP，检查的是用户会检查的内容。它们是 `tests/e2e` 里的 Go 测试：`linux` 和 `windows` 各自为每个 PHP 版本运行一个容器，`common` 放两者共用的部分。Linux 套件还多运行一个容器，对应 `8.3.12-zts`，即线程安全构建，Windows 没有这个构建。在这个容器里，`vfox use` 的版本系列 `8.3` 必须以未安装失败，即版本系列不会选中线程安全构建。
 
-离线的 Lua 测试和 `bin/install` 的 Go 测试在 Test Plugin 工作流中运行，见[开发](development.md)。
+离线的 Lua 测试（包括构建的测试）在 Test Plugin 工作流中运行，见[开发](development.md)。
 
 ## 在哪里运行
 
@@ -72,7 +72,7 @@ go test -v -timeout 55m -run TestE2E .\windows
 2. **未知版本**：`vfox install php@99.0.0` 失败，并且报出版本号：`PHP version not found: 99.0.0`。
 3. **安装**：`vfox install` 成功。在 Linux 上，其输出中会有 `Verifying checksum`，因为 PreInstall 传入了 php.net 的 sha256。在 Windows 上，镜像里没有 Visual C++ 运行库：安装前，加载器的搜索路径上没有任何文件夹含有 `vcruntime140.dll`；安装后 `System32` 中有它，因为是插件装上的。安装的输出中会显示安装它的助手脚本。
 4. **选择**：`vfox use -p` 选中该版本。在 Linux 上，`php` 解析为项目里的 `.vfox/sdks/php/bin/php`，并且 `PHP_VERSION` 与请求的版本匹配。
-5. **Linux 上的运行时**：`php -v` 的开头是该发布版本，`php -m` 列出 `bin/install` 启用的模块（见 `tests/e2e/common/common.go` 中的 `LinuxModules`，其中包括镜像里安装了的 gmp 和 sodium），PCRE JIT 已开启（含空格的运行中为 `not compiled in`，即构建时传入了 `--without-pcre-jit`），`PHP_ZTS` 在 `-zts` 的容器中为 1，其他容器中为 0，gd 报告支持 JPEG，`bin/` 旁边有 `conf.d/php.ini`，`composer -V` 与 `pear version` 能运行，`vfox list` 显示该版本。
+5. **Linux 上的运行时**：`php -v` 的开头是该发布版本，`php -m` 列出构建启用的模块（见 `tests/e2e/common/common.go` 中的 `LinuxModules`，其中包括镜像里安装了的 gmp 和 sodium），PCRE JIT 已开启（含空格的运行中为 `not compiled in`，即构建时传入了 `--without-pcre-jit`），`PHP_ZTS` 在 `-zts` 的容器中为 1，其他容器中为 0，gd 报告支持 JPEG，`bin/` 旁边有 `conf.d/php.ini`，`composer -V` 与 `pear version` 能运行，`vfox list` 显示该版本。
 6. **Windows 上的运行时**：同样的版本横幅检查，另外还有：TS 构建的 `PHP_ZTS` 为 1，已加载 `openssl`，PHP 加载的 `php.ini` 就是插件写入的那个，`extension_dir` 是绝对路径，`composer.bat` 能运行。套件以 `VFOX_HOME=C:\vfox home` 运行，这个路径含有空格，所以安装路径的引号处理也会被测试。
 7. **Windows 上的 NTS**：在单独的项目中执行 `vfox install php@<version>-nts`，其 `PHP_ZTS` 为 0。此时运行库已经记录在注册表中，所以这次安装的输出中不会再出现该助手脚本。
 8. **搜索**：`vfox search php` 列出该版本。列表从网络获取，所以会重试。
@@ -90,5 +90,5 @@ docker run --rm -v "$PWD:/src" ghcr.io/google/addlicense:v1.2.0 -check -f .licen
 ## 已知缺口
 
 - Linux arm64 任务和 Windows 任务只在 CI 中运行。开发容器覆盖的是 Linux amd64，而 Windows 套件需要 Windows 宿主机。
-- macOS 任务直接在 runner 上安装 PHP。Test Plugin 任务把 `bin/install` 与 runner 的 Homebrew 对照，Linux 没有 Homebrew，所以这一点只能在 macOS 上覆盖。
+- macOS 任务直接在 runner 上安装 PHP。Test Plugin 任务把构建的选项与 runner 的 Homebrew 对照，Linux 没有 Homebrew，所以这一点只能在 macOS 上覆盖。
 - 套件测试的是镜像里的 vfox 发布版本，而不是 `main` 分支。

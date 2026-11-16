@@ -27,10 +27,8 @@ function PLUGIN:PreUninstall(ctx)
         -- uninstall goes on, as it did before this hook existed.
         return
     end
-    local install = RUNTIME.pluginDirPath .. "/bin/install"
-    os.execute('chmod +x "' .. install .. '"')
-    local code = os.execute('"' .. install .. '" --remove-build "' .. path .. '"')
-    if code ~= 0 then
-        error("Failed to remove the PHP build behind " .. path)
+    local ok, err = pcall(require("php_build").remove_build, path)
+    if not ok then
+        error("Failed to remove the PHP build behind " .. path .. ": " .. tostring(err), 0)
     end
 end

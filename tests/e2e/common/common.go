@@ -69,7 +69,7 @@ const ZTSSpec = "8.3.12-zts"
 // PassThroughEnvs are copied from the host into every Linux container when set.
 var PassThroughEnvs = []string{"MAKEFLAGS"}
 
-// LinuxModules are the modules a Linux build provides. bin/install turns each
+// LinuxModules are the modules a Linux build provides. The build turns each
 // one on through its platform options or its global options.
 var LinuxModules = []string{
 	"openssl", "curl", "mbstring", "zip", "intl", "bcmath", "sockets", "mysqli",

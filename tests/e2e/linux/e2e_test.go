@@ -46,7 +46,7 @@ const (
 	spacedSpec = "latest"
 	// spacedSlug names the spaced-home run in the test output.
 	spacedSlug = "VFOX_HOME with a space"
-	// buildBase is the directory bin/install builds PHP in for that home: the
+	// buildBase is the directory the build makes PHP in for that home: the
 	// data directory under HOME, which has no space.
 	buildBase = "/root/.local/share/vfox-php"
 )

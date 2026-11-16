@@ -6,12 +6,13 @@
 
 ## Unreleased
 
-- Linux 和 macOS：`bin/install` 只传入所构建的 PHP 版本所接受的 configure 选项，覆盖 PHP 5.3 到 8.5。此前每个版本都会传入全部选项。configure 会忽略它不认识的选项，但会发出警告，因此 PHP 8 的构建会打印 PHP 8 已不再有的选项的警告，例如 `--enable-wddx`、`--with-xmlrpc` 和 `--with-mysql`。构建得到的扩展不变。`--with-pear` 和 `--with-mhash` 仍会传入：PHP 会警告它们已弃用，但它们分别安装 PEAR 和 mhash 函数，插件一直如此。
+- Linux 和 macOS：插件只传入所构建的 PHP 版本所接受的 configure 选项，覆盖 PHP 5.3 到 8.5。此前每个版本都会传入全部选项。configure 会忽略它不认识的选项，但会发出警告，因此 PHP 8 的构建会打印 PHP 8 已不再有的选项的警告，例如 `--enable-wddx`、`--with-xmlrpc` 和 `--with-mysql`。构建得到的扩展不变。`--with-pear` 和 `--with-mhash` 仍会传入：PHP 会警告它们已弃用，但它们分别安装 PEAR 和 mhash 函数，插件一直如此。
+- Linux 和 macOS：构建 PHP 的代码改用 Lua 编写（`lib/php_build.lua`），shell 脚本 `bin/install` 已删除。选项、依赖检查、构建和 Composer 的行为与之前一致。原来 `bin/install` 的 Go 测试改为 Lua 测试：`tests/php_build_test.lua` 在假机器上运行，`tests/php_build_brew_test.lua` 在 macOS 上对照 Homebrew 检查选项。
 
 ## 0.3.3（2026-11-15）
 
 - 开发：开发容器；Linux 和 Windows 的 Go 端到端套件，在容器里用 vfox 安装 PHP；CI 中的 lint、格式和 license 头检查；中英文文档。
-- Linux：`bin/install` 在编译之前检查构建依赖：编译器、`make`、`autoconf`、`pkg-config` 和 `curl`，以及 configure 选项所用的库。缺少任何一项，安装会立即停止，消息会列出每个缺失的项目及其 Debian 或 Ubuntu 软件包。此前，安装要等到长时间编译之后才会在 configure 或 make 中失败。见[平台](platforms.md#linux)。
+- Linux：插件在编译之前检查构建依赖：编译器、`make`、`autoconf`、`pkg-config` 和 `curl`，以及 configure 选项所用的库。缺少任何一项，安装会立即停止，消息会列出每个缺失的项目及其 Debian 或 Ubuntu 软件包。此前，安装要等到长时间编译之后才会在 configure 或 make 中失败。见[平台](platforms.md#linux)。
 - Lua 和 shell 源文件带上了 Apache-2.0 的 license 头。
 - Linux 和 macOS：PCRE JIT 默认开启，与 PHP 一致。`PHP_WITHOUT_PCRE_JIT` 用来关闭它。此前这个变量的判断条件写反了，构建默认关闭 JIT。
 - Linux：gmp 和 sodium 通过系统的库缓存及其头文件查找，不再使用 `locate`。JPEG 和 PNG 来自系统的 libgd，因为构建使用 `--with-external-gd`，所以旧的 `--with-jpeg-dir` 和 `--with-png-dir` 选项已经去掉。

@@ -201,7 +201,7 @@ function InstallComposerForWin(path)
     end
 
     local installer = fetch_or_fail("https://getcomposer.org/installer")
-    -- The sha384 that Composer publishes, as bin/install checks it on Linux and macOS.
+    -- The sha384 that Composer publishes, as lib/php_build.lua checks it on Linux and macOS.
     local expected = (fetch_or_fail("https://composer.github.io/installer.sig"):gsub("%s", ""))
     local setup = path .. "\\composer-setup.php"
     _, err = util.write_file(setup, installer)
@@ -250,12 +250,7 @@ function CompileInstallPHP(path, version, zts)
     if not version:match("^%d+%.%d+%.%d+$") then
         error("Invalid PHP source version: " .. tostring(version))
     end
-    local install = RUNTIME.pluginDirPath .. "/bin/install"
-    os.execute('chmod +x "' .. install .. '"')
-    -- --zts comes before the install path, which bin/install reads first.
-    local option = zts and "--zts " or ""
-    local code = os.execute('"' .. install .. '" ' .. option .. '"' .. path .. '" ' .. version)
-    if code ~= 0 then
-        error("Compilation Failure.")
-    end
+    -- The build is in lib/php_build.lua. It is loaded here, not at the top, so that the
+    -- Windows steps do not need it.
+    require("php_build").install(path, version, zts)
 end

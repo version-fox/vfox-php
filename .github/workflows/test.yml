@@ -39,7 +39,7 @@ jobs:
           cache: false
       - name: Test plugin hooks with vfox's Lua interpreter
         run: go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/hooks_test.lua
-      - name: Test the compile step with the install path quoted
+      - name: Test the compile step of the PostInstall hook
         run: go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/post_install_test.lua
       - name: Test the uninstall step that removes a PHP build
         run: go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/pre_uninstall_test.lua
@@ -47,13 +47,12 @@ jobs:
         run: go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/detect_test.lua
       - name: Test Windows configuration and composer verification
         run: go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/windows_test.lua
-      - name: Test bin/install with its commands faked
-        run: go test -count=1 -v ./install/
-        working-directory: tests/e2e
+      - name: Test the build of PHP on Linux, with its commands faked
+        run: go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/php_build_test.lua
 
   macos:
     if: github.repository == 'version-fox/vfox-php'
-    name: macOS (bin/install)
+    name: macOS (php_build)
     runs-on: macos-latest
     timeout-minutes: 30
     steps:
@@ -64,10 +63,9 @@ jobs:
         with:
           go-version: '1.27.1'
           cache: false
-      - name: Install the Homebrew formulae that bin/install looks for
+      - name: Install the Homebrew formulae that the build looks for
         env:
           HOMEBREW_NO_AUTO_UPDATE: 1
         run: brew install gmp libsodium openssl@3
-      - name: Test bin/install on this Mac, against its Homebrew
-        run: go test -count=1 -v ./install/
-        working-directory: tests/e2e
+      - name: Test the build options on this Mac, against its Homebrew
+        run: go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/php_build_brew_test.lua

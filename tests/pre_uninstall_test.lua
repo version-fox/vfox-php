@@ -12,50 +12,57 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
--- The PreUninstall hook: on Linux and macOS it asks bin/install to remove the
--- build behind the main SDK's install path, and on Windows it runs nothing. vfox
--- passes the install path as ctx.main.path.
+-- The PreUninstall hook: on Linux and macOS it asks lib/php_build.lua to remove the build
+-- behind the main SDK's install path, and on Windows it does nothing. vfox passes the install
+-- path as ctx.main.path.
 package.path = "./lib/?.lua;" .. package.path
 PLUGIN = {}
 RUNTIME = { osType = "linux", pluginDirPath = "/plugins/php" }
 
-local S = { commands = {}, exit_status = 0 }
-os.execute = function(command)
-    S.commands[#S.commands + 1] = command
-    return S.exit_status
+local removed = {}
+local fail_with = nil
+package.preload.php_build = function()
+    return {
+        remove_build = function(path)
+            table.insert(removed, path)
+            if fail_with then
+                error(fail_with, 0)
+            end
+        end,
+    }
 end
 dofile("hooks/pre_uninstall.lua")
 
 local path = "/home/John Doe/.vfox/cache/php/v-8.5.12/php-8.5.12"
 PLUGIN:PreUninstall({ main = { path = path, version = "8.5.12" } })
-assert(S.commands[1] == 'chmod +x "/plugins/php/bin/install"', S.commands[1])
-assert(S.commands[2] == '"/plugins/php/bin/install" --remove-build "' .. path .. '"', S.commands[2])
-print("Linux uninstall asks bin/install to remove the build of the install path")
+assert(#removed == 1 and removed[1] == path, removed[1])
+print("Linux uninstall removes the build of the install path")
 
--- A context without an install path leaves nothing to remove, and the uninstall
--- goes on: the hook does not fail it.
-S.commands = {}
+-- A context without an install path leaves nothing to remove, and the uninstall goes on.
+removed = {}
 PLUGIN:PreUninstall({ sdkInfo = {} })
-assert(#S.commands == 0, "nothing may run without an install path")
+assert(#removed == 0, "nothing may be removed without an install path")
 print("Linux uninstall does nothing without an install path")
 
 -- The install path can also come from sdkInfo, as PostInstall reads it.
-S.commands = {}
+removed = {}
 PLUGIN:PreUninstall({ sdkInfo = { php = { path = "/y z" } } })
-assert(S.commands[2] == '"/plugins/php/bin/install" --remove-build "/y z"', S.commands[2])
+assert(#removed == 1 and removed[1] == "/y z", removed[1])
 print("Linux uninstall finds the install path in sdkInfo")
 
--- A removal that fails is reported, not ignored.
-S.commands = {}
-S.exit_status = 1
+-- A removal that fails is reported with the install path and the reason.
+removed = {}
+fail_with = "ERROR: /x links to /tmp, which is not a vfox-php build directory"
 local ok, err = pcall(PLUGIN.PreUninstall, PLUGIN, { main = { path = "/x" } })
-assert(not ok and tostring(err):find("Failed to remove the PHP build behind /x", 1, true), tostring(err))
+assert(not ok, "a removal that fails must fail the uninstall")
+assert(tostring(err):find("Failed to remove the PHP build behind /x", 1, true), tostring(err))
+assert(tostring(err):find("is not a vfox-php build directory", 1, true), tostring(err))
+fail_with = nil
 print("Linux uninstall reports a removal that fails")
 
 -- On Windows nothing runs: the Windows builds are unpacked, not compiled.
 RUNTIME.osType = "windows"
-S.commands = {}
-S.exit_status = 0
+removed = {}
 PLUGIN:PreUninstall({ main = { path = "C:\\x" } })
-assert(#S.commands == 0, "nothing may run on Windows")
+assert(#removed == 0, "nothing may be removed on Windows")
 print("Windows uninstall runs nothing")
