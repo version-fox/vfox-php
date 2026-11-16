@@ -2,7 +2,7 @@
 
 [中文](zh-CN/changes.md) | [English](changes.md)
 
-What each release changed. The releases before 0.3.0 are on the [GitHub releases page](https://github.com/version-fox/vfox-php/releases).
+What each release changed. Dates are in UTC: the day each release was published on GitHub. The releases before 0.3.0 are on the [GitHub releases page](https://github.com/version-fox/vfox-php/releases).
 
 ## 0.3.3 (2026-11-15)
 

@@ -2,7 +2,7 @@
 
 [中文](changes.md) | [English](../changes.md)
 
-每个版本改了什么。0.3.0 之前的版本见 [GitHub Releases 页面](https://github.com/version-fox/vfox-php/releases)。
+每个版本改了什么。日期以 UTC 计，是每个版本在 GitHub 上发布的那一天。0.3.0 之前的版本见 [GitHub Releases 页面](https://github.com/version-fox/vfox-php/releases)。
 
 ## 0.3.3（2026-11-15）
 
