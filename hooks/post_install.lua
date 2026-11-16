@@ -130,11 +130,14 @@ local function install_vc_redist(path, arch)
     end
     -- PowerShell 7 adds its modules to PSModulePath, which this process inherits, and
     -- Windows PowerShell cannot load its Security module from there. The batch file
-    -- gives Windows PowerShell its own module path, and runs it by its full path.
+    -- gives Windows PowerShell its own module path, and runs it by its full path. Then
+    -- it writes the helper's exit status to a file, which is how Lua learns the status.
+    local statusFile = path .. "\\install_vc_redist.exit"
     local runCommand = string.format(
-        '@set "PSModulePath=%%SystemRoot%%\\System32\\WindowsPowerShell\\v1.0\\Modules"\n"%%SystemRoot%%\\System32\\WindowsPowerShell\\v1.0\\powershell.exe" -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "%s" -Installer "%s"',
+        '@set "PSModulePath=%%SystemRoot%%\\System32\\WindowsPowerShell\\v1.0\\Modules"\n"%%SystemRoot%%\\System32\\WindowsPowerShell\\v1.0\\powershell.exe" -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "%s" -Installer "%s"\n@echo %%errorlevel%% > "%s"',
         script,
-        installer
+        installer,
+        statusFile
     )
     _, err = util.write_file(runBat, runCommand)
     if err ~= nil then
@@ -145,10 +148,20 @@ local function install_vc_redist(path, arch)
     if err ~= nil then
         error(err)
     end
-    local code = os.execute('""' .. runBat .. '""')
+    -- os.execute reports only 0 for success and 1 for any failure, so the exit status is
+    -- read from the status file. A restart-pending exit (3010) reaches Lua as 1 otherwise.
+    os.remove(statusFile)
+    os.execute('""' .. runBat .. '""')
+    local status = util.read_file(statusFile)
     os.remove(runBat)
     os.remove(script)
     os.remove(installer)
+    os.remove(statusFile)
+    local digits = status:match("%-?%d+")
+    local code = digits and tonumber(digits)
+    if code == nil then
+        error("The Visual C++ Redistributable installer did not report how it ended. " .. manual)
+    end
     if code == 100 then
         error(
             "The Visual C++ Redistributable from "
