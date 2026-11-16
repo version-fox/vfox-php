@@ -8,6 +8,7 @@ What each release changed. Dates are in UTC: the day each release was published 
 
 - Linux and macOS: the plugin passes only the configure options that the PHP version being built takes, from PHP 5.3 to 8.5. It used to pass every option to every version. configure ignores an option it does not know, but warns about it, so PHP 8 builds printed warnings for options that PHP 8 no longer has, such as `--enable-wddx`, `--with-xmlrpc` and `--with-mysql`. The extensions that a build gets do not change. `--with-pear` and `--with-mhash` are still passed: PHP warns that they are deprecated, but they install PEAR and the mhash functions, as the plugin always has.
 - Linux and macOS: the build of PHP is written in Lua (`lib/php_build.lua`), and the shell script `bin/install` is removed. The options, the dependency checks, the build and Composer work as before. The Go tests of `bin/install` are replaced by Lua tests: `tests/php_build_test.lua` runs on a fake machine, and `tests/php_build_brew_test.lua` checks the options against Homebrew on macOS.
+- Windows: the exit status of the Visual C++ Redistributable installer is read from a file that the install writes, because vfox's `os.execute` reports only success or failure. An installer that asks for a restart (exit 3010) no longer fails the install, and the messages for an unsigned installer, one that Windows did not start and a PowerShell failure are shown again.
 
 ## 0.3.3 (2026-11-15)
 
