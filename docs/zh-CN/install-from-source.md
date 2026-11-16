@@ -23,4 +23,4 @@ zip -r ../php.zip ./
 vfox add -s ../php.zip
 ```
 
-要求与正式发布的插件相同：vfox 0.3.2 或更新版本（`metadata.lua` 写明的最低版本），以及[平台](platforms.md)中列出的系统软件包。
+要求与正式发布的插件相同：vfox 0.3.2 或更新版本（`metadata.lua` 写明的最低版本），以及[平台](platforms.md)中列出的系统软件包。`vfox link --detect` 和卸载时删除构建目录都需要 vfox 1.1.0 或更新版本。

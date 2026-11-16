@@ -23,4 +23,4 @@ zip -r ../php.zip ./
 vfox add -s ../php.zip
 ```
 
-Requirements are the same as for the released plugin: vfox 0.3.2 or later, which `metadata.lua` names as its minimum, and the platform's packages from [platforms](platforms.md).
+Requirements are the same as for the released plugin: vfox 0.3.2 or later, which `metadata.lua` names as its minimum, and the platform's packages from [platforms](platforms.md). `vfox link --detect` and the removal of a build on uninstall need vfox 1.1.0 or later.

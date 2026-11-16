@@ -4,7 +4,7 @@
 
 每个版本改了什么。0.3.0 之前的版本见 [GitHub Releases 页面](https://github.com/version-fox/vfox-php/releases)。
 
-## 未发布
+## 0.3.3
 
 - 开发：开发容器；Linux 和 Windows 的 Go 端到端套件，在容器里用 vfox 安装 PHP；CI 中的 lint、格式和 license 头检查；中英文文档。
 - Linux：`bin/install` 在编译之前检查构建依赖：编译器、`make`、`autoconf`、`pkg-config` 和 `curl`，以及 configure 选项所用的库。缺少任何一项，安装会立即停止，消息会列出每个缺失的项目及其 Debian 或 Ubuntu 软件包。此前，安装要等到长时间编译之后才会在 configure 或 make 中失败。见[平台](platforms.md#linux)。

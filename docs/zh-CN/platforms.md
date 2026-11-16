@@ -33,7 +33,7 @@ Install them and run vfox install again. The packages are named for Debian and U
 
 不检查 `bison` 和 `re2c`：发布包里已经带有生成好的语法分析器和扫描器，只有从 git 检出的源码才需要它们。OpenSSL、readline、gettext 和 xsl 这几项平台依赖只在没有设置 `PHP_CONFIGURE_OPTIONS` 时才检查，因为只有那时才会用到平台选项。
 
-安装路径可以含有空格，例如 `/home/John Doe` 下的 `VFOX_HOME`。PHP 的 `make install` 以及 `pear`、`pecl` 脚本都不会给路径加引号，所以 PHP 无法直接构建或安装到这样的路径。因此 `bin/install` 会在不含空格的目录里构建 PHP，安装路径则链接到该目录。构建目录依次取以下第一个可用的：已设置且不含空格的 `$XDG_DATA_HOME/vfox-php`；不含空格的主目录下的 `~/.local/share/vfox-php`；若主目录也含空格，则为 `/var/tmp/vfox-php-<uid>`。`vfox uninstall` 会删除链接，连同构建目录一起删除。这需要 vfox 把安装路径传给 `PreUninstall` 钩子，vfox 1.1.0 会传。若 vfox 不传，请手动删除构建目录。
+安装路径可以含有空格，例如 `/home/John Doe` 下的 `VFOX_HOME`。PHP 的 `make install` 以及 `pear`、`pecl` 脚本都不会给路径加引号，所以 PHP 无法直接构建或安装到这样的路径。因此 `bin/install` 会在不含空格的目录里构建 PHP，安装路径则链接到该目录。构建目录是 `builds/<校验和>`，位于下列基础目录中第一个已设置且不含空格的那个之下：`$XDG_DATA_HOME/vfox-php`，然后是 `~/.local/share/vfox-php`，最后是 `/var/tmp/vfox-php-<uid>`。校验和由安装路径算出，所以两个 `VFOX_HOME` 不会共用同一个目录。`vfox uninstall` 会删除链接，连同构建目录一起删除。这需要 vfox 把安装路径传给 `PreUninstall` 钩子，vfox 1.1.0 会传。若 vfox 不传，请手动删除构建目录。
 
 JPEG 和 PNG 的支持来自系统的 libgd（`libgd-dev`），因为构建使用 `--with-external-gd`。E2E 套件会检查 gd 是否报告 JPEG 支持。
 
@@ -60,7 +60,7 @@ PHP 8.1 及更新的版本使用 `openssl@3` 编译。PHP 7.x 和 8.0 需要 Ope
 Windows 不需要编译器。这些构建会加载 Microsoft Visual C++ 2015-2022 Redistributable，缺少时安装会把它补装上。插件从 windows.php.net 解压构建，然后：
 
 - 注册表中没有记录 Redistributable 时，就安装它。插件从 [Microsoft](https://aka.ms/vs/17/release/vc_redist.x64.exe) 下载 x64 版（x86 版 PHP 则下载 `vc_redist.x86.exe`），核对它确由 Microsoft 签名，然后静默运行。安装程序需要管理员权限，所以 Windows 会先询问是否允许。如果下载或安装失败，安装停止，并给出可以自行安装该构建的链接；
-- 运行一次 `php.exe`。如果它无法启动，安装在此停止，并说明如何修复 Redistributable，在此之前不会写入任何内容，也不会下载 Composer；
+- 运行一次 `php.exe`。如果它无法启动，安装在此停止，并说明如何修复 Redistributable，在此之前不会写入 `php.ini`，也不会下载 Composer；
 - 在 `php.exe` 旁边写入 `php.ini`，内容来自 `php.ini-development`。它把 `extension_dir` 设为绝对路径的 `ext` 目录，并启用 `openssl`，让 Composer 能通过 HTTPS 下载包；
 - 从 getcomposer.org 下载 Composer 的安装器，并与 Composer 公布的 sha384 核对。两者不一致时，安装停止，Composer 不会被安装。核对由 PHP 完成，此时 PHP 已经就位；
 - 用 `php.exe` 运行安装器，并在旁边写入 `composer.bat`。

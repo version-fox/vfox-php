@@ -4,7 +4,7 @@
 
 What each release changed. The releases before 0.3.0 are on the [GitHub releases page](https://github.com/version-fox/vfox-php/releases).
 
-## Unreleased
+## 0.3.3
 
 - Development: a dev container, Go E2E suites for Linux and Windows that install PHP with vfox inside containers, lint, format and license-header checks in CI, and documentation in English and Chinese.
 - Linux: `bin/install` checks the build dependencies before it compiles: the compiler, `make`, `autoconf`, `pkg-config` and `curl`, and the libraries that the configure options use. A missing one stops the install at once, and the message names each missing item and its Debian or Ubuntu package. Before, the install failed in configure or make, after a long build. See [platforms](platforms.md#linux).

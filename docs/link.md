@@ -16,7 +16,7 @@ vfox lists what the plugin found and links what you pick. `vfox link --detect -y
 - Folders whose names start with `php` under `/opt` and `/usr/local`, such as `/opt/php-8.4`
 - The version managers asdf, mise and phpenv
 - MAMP on macOS (`/Applications/MAMP/bin/php`)
-- On Windows: Scoop (`%USERPROFILE%\scoop\apps\php`), XAMPP (`C:\xampp\php`), Laragon, WampServer, Chocolatey, folders named `php` under `C:\`, `C:\tools` and `C:\Program Files`, and `C:\php`
+- On Windows: Scoop (`%USERPROFILE%\scoop\apps\php`), XAMPP (`C:\xampp\php`), Laragon (`C:\laragon\bin\php`), WampServer (`C:\wamp64\bin\php` and `C:\wamp\bin\php`), Chocolatey (`%ProgramData%\chocolatey\lib\php\tools`), `C:\php`, the folders under `C:\Program Files\PHP` and `C:\Program Files (x86)\PHP`, and the folders whose names start with `php` under `C:\` and `C:\tools`
 - The CI runner tool caches (`/opt/hostedtoolcache/PHP` and `C:\hostedtoolcache\windows\PHP`)
 - The PHP that the PATH names, when it is in a folder of its own
 

@@ -29,7 +29,7 @@ The plugin could not read the release list. The address is the one it tried. Ope
 
 ### `Failed to remove the PHP build behind <path>`
 
-`vfox uninstall` could not remove the build directory that the install path links to. The build directory is under `~/.local/share/vfox-php/builds`, or under `/var/tmp` for a home directory with a space. Check the permissions of that directory, remove it by hand, and run the uninstall again. See [platforms](platforms.md#linux).
+`vfox uninstall` could not remove the build directory that the install path links to. The build directory is `builds/<checksum>` under the first of `$XDG_DATA_HOME/vfox-php`, `~/.local/share/vfox-php` and `/var/tmp/vfox-php-<uid>` that is set and has no space. Check the permissions of that directory, remove it by hand, and run the uninstall again. See [platforms](platforms.md#linux).
 
 ### `links to <target>, which is not a vfox-php build directory`
 
@@ -43,7 +43,7 @@ The install path is a link, but to a directory that the plugin did not make, so 
 
 ### `Compilation Failure.`
 
-The compile stopped, and the output above that message says where. The build checks for missing packages before it starts, so a missing package now usually stops the install with the message above instead.
+The compile stopped, and the output above that message says where. The build checks for missing packages before it starts, so a missing package usually stops the install with the message above instead.
 
 ### `Installer corrupt`
 
@@ -75,7 +75,7 @@ The installer needs administrator rights, so Windows asks for permission. If the
 
 ### `PowerShell could not check or start the Visual C++ Redistributable installer`
 
-Windows PowerShell failed before it could check or run the installer, so the plugin did not install the runtime, and the install stopped before it wrote anything. Install the build yourself from the link in the message, then install PHP again.
+Windows PowerShell failed before it could check or run the installer, so the plugin did not install the runtime, and the install stopped before it wrote `php.ini` or Composer. Install the build yourself from the link in the message, then install PHP again.
 
 ### `The Visual C++ Redistributable installer exited with code`
 

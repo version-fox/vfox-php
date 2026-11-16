@@ -16,7 +16,7 @@ vfox 会列出插件找到的 PHP，你选择要链接的即可。`vfox link --d
 - `/opt` 和 `/usr/local` 下名字以 `php` 开头的目录，例如 `/opt/php-8.4`
 - 版本管理器 asdf、mise 和 phpenv 安装的 PHP
 - macOS 上的 MAMP（`/Applications/MAMP/bin/php`）
-- Windows 上：Scoop（`%USERPROFILE%\scoop\apps\php`）、XAMPP（`C:\xampp\php`）、Laragon、WampServer、Chocolatey、`C:\`、`C:\tools` 和 `C:\Program Files` 下名字以 `php` 开头的目录，以及 `C:\php`
+- Windows 上：Scoop（`%USERPROFILE%\scoop\apps\php`）、XAMPP（`C:\xampp\php`）、Laragon（`C:\laragon\bin\php`）、WampServer（`C:\wamp64\bin\php` 和 `C:\wamp\bin\php`）、Chocolatey（`%ProgramData%\chocolatey\lib\php\tools`）、`C:\php`、`C:\Program Files\PHP` 和 `C:\Program Files (x86)\PHP` 下的各个目录，以及 `C:\` 和 `C:\tools` 下名字以 `php` 开头的目录
 - CI 运行器的工具缓存（`/opt/hostedtoolcache/PHP` 和 `C:\hostedtoolcache\windows\PHP`）
 - PATH 中的 PHP，前提是它位于自己的目录里
 
