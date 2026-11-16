@@ -4,6 +4,10 @@
 
 What each release changed. Dates are in UTC: the day each release was published on GitHub. The releases before 0.3.0 are on the [GitHub releases page](https://github.com/version-fox/vfox-php/releases).
 
+## Unreleased
+
+- Linux and macOS: `bin/install` passes only the configure options that the PHP version being built takes, from PHP 5.3 to 8.5. It used to pass every option to every version. configure ignores an option it does not know, but warns about it, so PHP 8 builds printed warnings for options that PHP 8 no longer has, such as `--enable-wddx`, `--with-xmlrpc` and `--with-mysql`. The extensions that a build gets do not change. `--with-pear` and `--with-mhash` are still passed: PHP warns that they are deprecated, but they install PEAR and the mhash functions, as the plugin always has.
+
 ## 0.3.3 (2026-11-15)
 
 - Development: a dev container, Go E2E suites for Linux and Windows that install PHP with vfox inside containers, lint, format and license-header checks in CI, and documentation in English and Chinese.
