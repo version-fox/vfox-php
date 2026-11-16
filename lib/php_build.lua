@@ -305,7 +305,15 @@ local function darwin_platform_options(version)
     prefixed("--with-zlib-dir", "zlib", php_build.before(version, 8, 4))
     prefixed("--with-libzip", "libzip", php_build.at_least(version, 5, 6) and php_build.before(version, 7, 4))
     prefixed("--with-readline", "readline", true)
-    prefixed("--with-libedit", "libedit", true)
+    -- libedit has two forms. From PHP 7.4, configure finds it with pkg-config (darwin_environment
+    -- sets up the path) and warns about a directory, which it ignores, so the flag is passed alone.
+    -- Before 7.4, configure looks for libedit in the directory that it is given.
+    local libedit = probe.brew_prefix("libedit")
+    if libedit and php_build.at_least(version, 7, 4) then
+        table.insert(options, "--with-libedit")
+    elseif libedit then
+        table.insert(options, "--with-libedit=" .. libedit)
+    end
     prefixed("--with-bz2", "bzip2", true)
     prefixed("--with-iconv", "libiconv", true)
     return options

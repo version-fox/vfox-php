@@ -8,6 +8,7 @@
 
 - Linux 和 macOS：插件只传入所构建的 PHP 版本所接受的 configure 选项，覆盖 PHP 5.3 到 8.5。此前每个版本都会传入全部选项。configure 会忽略它不认识的选项，但会发出警告，因此 PHP 8 的构建会打印 PHP 8 已不再有的选项的警告，例如 `--enable-wddx`、`--with-xmlrpc` 和 `--with-mysql`。构建得到的扩展不变。`--with-pear` 和 `--with-mhash` 仍会传入：PHP 会警告它们已弃用，但它们分别安装 PEAR 和 mhash 函数，插件一直如此。
 - Linux 和 macOS：构建 PHP 的代码改用 Lua 编写（`lib/php_build.lua`），shell 脚本 `bin/install` 已删除。选项、依赖检查、构建和 Composer 的行为与之前一致。原来 `bin/install` 的 Go 测试改为 Lua 测试：`tests/php_build_test.lua` 在假机器上运行，`tests/php_build_brew_test.lua` 在 macOS 上对照 Homebrew 检查选项。
+- macOS：PHP 7.4 及以后的版本改为传入不带目录的 `--with-libedit`，因为 configure 通过 pkg-config 查找 libedit，而 PHP 7.4 到 8.5 对带目录的参数都会发出警告。PHP 5.3 到 7.3 仍然传入目录，因为 configure 要在那个目录里查找 libedit。
 - Windows：Visual C++ 运行库安装器的退出码改为从安装过程写出的文件中读取，因为 vfox 的 `os.execute` 只报告成功或失败。要求重启的安装（退出码 3010）不再导致安装失败；未签名的安装器、Windows 没有启动的安装器，以及 PowerShell 失败的专门提示也会重新显示。
 
 ## 0.3.3（2026-11-15）

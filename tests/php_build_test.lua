@@ -397,10 +397,34 @@ local DARWIN_EXPECTED = {
         "--with-gettext",
         "--with-xsl",
     },
+    ["7.3.33"] = {
+        "--with-freetype-dir",
+        "--with-icu-dir",
+        "--with-jpeg-dir",
+        "--with-webp-dir",
+        "--with-png-dir",
+        "--with-libxml-dir",
+        "--with-zlib-dir",
+        "--with-libzip",
+        "--with-openssl=/fake/openssl@1.1",
+        "--with-gettext",
+        "--with-xsl",
+    },
     ["7.4.33"] = { "--with-zlib-dir", "--with-openssl=/fake/openssl@1.1", "--with-gettext", "--with-xsl" },
     ["8.0.30"] = { "--with-zlib-dir", "--with-openssl=/fake/openssl@1.1", "--with-gettext", "--with-xsl" },
     ["8.4.27"] = { "--with-openssl=/fake/openssl@3", "--with-gettext", "--with-xsl" },
     ["8.5.12"] = { "--with-openssl=/fake/openssl@3", "--with-gettext", "--with-xsl" },
+}
+-- The libedit flag of each version. Until PHP 7.3 it names the directory, which configure looks
+-- in; from PHP 7.4 it comes alone, since configure finds libedit with pkg-config.
+local LIBEDIT_FLAG = {
+    ["5.6.40"] = "--with-libedit=/fake/libedit",
+    ["7.0.33"] = "--with-libedit=/fake/libedit",
+    ["7.3.33"] = "--with-libedit=/fake/libedit",
+    ["7.4.33"] = "--with-libedit",
+    ["8.0.30"] = "--with-libedit",
+    ["8.4.27"] = "--with-libedit",
+    ["8.5.12"] = "--with-libedit",
 }
 local DARWIN_FLAGS = {
     "--with-freetype-dir",
@@ -468,13 +492,18 @@ for version, want in pairs(DARWIN_EXPECTED) do
         "--with-gettext=/fake/gettext",
         "--with-xsl=/fake/libxslt",
         "--with-readline=/fake/readline",
-        "--with-libedit=/fake/libedit",
         "--with-bz2=/fake/bzip2",
         "--with-iconv=/fake/libiconv",
         "--with-gmp=/fake/gmp",
     }) do
         assert(set[flag], version .. " lacks " .. flag)
     end
+    -- libedit takes its directory until PHP 7.3, and the flag alone from PHP 7.4.
+    local libedit = LIBEDIT_FLAG[version]
+    assert(libedit ~= nil, version .. " has no libedit flag in the test")
+    local other = libedit == "--with-libedit" and "--with-libedit=/fake/libedit" or "--with-libedit"
+    assert(set[libedit], version .. " lacks " .. libedit)
+    assert(not set[other], version .. " must not take " .. other)
 end
 print("macOS formulae follow the PHP version")
 

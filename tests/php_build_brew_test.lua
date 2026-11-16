@@ -62,11 +62,12 @@ local function taken_with(flag)
 end
 
 -- PHP 8.5 takes these formulae: an installed one gives its prefix, and a missing one gives no
--- argument.
+-- argument. libedit is the exception: from PHP 7.4 its flag comes alone, since configure finds it
+-- with pkg-config.
 local TAKEN = {
     { "bzip2", "--with-bz2" },
     { "gettext", "--with-gettext" },
-    { "libedit", "--with-libedit" },
+    { "libedit", "--with-libedit", alone = true },
     { "libiconv", "--with-iconv" },
     { "libxslt", "--with-xsl" },
     { "readline", "--with-readline" },
@@ -77,10 +78,8 @@ for _, item in ipairs(TAKEN) do
     local prefix = brew_prefix(item[1])
     local got = taken_with(item[2])
     if prefix then
-        assert(
-            got == item[2] .. "=" .. prefix,
-            item[1] .. ": want " .. item[2] .. "=" .. prefix .. ", got " .. tostring(got)
-        )
+        local want = item.alone and item[2] or item[2] .. "=" .. prefix
+        assert(got == want, item[1] .. ": want " .. want .. ", got " .. tostring(got))
     else
         assert(got == nil, item[1] .. " is not installed, yet " .. tostring(got) .. " is there")
     end
