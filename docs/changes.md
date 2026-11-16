@@ -4,6 +4,10 @@
 
 What each release changed. Dates are in UTC: the day each release was published on GitHub. The releases before 0.3.0 are on the [GitHub releases page](https://github.com/version-fox/vfox-php/releases).
 
+## Unreleased
+
+- Windows: the exit status of the Visual C++ Redistributable installer is read from a file that the install writes, because vfox's `os.execute` reports only success or failure. An installer that asks for a restart (exit 3010) no longer fails the install, and the messages for an unsigned installer, one that Windows did not start and a PowerShell failure are shown again.
+
 ## 0.3.3 (2026-11-15)
 
 - Development: a dev container, Go E2E suites for Linux and Windows that install PHP with vfox inside containers, lint, format and license-header checks in CI, and documentation in English and Chinese.

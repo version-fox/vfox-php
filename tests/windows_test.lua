@@ -42,6 +42,8 @@ local function reset(overrides)
     S.redist_exit = 0
     S.redist_ran = false
     S.redist_resp = { status_code = 200, body = "MZ\r\n\0" }
+    -- The batch file writes the exit status; false means it wrote nothing.
+    S.redist_status_file = true
     S.sig = { status_code = 200, body = "  ABCDEF\n" }
     for key, value in pairs(overrides or {}) do
         S[key] = value
@@ -49,7 +51,15 @@ local function reset(overrides)
 end
 reset()
 
-util.read_file = function()
+-- The status file of the runtime's installer is read back. Like the real util.read_file,
+-- a file that is not there gives "" and an error.
+util.read_file = function(filename)
+    if filename:find("install_vc_redist.exit", 1, true) then
+        if S.redist_status == nil then
+            return "", "Failed to open file: " .. filename
+        end
+        return S.redist_status
+    end
     return ';extension_dir = "ext"\n;extension=openssl\n;extension=php_openssl.dll\n'
 end
 util.write_file = function(path, content)
@@ -96,7 +106,10 @@ os.execute = function(command)
     end
     if command:find("install_vc_redist.bat", 1, true) then
         S.redist_ran = true
-        return S.redist_exit
+        -- The batch file writes the helper's exit status to the status file. Like vfox's
+        -- os.execute, the return value is only 0 or 1, so 3010 comes back as 1.
+        S.redist_status = S.redist_status_file and tostring(S.redist_exit) or nil
+        return S.redist_exit == 0 and 0 or 1
     end
     if command:find("composer_verify.bat", 1, true) then
         return S.verify_exit
@@ -196,6 +209,8 @@ assert(helper:find("O=Microsoft Corporation", 1, true), helper)
 assert(helper:find("trap { exit 102 }", 1, true), helper)
 local run = assert(S.files[path .. "\\install_vc_redist.bat"])
 assert(run:find('-File "' .. path .. '\\install_vc_redist.ps1" -Installer "' .. installer .. '"', 1, true), run)
+-- The batch file then writes the helper's exit status, which Lua reads back.
+assert(run:find('@echo %errorlevel% > "' .. path .. '\\install_vc_redist.exit"', 1, true), run)
 -- PowerShell 7 puts its modules on PSModulePath, so the batch file gives Windows PowerShell
 -- its own module path, and runs it by its full path.
 assert(run:find('@set "PSModulePath=%SystemRoot%\\System32\\WindowsPowerShell\\v1.0\\Modules"', 1, true), run)
@@ -206,7 +221,12 @@ assert(#S.commands == 4, #S.commands)
 assert(S.commands[1]:find("install_vc_redist.bat", 1, true), S.commands[1])
 assert(S.commands[2]:find("php_start.bat", 1, true), S.commands[2])
 assert(S.files[path .. "\\php.ini"] ~= nil, "php.ini is written once php.exe starts")
-for _, file in ipairs({ installer, path .. "\\install_vc_redist.ps1", path .. "\\install_vc_redist.bat" }) do
+for _, file in ipairs({
+    installer,
+    path .. "\\install_vc_redist.ps1",
+    path .. "\\install_vc_redist.bat",
+    path .. "\\install_vc_redist.exit",
+}) do
     assert(contains(S.removed, file), "the runtime's files are removed: " .. file)
 end
 print("Windows installs the runtime when it is not recorded, then carries on")
@@ -278,10 +298,22 @@ assert(S.files[path .. "\\php.ini"] == nil, "nothing may be written when the ins
 print("Windows reports a runtime installer that fails")
 
 -- Exit 3010 means the runtime is installed and a restart is pending: php.exe is checked again.
+-- os.execute reports this run as 1, as vfox does; only the status file says 3010.
 reset({ registered = false, redist_exit = 3010, start_after_redist = 0 })
 post_install(path)
 assert(S.files[path .. "\\php.ini"] ~= nil, "php.ini is written when php.exe starts after a restart is pending")
 print("Windows accepts a runtime install that asks for a restart")
+
+-- If the batch file wrote no status, the install does not guess: it says so, and gives
+-- the link to install the runtime by hand.
+reset({ registered = false, redist_status_file = false })
+message = error_of(function()
+    post_install(path)
+end)
+assert(message:find("did not report how it ended", 1, true), message)
+assert(message:find(redist_url, 1, true), message)
+assert(S.files[path .. "\\php.ini"] == nil, "nothing may be written when the status is unknown")
+print("Windows reports an installer run whose exit status cannot be read")
 
 -- php.exe still does not start after the installer ran: the install stops before php.ini.
 reset({ registered = false, redist_exit = 0, start_after_redist = 1 })

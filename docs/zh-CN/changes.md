@@ -4,6 +4,10 @@
 
 每个版本改了什么。日期以 UTC 计，是每个版本在 GitHub 上发布的那一天。0.3.0 之前的版本见 [GitHub Releases 页面](https://github.com/version-fox/vfox-php/releases)。
 
+## Unreleased
+
+- Windows：Visual C++ 运行库安装器的退出码改为从安装过程写出的文件中读取，因为 vfox 的 `os.execute` 只报告成功或失败。要求重启的安装（退出码 3010）不再导致安装失败；未签名的安装器、Windows 没有启动的安装器，以及 PowerShell 失败的专门提示也会重新显示。
+
 ## 0.3.3（2026-11-15）
 
 - 开发：开发容器；Linux 和 Windows 的 Go 端到端套件，在容器里用 vfox 安装 PHP；CI 中的 lint、格式和 license 头检查；中英文文档。
