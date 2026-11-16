@@ -7,12 +7,12 @@ On Linux and macOS, the plugin compiles PHP when `vfox install` runs. It reads t
 | Variable | Effect |
 | --- | --- |
 | `PHP_CONFIGURE_OPTIONS` | Replaces the platform options, the ones for the system libraries (OpenSSL, curl, readline and so on). The global options are still added after them. |
-| `PHP_WITHOUT_PEAR` | Any value other than `no` builds without PEAR (`--without-pear`). Unset or `no` builds with PEAR (`--with-pear`). |
+| `PHP_WITHOUT_PEAR` | PHP 5.3 to 7.3 only. Any value other than `no` builds without PEAR (`--without-pear`). Unset or `no` builds with PEAR (`--with-pear`). PHP 7.4 and later never build with PEAR, as PHP deprecates `--with-pear`, so the variable has no effect there. |
 | `PHP_WITHOUT_PCRE_JIT` | Any value other than `no` builds without PCRE JIT (`--without-pcre-jit`). PHP 5.x has no such option, so the variable has no effect there. Unset or `no` keeps PHP's default, PCRE JIT on. |
 | `MAKEFLAGS` | Passed to `make`, which compiles PHP, for example `MAKEFLAGS=-j8`. |
 
 ```shell
-MAKEFLAGS=-j8 PHP_WITHOUT_PEAR=yes vfox install php@8.4
+MAKEFLAGS=-j8 PHP_WITHOUT_PEAR=yes vfox install php@7.3
 ```
 
 On Windows these variables do nothing: the plugin unpacks a prebuilt build and compiles nothing.

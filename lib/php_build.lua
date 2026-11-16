@@ -320,8 +320,10 @@ local function darwin_platform_options(version)
 end
 
 -- The options that every build takes, for the install path that the build is made into.
-local function global_options(prefix)
-    return {
+-- --with-mhash builds the mhash functions, which PHP 8.1 deprecates in favour of the hash
+-- functions, so it is passed only before 8.1. It keeps its place in the list.
+local function global_options(prefix, version)
+    local options = {
         "--prefix=" .. prefix,
         "--enable-bcmath",
         "--enable-calendar",
@@ -345,12 +347,17 @@ local function global_options(prefix)
         "--with-curl",
         "--with-fpm-group=www-data",
         "--with-fpm-user=www-data",
-        "--with-mhash",
+    }
+    if php_build.before(version, 8, 1) then
+        table.insert(options, "--with-mhash")
+    end
+    extend(options, {
         "--with-mysqli=mysqlnd",
         "--with-pdo-mysql=mysqlnd",
         "--with-zlib",
         "--without-snmp",
-    }
+    })
+    return options
 end
 
 -- The options that some PHP versions take and others do not. configure ignores an option
@@ -391,16 +398,17 @@ function php_build.configure_arguments(prefix, version, zts)
         platform = linux_platform_options(version)
     end
 
-    local args = extend(platform, global_options(prefix))
+    local args = extend(platform, global_options(prefix, version))
     extend(args, version_options(version))
 
-    -- PHP 7.4 and later warn that --with-pear is deprecated, and PHP 8.4 and later warn
-    -- that --with-mhash is. Both stay: PEAR is installed only when --with-pear is given,
-    -- and the mhash functions are built only with --with-mhash.
-    if switch("PHP_WITHOUT_PEAR") ~= "no" then
-        table.insert(args, "--without-pear")
-    else
-        table.insert(args, "--with-pear")
+    -- PHP 7.4 deprecates --with-pear, and PEAR is built only when that flag is given. So PHP
+    -- 7.4 and later are built without PEAR, and PHP_WITHOUT_PEAR applies to PHP 5.3 to 7.3.
+    if php_build.before(version, 7, 4) then
+        if switch("PHP_WITHOUT_PEAR") ~= "no" then
+            table.insert(args, "--without-pear")
+        else
+            table.insert(args, "--with-pear")
+        end
     end
 
     -- PCRE JIT is on in PHP's own configuration, so it stays on unless PHP_WITHOUT_PCRE_JIT

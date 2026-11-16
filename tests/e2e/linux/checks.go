@@ -98,8 +98,8 @@ func checkUse(s *session, spec string) string {
 
 // checkRuntime checks the PHP that was selected: its banner, its modules, the PCRE
 // JIT row that phpinfo prints (pcreJIT is pcreJITEnabled or pcreJITNotCompiled),
-// the php.ini that the build leaves in the install, composer, pear, and what
-// vfox lists.
+// the php.ini that the build leaves in the install, composer, PEAR (none from
+// PHP 7.4 on), and what vfox lists.
 func checkRuntime(s *session, c common.Combo, version, pcreJIT string) {
 	s.t.Helper()
 
@@ -143,9 +143,18 @@ func checkRuntime(s *session, c common.Combo, version, pcreJIT string) {
 		s.t.Fatalf("composer -V printed %q", out)
 	}
 
-	// pear and pecl are shell wrappers that name the install directory, so they
-	// only run when that name is quoted correctly.
-	if out := s.ok(project() + "pear version"); !strings.Contains(out, "PEAR Version") {
+	// PHP 7.4 deprecates --with-pear, so from 7.4 the build installs neither pear nor
+	// pecl. Before 7.4 pear version runs: pear and pecl are shell wrappers that name the
+	// install directory, so they only run when that name is quoted correctly.
+	var major, minor int
+	if _, err := fmt.Sscanf(version, "%d.%d", &major, &minor); err != nil {
+		s.t.Fatalf("PHP version %q has no major.minor part: %v", version, err)
+	}
+	if major > 7 || (major == 7 && minor >= 4) {
+		for _, tool := range []string{"pear", "pecl"} {
+			s.ok(project() + `test ! -e "$(dirname "$(command -v php)")/` + tool + `"`)
+		}
+	} else if out := s.ok(project() + "pear version"); !strings.Contains(out, "PEAR Version") {
 		s.t.Fatalf("pear version printed %q", out)
 	}
 

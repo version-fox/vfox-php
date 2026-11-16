@@ -334,7 +334,6 @@ local LINUX_EXPECTED = {
         "--with-xmlrpc",
         "--with-sodium",
         "--with-mhash",
-        "--with-pear",
     },
     ["8.0.30"] = {
         "--enable-mbregex",
@@ -343,7 +342,13 @@ local LINUX_EXPECTED = {
         "--with-zip",
         "--with-sodium",
         "--with-mhash",
-        "--with-pear",
+    },
+    ["8.1.34"] = {
+        "--enable-mbregex",
+        "--enable-gd",
+        "--with-external-gd",
+        "--with-zip",
+        "--with-sodium",
     },
     ["8.5.12"] = {
         "--enable-mbregex",
@@ -351,8 +356,6 @@ local LINUX_EXPECTED = {
         "--with-external-gd",
         "--with-zip",
         "--with-sodium",
-        "--with-mhash",
-        "--with-pear",
     },
 }
 RUNTIME.osType = "linux"
@@ -525,19 +528,31 @@ fresh({ env = { HOME = "/home/user", PHP_CONFIGURE_OPTIONS = "--with-openssl=/cu
 local set, args = configure_of("8.5.12")
 assert(args[1] == "--with-openssl=/custom/openssl" and args[2] == "--with-curl", table.concat(args, " "))
 assert(not set["--with-gmp"], "the platform options are replaced, so gmp is not added")
-assert(set["--enable-bcmath"] and set["--with-mhash"], "the global options stay")
+assert(set["--enable-bcmath"] and set["--with-zlib"], "the global options stay")
 assert(#H.commands == 0, "the libraries are not probed when the options are given")
 print("PHP_CONFIGURE_OPTIONS replaces the platform options")
 
--- 6. PEAR, PCRE JIT and ZTS. PHP 5.x has no --without-pcre-jit, and PHP 5.x and 7.x take
--- --enable-maintainer-zts.
+-- 6. PEAR, PCRE JIT and ZTS. PEAR is deprecated from PHP 7.4, so a build from 7.4 takes no PEAR
+-- option, whatever PHP_WITHOUT_PEAR says. PHP 5.x has no --without-pcre-jit, and PHP 5.x and 7.x
+-- take --enable-maintainer-zts.
 fresh({ env = { HOME = "/home/user", PHP_WITHOUT_PEAR = "yes", PHP_WITHOUT_PCRE_JIT = "yes" } })
+set = configure_of("7.3.33")
+assert(set["--without-pear"] and not set["--with-pear"], "PHP_WITHOUT_PEAR builds PHP 7.3 without PEAR")
+assert(set["--without-pcre-jit"], "PHP_WITHOUT_PCRE_JIT builds without PCRE JIT")
 set = configure_of("8.5.12")
-assert(set["--without-pear"] and not set["--with-pear"], "PHP_WITHOUT_PEAR builds without PEAR")
+assert(not set["--without-pear"] and not set["--with-pear"], "PHP 8.5 takes no PEAR option")
 assert(set["--without-pcre-jit"], "PHP_WITHOUT_PCRE_JIT builds without PCRE JIT")
 set = configure_of("5.6.40")
 assert(not set["--without-pcre-jit"], "PHP 5.x does not take --without-pcre-jit")
 fresh()
+local _, pear73 = configure_of("7.3.33")
+assert(pear73[#pear73] == "--with-pear", "PEAR is built before PHP 7.4 unless the switch is set: " .. pear73[#pear73])
+local set85 = configure_of("8.5.12")
+assert(not set85["--with-pear"] and not set85["--with-mhash"], "PHP 8.5 takes neither --with-pear nor --with-mhash")
+local set81 = configure_of("8.1.34")
+assert(not set81["--with-mhash"], "PHP 8.1 takes no --with-mhash")
+local set80 = configure_of("8.0.30")
+assert(set80["--with-mhash"] and not set80["--with-pear"], "PHP 8.0 takes --with-mhash, and no PEAR option")
 local _, nts = configure_of("8.4.5")
 assert(not mentions(nts, "zts"), "an NTS build takes no ZTS option")
 local _, zts8 = configure_of("8.4.5", true)
@@ -546,8 +561,6 @@ local _, zts7 = configure_of("7.4.33", true)
 assert(zts7[#zts7] == "--enable-maintainer-zts", "PHP 7.x takes --enable-maintainer-zts")
 local _, zts5 = configure_of("5.6.40", true)
 assert(zts5[#zts5] == "--enable-maintainer-zts", "PHP 5.x takes --enable-maintainer-zts")
-local _, pear_last = configure_of("8.5.12")
-assert(pear_last[#pear_last] == "--with-pear", "PEAR comes after the global options: " .. pear_last[#pear_last])
 print("PEAR, PCRE JIT and ZTS follow the switches and the version")
 
 -- 7. Libraries that are missing are reported, and their options are left out.
