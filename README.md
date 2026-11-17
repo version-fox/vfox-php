@@ -1,66 +1,61 @@
 # vfox-php
 
+[中文](README_CN.md) | [English](README.md)
+
 [PHP](https://www.php.net/) plugin for [vfox](https://vfox.dev/).
 
-## Usage
+On Linux and macOS it compiles PHP from the source releases on php.net. On Windows it downloads the prebuilt builds from windows.php.net. Every install comes with Composer.
+
+## Install
+
+After installing [vfox](https://github.com/version-fox/vfox), add the plugin, install a PHP and select it:
 
 ```shell
-# install plugin
 vfox add php
-
-# install an available version
 vfox search php
-# or specific version
-vfox install php@8.4.5
-
-# or nts version
-vfox install php@8.4.5-nts
+vfox install php@latest
+vfox use --global php@latest
+php -v
 ```
 
-The version list combines current and archived Windows binaries, sorted newest
-first. Plain Windows versions select thread-safe (TS) builds; `-nts` selects NTS.
-Linux and macOS source versions come directly from PHP's official JSON API.
-Network failures report the upstream URL instead of returning an empty list.
+`php -v` shows the PHP that is selected. For `php` to be on the `PATH`, vfox has to be hooked into your shell, see vfox's [quick start](https://vfox.dev/guides/quick-start.html).
 
-## Prerequirements
+## Versions
 
-PHP installation requires some dependencies. Please install the dependencies based on the error messages, or refer to [.github/workflows/test-\*.yaml](https://github.com/version-fox/vfox-php/tree/main/.github/workflows) for guidance.
-
-### macOS
-
-To install PHP on macOS, you'll need a set of packages installed via homebrew.
+A version is a full release, a line such as `8.4`, or `latest`:
 
 ```shell
-brew install autoconf automake bison freetype gd gettext icu4c krb5 libedit libiconv libjpeg libpng libxml2 libzip openssl@3 pkg-config re2c zlib
+vfox install php@latest     # the newest release
+vfox install php@8.4        # the newest 8.4.x
+vfox install php@8.4.5      # exactly 8.4.5
+vfox install php@8.4.5-nts  # Windows only: the NTS build of 8.4.5
+vfox install php@8.4.5-zts  # Linux and macOS only: the thread-safe (ZTS) build of 8.4.5
 ```
 
-PHP 8.1 and newer use `openssl@3` on macOS. Older PHP versions require a
-compatible older OpenSSL installation; the build reports a missing dependency
-instead of silently selecting OpenSSL 3 or omitting HTTPS support. Homebrew no
-longer supplies `openssl@1.1` through its normal supported formulae. See the
-[PHP OpenSSL compatibility requirements](https://www.php.net/manual/en/openssl.requirements.php).
-If you supply `PHP_CONFIGURE_OPTIONS`, you remain responsible for configuring
-the dependency paths; automatic macOS dependency selection is bypassed.
+On Windows a plain version is the thread-safe (TS) build, and `-nts` selects the non-thread-safe (NTS) build. On Linux and macOS a plain version is the NTS build, and `-zts` selects the thread-safe one. See [docs/versions.md](docs/versions.md) for how a version is matched, where the lists come from and the errors you may see.
 
-There's also a set of optional packages which enable additional extensions to be enabled:
+## Prerequisites
 
-```shell
-brew install gmp libsodium imagemagick
-```
+On Linux and macOS, PHP installation requires some dependencies: a compiler and the development libraries that PHP is built against. The packages for each system are listed in [docs/platforms.md](docs/platforms.md). On Windows, the builds need the Microsoft Visual C++ 2015-2022 Redistributable (x64, or x86 for x86 PHP). The install adds it when it is missing, after Windows asks for permission to run Microsoft's installer. See [docs/platforms.md](docs/platforms.md#windows).
 
-Note that the supported extensions are not exhaustive, so you may need to edit the [bin/install](./bin/install) script to support additional extension. Feel free to submit a PR for any missing extensions.
+## Platforms
 
-## Releasing this plugin
+- **Linux and macOS** compile the source release. Architectures that CI runs: Linux amd64 and arm64.
+- **Windows** downloads x64 and x86 builds. PHP publishes no ARM64 build for Windows, so there is nothing to install on Windows on ARM.
 
-Maintainers can publish from **Actions → Plugin → Run workflow** on the default
-branch by entering a stable plugin version without the `v` prefix. The shared
-workflow updates `metadata.lua`, creates the version commit and tag, and publishes
-the ZIP and manifest in this repository. No local tag or extra release token is
-needed. Pull requests run checks only; PR titles no longer trigger publication.
+## Documentation
 
-Existing version-tag pushes are supported when `PLUGIN.version` already matches
-the tag. If publication fails, re-run the original failed job to resume it.
+**Using the plugin**
 
-The workflow follows the shared `@v1` release-tool version. Updating the tool does
-not release this plugin. See the [shared workflow documentation](https://github.com/version-fox/plugin-manifest-action)
-for the package contract and first-rollout requirements.
+- [Versions and names](docs/versions.md): how a version is matched, the lists and the errors
+- [Installs already on the machine](docs/link.md): `vfox link --detect php` adopts a PHP that is already installed
+- [Platforms](docs/platforms.md): what each system builds or downloads, and what it needs
+- [Build options](docs/configuration.md): the environment variables that change how PHP is built
+- [Troubleshooting](docs/troubleshooting.md): the messages you may see and what to do about them
+- [Changes](docs/changes.md): what each release changed
+
+**Working on the plugin**
+
+- [Install from source](docs/install-from-source.md): trying a checkout of this repository before a release
+- [Development](docs/development.md): how the plugin works, the checks, and how to release it
+- [E2E tests](docs/e2e.md): the container tests and the dev container
