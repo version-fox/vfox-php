@@ -4,7 +4,7 @@
 
 每个版本改了什么。日期以 UTC 计，是每个版本在 GitHub 上发布的那一天。0.3.0 之前的版本见 [GitHub Releases 页面](https://github.com/version-fox/vfox-php/releases)。
 
-## Unreleased
+## 0.3.4（2026-11-17）
 
 - Linux 和 macOS：插件只传入所构建的 PHP 版本所接受的 configure 选项，覆盖 PHP 5.3 到 8.5。此前每个版本都会传入全部选项。configure 会忽略它不认识的选项，但会发出警告，因此 PHP 8 的构建会打印 PHP 8 已不再有的选项的警告，例如 `--enable-wddx`、`--with-xmlrpc` 和 `--with-mysql`。构建得到的扩展不变。
 - Linux 和 macOS：构建不再传入 configure 会发出警告的选项：PHP 7.4 起不再传入 `--with-pear`，PHP 8.4 起不再传入 `--with-mhash`。因此 PHP 7.4 及以后的版本默认不带 PEAR，不会安装 `pear` 和 `pecl`，除非设置 `PHP_WITH_PEAR`；PHP 8.4 及以后的版本默认没有 mhash 函数，除非设置 `PHP_WITH_MHASH`；`hash_*` 函数（PHP 始终内置）不受影响。`PHP_WITHOUT_PEAR` 仅对 PHP 5.3 到 7.3 有效，`PHP_WITH_PEAR` 仅对 PHP 7.4 及以后的版本有效，`PHP_WITH_MHASH` 仅对 PHP 8.4 及以后的版本有效。

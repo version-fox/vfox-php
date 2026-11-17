@@ -4,7 +4,7 @@
 
 What each release changed. Dates are in UTC: the day each release was published on GitHub. The releases before 0.3.0 are on the [GitHub releases page](https://github.com/version-fox/vfox-php/releases).
 
-## Unreleased
+## 0.3.4 (2026-11-17)
 
 - Linux and macOS: the plugin passes only the configure options that the PHP version being built takes, from PHP 5.3 to 8.5. It used to pass every option to every version. configure ignores an option it does not know, but warns about it, so PHP 8 builds printed warnings for options that PHP 8 no longer has, such as `--enable-wddx`, `--with-xmlrpc` and `--with-mysql`. The extensions that a build gets do not change.
 - Linux and macOS: the build no longer passes the options that configure warns about: `--with-pear` from PHP 7.4 and `--with-mhash` from PHP 8.4. PHP 7.4 and later are built without PEAR unless `PHP_WITH_PEAR` is set, so `pear` and `pecl` are not installed by default. PHP 8.4 and later are built without the mhash functions unless `PHP_WITH_MHASH` is set; the `hash_*` functions, which PHP always builds, are not affected. `PHP_WITHOUT_PEAR` applies to PHP 5.3 to 7.3, `PHP_WITH_PEAR` to PHP 7.4 and later, and `PHP_WITH_MHASH` to PHP 8.4 and later.
