@@ -21,5 +21,5 @@
 //	go test -v -timeout 55m -run TestE2E ./linux
 //	go test -v -timeout 55m -run TestE2E ./windows
 //
-// The unit tests of common need no Docker: go test -short ./...
+// The unit tests need no Docker: go test -short ./... runs them, the Lua tests of tests/ too.
 package e2e

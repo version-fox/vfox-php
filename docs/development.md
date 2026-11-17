@@ -18,7 +18,7 @@ lib/releases.lua        the release lists: php.net on Linux and macOS, windows.p
 lib/constants.lua       the URLs of those lists
 lib/util.lua            version comparison and file helpers
 lib/php_build.lua       builds PHP and installs Composer on Linux and macOS
-tests/*_test.lua        offline hook and build tests, run with glua
+tests/*_test.lua        offline hook and build tests, run by `go test` in tests/e2e
 tests/e2e/              the container suites and the Go checks of the repository, see e2e.md
 Injection.lua           type hints for what vfox injects; never loaded
 .devcontainer/          the dev container
@@ -51,15 +51,12 @@ vfox loads `metadata.lua`, calls a hook when a command needs it, and puts `PLUGI
 
 ## Tests
 
-The offline tests run in the Test Plugin workflow. The Lua tests run on Ubuntu, and `php_build_brew_test.lua` runs on macOS against its Homebrew. You can run them the same way:
+`go test -short ./...` in `tests/e2e` runs every unit test: the Go checks, the documentation checks, and the Lua tests in `tests/*_test.lua`. Each Lua file is a subtest of `TestLua` in `tests/e2e/lua`, and runs in its own gopher-lua state, the interpreter that vfox runs the plugin with. A new `*_test.lua` file is picked up with no change to any code or workflow. The Test Plugin workflow runs the same command on Ubuntu and on macOS. On macOS, `php_build_brew_test.lua` checks the options against the Homebrew of that Mac, and on other systems it does nothing. You can run the tests the same way:
 
 ```shell
-go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/hooks_test.lua
-go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/windows_test.lua
-go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/post_install_test.lua
-go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/pre_uninstall_test.lua
-go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/detect_test.lua
-go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/php_build_test.lua
+cd tests/e2e
+go test -short -count=1 -v ./...                                # every unit test
+go test -short -count=1 -v -run 'TestLua/hooks_test.lua' ./lua  # one Lua file
 ```
 
 `hooks_test.lua` replaces the HTTP client, the JSON and HTML modules and the file functions, then checks what the hooks return, including the Windows release list with its NTS builds, and what `PreUse` picks among the installed names. `windows_test.lua` checks the Windows install: the runtime (the registry query, the download, the signature check of the installer, its exit codes, and the x86 record), the php.ini, the Composer installer and its sha384 check, and the quoting of paths that hold spaces. `post_install_test.lua` checks the Linux and macOS compile step: what it asks the build for, and the versions it refuses. `pre_uninstall_test.lua` checks the step that removes a PHP build. `php_build_test.lua` checks the build on a fake machine: the options of each PHP version, the macOS formulae and the OpenSSL that it picks, the Linux build dependencies and the packages that provide them, the build directory of an install path with spaces, the steps of a build and the removal of a failed one, and Composer. The fake machine answers the commands that check it, and records the commands that build PHP. `php_build_brew_test.lua` checks the options against the Homebrew of a Mac, and does nothing on other systems. `detect_test.lua` checks which PHP installs on the machine are found, how they are named, and which are left alone: shared system folders, shims, vfox's own installs, and a PHP that does not answer `php -v`. The container suites are described in [E2E tests](e2e.md).
@@ -74,7 +71,7 @@ lua-language-server --check . --checklevel=Warning
 cd tests/e2e
 gofmt -l .                                      # prints nothing when formatted
 go vet ./...
-go test -short ./...                            # unit tests, including the documentation checks
+go test -short ./...                            # unit tests: Go, the documentation checks and the Lua tests
 cd ../..
 actionlint                                      # the workflows (actionlint 1.7.12)
 license-eye header check                        # license headers (SkyWalking Eyes 0.9.0)

@@ -40,9 +40,6 @@ jobs:
       - name: Run go vet
         run: go vet ./...
         working-directory: tests/e2e
-      - name: Run unit tests
-        run: go test -short ./...
-        working-directory: tests/e2e
 
   lint-lua:
     if: github.repository == 'version-fox/vfox-php'
