@@ -4,7 +4,7 @@
 
 The end-to-end suites install PHP with vfox inside containers, and check what a user would check. They are Go tests in `tests/e2e`: `linux` and `windows` each run one container per PHP version, and `common` holds what the two share. The Linux suite runs one more container, for `8.3.12-zts`, the thread-safe build, which Windows does not have. In that container, `vfox use` of the line `8.3` must fail as not installed, so the line does not take the thread-safe build.
 
-The offline Lua tests and the Go tests of `bin/install` run in the Test Plugin workflow, described in [development](development.md).
+The offline Lua tests, including those of the build, run in the Test Plugin workflow, described in [development](development.md).
 
 ## Where they run
 
@@ -42,6 +42,8 @@ There is no dev container for Windows, because the Dev Containers specification 
 | `E2E_MAX_JOBS` | `2` | containers that run at once |
 | `E2E_RETRY_ATTEMPTS` | `3` | attempts for `vfox search`, with a backoff of 10 seconds per attempt |
 | `MAKEFLAGS` | `-j2` | build parallelism inside the Linux containers; a value set on the host is passed through |
+| `PHP_WITH_PEAR` | unset | PEAR (`pear` and `pecl`) for PHP 7.4 and later, as in `vfox install`; a value set on the host is passed through, and the runtime check then expects both to run |
+| `PHP_WITH_MHASH` | unset | the mhash functions for PHP 8.4 and later, as in `vfox install`; a value set on the host is passed through, and the runtime check then expects `mhash_count` to exist on every version |
 
 ## Linux
 
@@ -72,7 +74,7 @@ For each PHP version, in this order:
 2. **Unknown version:** `vfox install php@99.0.0` fails and names the version: `PHP version not found: 99.0.0`.
 3. **Install:** `vfox install` succeeds. On Linux, its output shows `Verifying checksum`, because PreInstall passes php.net's sha256. On Windows, the image has no Visual C++ runtime: before the install, no folder on the loader's search path holds `vcruntime140.dll`, and after it, `System32` does, because the plugin installed the runtime. The output of the install shows the helper that installs it.
 4. **Selection:** `vfox use -p` selects the version. On Linux, `php` resolves to `.vfox/sdks/php/bin/php` in the project, and `PHP_VERSION` matches the version asked for.
-5. **Runtime on Linux:** `php -v` starts with the release, `php -m` lists the modules that `bin/install` enables (`LinuxModules` in `tests/e2e/common/common.go`, including gmp and sodium, which the image installs), PCRE JIT is enabled (`not compiled in` in the spaced run, which passes `--without-pcre-jit`), `PHP_ZTS` is 1 in the `-zts` container and 0 in the others, gd reports JPEG support, `conf.d/php.ini` is there next to `bin/`, `composer -V` and `pear version` run, and `vfox list` shows the version.
+5. **Runtime on Linux:** `php -v` starts with the release, `php -m` lists the modules that the build enables (`LinuxModules` in `tests/e2e/common/common.go`, including gmp and sodium, which the image installs), PCRE JIT is enabled (`not compiled in` in the spaced run, which passes `--without-pcre-jit`), `PHP_ZTS` is 1 in the `-zts` container and 0 in the others, gd reports JPEG support, `conf.d/php.ini` is there next to `bin/`, `composer -V` runs; from PHP 7.4 on, `pear` and `pecl` are not installed unless `PHP_WITH_PEAR` is set, and then both run (before 7.4, `pear version` runs); the `mhash_count` function exists unless the PHP version is 8.4 or later and `PHP_WITH_MHASH` is not set; and `vfox list` shows the version.
 6. **Runtime on Windows:** the same banner check, with `PHP_ZTS` equal to 1 for the TS build, `openssl` loaded, the `php.ini` the plugin wrote as the one PHP loads, an absolute `extension_dir`, and `composer.bat` working. The suite runs with `VFOX_HOME` set to `C:\vfox home`, a path with a space, so the quoting of install paths is tested.
 7. **NTS on Windows:** `vfox install php@<version>-nts` in a project of its own, where `PHP_ZTS` is 0. The runtime is recorded by now, so the output of this install does not show the helper again.
 8. **Search:** `vfox search php` lists the version, with retries, since the list is fetched from the network.
@@ -90,5 +92,5 @@ docker run --rm -v "$PWD:/src" ghcr.io/google/addlicense:v1.2.0 -check -f .licen
 ## Known gaps
 
 - The Linux arm64 job and the Windows job run only in CI. The dev container covers Linux amd64, and the Windows suite needs a Windows host.
-- The macOS job installs PHP on the runner. The Test Plugin job checks `bin/install` against the runner's Homebrew, which Linux does not have.
+- The macOS job installs PHP on the runner. The Test Plugin job checks the build's options against the runner's Homebrew, which Linux does not have.
 - The suites test one vfox release, the one in the image, not `main`.

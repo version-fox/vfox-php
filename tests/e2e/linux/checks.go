@@ -17,6 +17,7 @@ package linux
 import (
 	"context"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/version-fox/vfox-php/tests/e2e/common"
@@ -96,10 +97,28 @@ func checkUse(s *session, spec string) string {
 	return version
 }
 
+// switchOn reports whether a build switch, such as PHP_WITH_PEAR, is set to a value that the
+// build reads as on: any value except an empty one and "no".
+func switchOn(name string) bool {
+	v := os.Getenv(name)
+	return v != "" && v != "no"
+}
+
+// phpAtLeast reports whether version, such as 8.5.12, is major.minor or later.
+func phpAtLeast(s *session, version string, major, minor int) bool {
+	s.t.Helper()
+	var vMajor, vMinor int
+	if _, err := fmt.Sscanf(version, "%d.%d", &vMajor, &vMinor); err != nil {
+		s.t.Fatalf("PHP version %q has no major.minor part: %v", version, err)
+	}
+	return vMajor > major || (vMajor == major && vMinor >= minor)
+}
+
 // checkRuntime checks the PHP that was selected: its banner, its modules, the PCRE
 // JIT row that phpinfo prints (pcreJIT is pcreJITEnabled or pcreJITNotCompiled),
-// the php.ini that bin/install leaves in the install, composer, pear, and what
-// vfox lists.
+// the php.ini that the build leaves in the install, composer, PEAR (from PHP 7.4 on,
+// only when PHP_WITH_PEAR asks for it), the mhash functions (from PHP 8.4 on, only when
+// PHP_WITH_MHASH asks for them), and what vfox lists.
 func checkRuntime(s *session, c common.Combo, version, pcreJIT string) {
 	s.t.Helper()
 
@@ -132,7 +151,7 @@ func checkRuntime(s *session, c common.Combo, version, pcreJIT string) {
 		s.t.Fatalf("gd reports no JPEG support: %q", jpeg)
 	}
 
-	// bin/install writes conf.d/php.ini into the install, next to bin/.
+	// The build writes conf.d/php.ini into the install, next to bin/.
 	s.ok(project() + `test -f "$(dirname "$(dirname "$(command -v php)")")/conf.d/php.ini"`)
 
 	composer := strings.TrimSpace(s.ok(project() + "command -v composer"))
@@ -143,10 +162,31 @@ func checkRuntime(s *session, c common.Combo, version, pcreJIT string) {
 		s.t.Fatalf("composer -V printed %q", out)
 	}
 
-	// pear and pecl are shell wrappers that name the install directory, so they
-	// only run when that name is quoted correctly.
-	if out := s.ok(project() + "pear version"); !strings.Contains(out, "PEAR Version") {
+	// PHP 7.4 deprecates --with-pear, so from 7.4 the build installs pear and pecl only
+	// when PHP_WITH_PEAR asks for them. Before 7.4 pear version runs: pear and pecl are
+	// shell wrappers that name the install directory, so they only run when that name is
+	// quoted correctly.
+	if phpAtLeast(s, version, 7, 4) {
+		for _, tool := range []string{"pear", "pecl"} {
+			path := `"$(dirname "$(command -v php)")/` + tool + `"`
+			if switchOn("PHP_WITH_PEAR") {
+				if out := s.ok(project() + path + " version"); !strings.Contains(out, "PEAR Version") {
+					s.t.Fatalf("%s version printed %q", tool, out)
+				}
+			} else {
+				s.ok(project() + "test ! -e " + path)
+			}
+		}
+	} else if out := s.ok(project() + "pear version"); !strings.Contains(out, "PEAR Version") {
 		s.t.Fatalf("pear version printed %q", out)
+	}
+
+	// PHP 8.4 warns that --with-mhash is deprecated, so from 8.4 the mhash functions are
+	// there only when PHP_WITH_MHASH asks for them. Before 8.4 they are always built.
+	wantMHash := !phpAtLeast(s, version, 8, 4) || switchOn("PHP_WITH_MHASH")
+	mhash := strings.TrimSpace(s.ok(project() + `php -r 'echo function_exists("mhash_count") ? "yes" : "no";'`))
+	if (mhash == "yes") != wantMHash {
+		s.t.Fatalf("mhash_count exists = %s for PHP %s, want %t", mhash, version, wantMHash)
 	}
 
 	listed := s.ok(project() + "vfox list php")

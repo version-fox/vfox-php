@@ -6,14 +6,14 @@ The plugin does one of two things, depending on the system: it compiles PHP from
 
 | System | Architectures | What vfox installs |
 | --- | --- | --- |
-| Linux | amd64 and arm64, both run in CI | the source release, compiled by `bin/install` |
-| macOS | the same source build; CI's macOS job runs on `macos-latest` | the source release, compiled by `bin/install` |
+| Linux | amd64 and arm64, both run in CI | the source release, compiled by the plugin |
+| macOS | the same source build; CI's macOS job runs on `macos-latest` | the source release, compiled by the plugin |
 | Windows | x64 (amd64) and x86 (386) | the prebuilt TS or NTS build from windows.php.net |
 | Windows on ARM | none | nothing: PHP publishes no ARM64 build, and the plugin reports `No PHP releases found for windows/arm64` |
 
 ## Linux
 
-`bin/install` compiles PHP. It needs a compiler and the development libraries below. This is the list the E2E image installs on Ubuntu 26.04:
+The plugin compiles PHP. It needs a compiler and the development libraries below. This is the list the E2E image installs on Ubuntu 26.04:
 
 ```shell
 sudo apt-get install --assume-yes autoconf bison build-essential ca-certificates curl gettext git \
@@ -22,7 +22,7 @@ sudo apt-get install --assume-yes autoconf bison build-essential ca-certificates
     re2c zip zlib1g-dev libgmp-dev libsodium-dev
 ```
 
-Before it compiles anything, `bin/install` checks the build dependencies on the system: the compiler, `make`, `autoconf`, `pkg-config` and `curl`, and the libraries that the configure options use. A missing one stops the install at once. The message lists each missing item with the Debian or Ubuntu package that provides it:
+Before it compiles anything, the plugin checks the build dependencies on the system: the compiler, `make`, `autoconf`, `pkg-config` and `curl`, and the libraries that the configure options use. A missing one stops the install at once. The message lists each missing item with the Debian or Ubuntu package that provides it:
 
 ```text
 ERROR: PHP cannot be built, because these build dependencies are missing. Nothing was compiled:
@@ -33,11 +33,11 @@ Install them and run vfox install again. The packages are named for Debian and U
 
 `bison` and `re2c` are not checked. The release tarball ships the generated parser and scanner, so only a git checkout needs them. The platform requirements, for OpenSSL, readline, gettext and xsl, are checked only when `PHP_CONFIGURE_OPTIONS` is not set, because the platform options are used only then.
 
-An install path may hold a space, such as a `VFOX_HOME` under `/home/John Doe`. PHP's `make install` and the `pear` and `pecl` scripts do not quote their paths, so PHP cannot be built or installed under such a path. `bin/install` therefore builds PHP in a directory without spaces, and the install path becomes a link to it. The build directory is `builds/<checksum>` under the first of these that is set and has no space: `$XDG_DATA_HOME/vfox-php`, then `~/.local/share/vfox-php`, then `/var/tmp/vfox-php-<uid>`. The checksum comes from the install path, so two `VFOX_HOME`s never share one. `vfox uninstall` removes the link, and the build directory with it. That needs vfox 0.4.0 or later, which passes the install path to the `PreUninstall` hook. Older vfox has no such hook, so remove the build directory by hand.
+An install path may hold a space, such as a `VFOX_HOME` under `/home/John Doe`. PHP's `make install` does not quote its paths, so PHP cannot be built or installed under such a path. The plugin therefore builds PHP in a directory without spaces, and the install path becomes a link to it. The build directory is `builds/<checksum>` under the first of these that is set and has no space: `$XDG_DATA_HOME/vfox-php`, then `~/.local/share/vfox-php`, then `/var/tmp/vfox-php-<uid>`. The checksum comes from the install path, so two `VFOX_HOME`s never share one. `vfox uninstall` removes the link, and the build directory with it. That needs vfox 0.4.0 or later, which passes the install path to the `PreUninstall` hook. Older vfox has no such hook, so remove the build directory by hand.
 
 JPEG and PNG support come from the system libgd (`libgd-dev`), because the build uses `--with-external-gd`. The E2E suite checks that gd reports JPEG support.
 
-gmp and sodium are optional. `bin/install` enables each one when its library and its header are installed, and checks both: the library with `ldconfig`, the header with the compiler. Without them, the build prints `gmp not found, not including in installation` (or the sodium line) and carries on. The `libgmp-dev` and `libsodium-dev` packages in the list above provide them.
+gmp and sodium are optional. The plugin enables each one when its library and its header are installed, and checks both: the library with `ldconfig`, the header with the compiler. Without them, the build prints `gmp not found, not including in installation` (or the sodium line) and carries on. The `libgmp-dev` and `libsodium-dev` packages in the list above provide them.
 
 ## macOS
 
@@ -47,7 +47,7 @@ As on Linux, an install path with a space is built in a directory without spaces
 brew install autoconf automake bison freetype gd gettext icu4c krb5 libedit libiconv libjpeg libpng libxml2 libxslt libzip openssl@3 pkg-config re2c zlib
 ```
 
-Two optional formulae add extensions when they are installed: `brew install gmp libsodium`. `bin/install` passes `--with-gmp` and `--with-sodium` for them. When one is missing, the build prints `gmp not found, not including in installation` (or the sodium line) and carries on. ImageMagick does not add an extension: `bin/install` has no option for it.
+Two optional formulae add extensions when they are installed: `brew install gmp libsodium`. The plugin passes `--with-gmp` and `--with-sodium` for them. When one is missing, the build prints `gmp not found, not including in installation` (or the sodium line) and carries on. ImageMagick does not add an extension: the plugin has no option for it.
 
 ### OpenSSL
 

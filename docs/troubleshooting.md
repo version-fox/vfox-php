@@ -2,7 +2,7 @@
 
 [中文](zh-CN/troubleshooting.md) | [English](troubleshooting.md)
 
-The messages below come from the plugin, from `bin/install`, or from vfox when the plugin fails. Each entry gives what the message means and what to do.
+The messages below come from the plugin, from its build, or from vfox when the plugin fails. Each entry gives what the message means and what to do.
 
 ## `vfox requires hook support`
 
@@ -39,7 +39,7 @@ The install path is a link, but to a directory that the plugin did not make, so 
 
 ### `ERROR: PHP cannot be built, because these build dependencies are missing`
 
-`bin/install` found tools or libraries that the build needs and the system does not have. It stopped before it moved the source or compiled anything. The lines under the message name each missing item, and the `sudo apt-get install` line names the Debian or Ubuntu packages that provide them. Install those packages and run `vfox install` again. On other systems, install the equivalent packages. The full list is in [platforms](platforms.md#linux).
+The plugin found tools or libraries that the build needs and the system does not have. It stopped before it moved the source or compiled anything. The lines under the message name each missing item, and the `sudo apt-get install` line names the Debian or Ubuntu packages that provide them. Install those packages and run `vfox install` again. On other systems, install the equivalent packages. The full list is in [platforms](platforms.md#linux).
 
 ### `Compilation Failure.`
 
@@ -47,7 +47,7 @@ The compile stopped, and the output above that message says where. The build che
 
 ### `Installer corrupt`
 
-The Composer installer did not match the sha384 that Composer publishes, so `bin/install` removed it and stopped. Run the install again. If the same thing happens each time, something between you and getcomposer.org is changing the file, such as a proxy.
+The Composer installer did not match the sha384 that Composer publishes, so the plugin removed it and stopped. Run the install again. If the same thing happens each time, something between you and getcomposer.org is changing the file, such as a proxy.
 
 ## macOS
 

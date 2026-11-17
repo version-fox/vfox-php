@@ -17,9 +17,8 @@ lib/detect_php.lua      在哪里查找 PHP 安装，以及如何为它们命名
 lib/releases.lua        发布列表：Linux 和 macOS 来自 php.net，Windows 来自 windows.php.net
 lib/constants.lua       那些列表的 URL
 lib/util.lua            版本比较和文件辅助函数
-bin/install             在 Linux 和 macOS 上编译 PHP、安装 Composer
-tests/*_test.lua        离线的 hook 测试，用 glua 运行
-tests/e2e/install/      bin/install 的离线测试：用 Go 编写，宿主机的命令被替换
+lib/php_build.lua       在 Linux 和 macOS 上编译 PHP、安装 Composer
+tests/*_test.lua        离线的 hook 和构建测试，由 tests/e2e 中的 `go test` 运行
 tests/e2e/              容器端到端套件，以及仓库的 Go 检查，见 e2e.md
 Injection.lua           vfox 注入对象的类型提示，从不加载
 .devcontainer/          开发容器
@@ -35,7 +34,7 @@ vfox 会加载 `metadata.lua`，在某个命令需要时调用对应的 hook，�
 | --- | --- | --- |
 | `vfox search php` | `Available` | 列出发布版本，来自 `lib/releases.lua` |
 | `vfox install php@8.4` | `PreInstall` | 解析版本，返回 URL、安装名，以及 Linux 和 macOS 上的 sha256 |
-| （下载之后） | `PostInstall` | Linux 和 macOS：运行 `bin/install`；Windows：注册表未记录运行库时安装它，再写入 `php.ini` 并安装 Composer |
+| （下载之后） | `PostInstall` | Linux 和 macOS：由 `lib/php_build.lua` 编译 PHP；Windows：注册表未记录运行库时安装它，再写入 `php.ini` 并安装 Composer |
 | `vfox use php@8.4` | `PreUse` | 返回版本对应的已安装名字；版本系列取默认类型的构建，来自 `hooks/pre_use.lua` |
 | `vfox use php@8.4` | `EnvKeys` | 把 `PATH` 设为安装目录下的 `bin`；Windows 上设为安装目录本身 |
 | `vfox info php` | 无 | vfox 打印 `metadata.lua` 中的提示信息，其中有指向 README 的链接 |
@@ -44,7 +43,7 @@ vfox 会加载 `metadata.lua`，在某个命令需要时调用对应的 hook，�
 ## 那些要花时间才能找到的约定
 
 - `PreInstall` 返回 `version`（它会成为安装的名字）和 `url`。在 Linux 和 macOS 上，它还返回 `sha256`，vfox 用它校验下载的文件。Windows 的构建这里没有校验和，所以 vfox 没有可以校验的内容。
-- `PostInstall` 读取 `ctx.sdkInfo['php']` 中的 `path` 和 `version`。`CompileInstallPHP` 接受 `x.y.z` 形式的发布版本，名字上的 `-zts` 表示线程安全构建（即 `bin/install --zts`），其他形式都会失败。
+- `PostInstall` 读取 `ctx.sdkInfo['php']` 中的 `path` 和 `version`。`CompileInstallPHP` 接受 `x.y.z` 形式的发布版本，名字上的 `-zts` 表示线程安全构建（即 `php_build.install` 的 `zts` 参数），其他形式都会失败。
 - 未知版本会被按名字拒绝：`PHP version not found: <version>`。端到端套件会检查这条消息。
 - 某个平台没有任何构建时，`lib/releases.lua` 会报 `No PHP releases found for <os>/<arch>`，Windows on ARM 就是这样报错的。
 - Windows 列表中每个发布版本都有 TS 和 NTS 两项。TS 排在前面，所以版本系列选的是 TS，`latest` 也是 TS。
@@ -52,18 +51,15 @@ vfox 会加载 `metadata.lua`，在某个命令需要时调用对应的 hook，�
 
 ## 测试
 
-离线测试在 Test Plugin 工作流中运行：Lua 测试在 Ubuntu 上运行，`bin/install` 的 Go 测试在 Ubuntu 和 macOS 上都运行。你也可以在本地用同样的方式运行：
+在 `tests/e2e` 中运行 `go test -short ./...`，即可运行全部单元测试：Go 检查、文档检查，以及 `tests/*_test.lua` 中的 Lua 测试。每个 Lua 文件是 `tests/e2e/lua` 中 `TestLua` 的一个子测试，在独立的 gopher-lua 解释器中运行，这正是 vfox 运行插件的解释器。新增 `*_test.lua` 文件无需改动任何代码或工作流。Test Plugin 工作流在 Ubuntu 和 macOS 上运行同一条命令。在 macOS 上，`php_build_brew_test.lua` 会对照这台 Mac 的 Homebrew 检查选项；在其他系统上它什么也不做。你也可以在本地用同样的方式运行：
 
 ```shell
-go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/hooks_test.lua
-go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/windows_test.lua
-go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/post_install_test.lua
-go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/pre_uninstall_test.lua
-go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/detect_test.lua
-go test -C tests/e2e -count=1 -v ./install/
+cd tests/e2e
+go test -short -count=1 -v ./...                                # 全部单元测试
+go test -short -count=1 -v -run 'TestLua/hooks_test.lua' ./lua  # 单个 Lua 文件
 ```
 
-`hooks_test.lua` 会替换 HTTP 客户端、JSON 和 HTML 模块以及文件函数，然后检查 hook 的返回值，包括带 NTS 构建的 Windows 发布列表，以及 `PreUse` 在已安装名字中的选择。`windows_test.lua` 检查 Windows 上的安装：运行库（注册表查询、下载、安装器的签名核对、退出码以及 x86 的记录）、php.ini、Composer 安装器及其 sha384 校验，以及带空格路径的引号。`post_install_test.lua` 检查 Linux 和 macOS 的编译步骤，`pre_uninstall_test.lua` 检查删除 PHP 构建的步骤。`tests/e2e/install` 在 bash 中运行 `bin/install`，宿主机的命令都被替换：`uname`、`brew`、`ldconfig`、`cc`、`locate`（只记录调用，因为 bin/install 绝不能调用它）、`make`、`autoconf`、`pkg-config` 和 `curl` 是指向测试二进制的符号链接，测试二进制按调用时的命令名作出回应；假的 PHP 源码树里的 `buildconf` 和 `configure` 也是这样。它检查 macOS 的选项及选中的 OpenSSL、Linux 的选项（包括 PCRE JIT、gmp 和 sodium）、各 PHP 版本所接受的选项、Linux 的构建依赖（缺少任何一项，安装都会在编译前停止，提示中会列出对应的软件包），以及带空格安装路径的构建目录；构建失败或卸载 PHP 时，这个目录会被删除。在 macOS 上，`TestHomebrewOfThisMac` 还会把选项与这台 Mac 的 Homebrew 对照。`detect_test.lua` 检查能找到机器上哪些 PHP 安装、如何为它们命名，以及哪些不纳入：共享的系统目录、shims、vfox 自己的安装，以及不回应 `php -v` 的 PHP。容器套件见 [E2E 测试](e2e.md)。
+`hooks_test.lua` 会替换 HTTP 客户端、JSON 和 HTML 模块以及文件函数，然后检查 hook 的返回值，包括带 NTS 构建的 Windows 发布列表，以及 `PreUse` 在已安装名字中的选择。`windows_test.lua` 检查 Windows 上的安装：运行库（注册表查询、下载、安装器的签名核对、退出码以及 x86 的记录）、php.ini、Composer 安装器及其 sha384 校验，以及带空格路径的引号。`post_install_test.lua` 检查 Linux 和 macOS 的编译步骤：向构建要求什么，以及拒绝哪些版本。`pre_uninstall_test.lua` 检查删除 PHP 构建的步骤。`php_build_test.lua` 在假机器上检查构建（`lib/php_build.lua`）：各 PHP 版本的选项、macOS 的 formula 及选中的 OpenSSL、Linux 的构建依赖及提供它们的软件包、带空格安装路径的构建目录、构建的各个步骤和失败后的清理，以及 Composer。假机器回答检查机器的命令，并记录编译 PHP 的命令。`php_build_brew_test.lua` 在 Mac 上把选项与 Homebrew 对照，在其他系统上什么也不做。`detect_test.lua` 检查能找到机器上哪些 PHP 安装、如何为它们命名，以及哪些不纳入：共享的系统目录、shims、vfox 自己的安装，以及不回应 `php -v` 的 PHP。容器套件见 [E2E 测试](e2e.md)。
 
 ## 本地检查
 
@@ -75,7 +71,7 @@ lua-language-server --check . --checklevel=Warning
 cd tests/e2e
 gofmt -l .                                      # 没有输出即为格式正确
 go vet ./...
-go test -short ./...                            # 单元测试，包括文档检查
+go test -short ./...                            # 单元测试：Go、文档检查和 Lua 测试
 cd ../..
 actionlint                                      # 工作流（actionlint 1.7.12）
 license-eye header check                        # license 头（SkyWalking Eyes 0.9.0）

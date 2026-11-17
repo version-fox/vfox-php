@@ -2,7 +2,7 @@
 
 [中文](troubleshooting.md) | [English](../troubleshooting.md)
 
-下面的提示来自插件、`bin/install`，或者插件失败时的 vfox。每一条都说明了它的含义和对应的处理方法。
+下面的提示来自插件、插件的构建，或者插件失败时的 vfox。每一条都说明了它的含义和对应的处理方法。
 
 ## `vfox requires hook support`
 
@@ -39,7 +39,7 @@ PHP 没有为这个架构发布构建。在 Windows on ARM 上没有可以安装
 
 ### `ERROR: PHP cannot be built, because these build dependencies are missing`
 
-`bin/install` 发现构建需要的一些工具或库在系统上缺失。它在移动源码或编译之前就停止了。消息下方的各行列出每个缺失的项目，`sudo apt-get install` 那一行给出提供它们的 Debian 或 Ubuntu 软件包。安装这些软件包后，重新运行 `vfox install`。在其他系统上，请安装对应的软件包。完整列表见[平台](platforms.md#linux)。
+插件发现构建需要的一些工具或库在系统上缺失。它在移动源码或编译之前就停止了。消息下方的各行列出每个缺失的项目，`sudo apt-get install` 那一行给出提供它们的 Debian 或 Ubuntu 软件包。安装这些软件包后，重新运行 `vfox install`。在其他系统上，请安装对应的软件包。完整列表见[平台](platforms.md#linux)。
 
 ### `Compilation Failure.`
 
@@ -47,7 +47,7 @@ PHP 没有为这个架构发布构建。在 Windows on ARM 上没有可以安装
 
 ### `Installer corrupt`
 
-Composer 的安装器与 Composer 公布的 sha384 不一致，所以 `bin/install` 删除了它并停止。请重新安装。如果每次都这样，说明你和 getcomposer.org 之间有东西（比如代理）在改动文件。
+Composer 的安装器与 Composer 公布的 sha384 不一致，所以插件删除了它并停止。请重新安装。如果每次都这样，说明你和 getcomposer.org 之间有东西（比如代理）在改动文件。
 
 ## macOS
 

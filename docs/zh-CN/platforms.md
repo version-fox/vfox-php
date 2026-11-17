@@ -6,14 +6,14 @@
 
 | 系统 | 架构 | vfox 安装的内容 |
 | --- | --- | --- |
-| Linux | amd64 和 arm64，CI 两者都运行 | 源码发布包，由 `bin/install` 编译 |
-| macOS | 同一份源码构建；CI 的 macOS 任务运行在 `macos-latest` 上 | 源码发布包，由 `bin/install` 编译 |
+| Linux | amd64 和 arm64，CI 两者都运行 | 源码发布包，由插件编译 |
+| macOS | 同一份源码构建；CI 的 macOS 任务运行在 `macos-latest` 上 | 源码发布包，由插件编译 |
 | Windows | x64（amd64）和 x86（386） | windows.php.net 上预编译的 TS 或 NTS 构建 |
 | Windows on ARM | 无 | 什么都不装：PHP 没有发布 ARM64 构建，插件会报 `No PHP releases found for windows/arm64` |
 
 ## Linux
 
-`bin/install` 编译 PHP，需要一个编译器和下面这些开发库。这是 E2E 镜像在 Ubuntu 26.04 上安装的列表：
+插件编译 PHP，需要一个编译器和下面这些开发库。这是 E2E 镜像在 Ubuntu 26.04 上安装的列表：
 
 ```shell
 sudo apt-get install --assume-yes autoconf bison build-essential ca-certificates curl gettext git \
@@ -22,7 +22,7 @@ sudo apt-get install --assume-yes autoconf bison build-essential ca-certificates
     re2c zip zlib1g-dev libgmp-dev libsodium-dev
 ```
 
-编译之前，`bin/install` 会先检查系统上的构建依赖：编译器、`make`、`autoconf`、`pkg-config` 和 `curl`，以及 configure 选项所用的库。缺少任何一项，安装会立即停止。消息会列出每个缺失的项目，以及提供它的 Debian 或 Ubuntu 软件包：
+编译之前，插件会先检查系统上的构建依赖：编译器、`make`、`autoconf`、`pkg-config` 和 `curl`，以及 configure 选项所用的库。缺少任何一项，安装会立即停止。消息会列出每个缺失的项目，以及提供它的 Debian 或 Ubuntu 软件包：
 
 ```text
 ERROR: PHP cannot be built, because these build dependencies are missing. Nothing was compiled:
@@ -33,11 +33,11 @@ Install them and run vfox install again. The packages are named for Debian and U
 
 不检查 `bison` 和 `re2c`：发布包里已经带有生成好的语法分析器和扫描器，只有从 git 检出的源码才需要它们。OpenSSL、readline、gettext 和 xsl 这几项平台依赖只在没有设置 `PHP_CONFIGURE_OPTIONS` 时才检查，因为只有那时才会用到平台选项。
 
-安装路径可以含有空格，例如 `/home/John Doe` 下的 `VFOX_HOME`。PHP 的 `make install` 以及 `pear`、`pecl` 脚本都不会给路径加引号，所以 PHP 无法直接构建或安装到这样的路径。因此 `bin/install` 会在不含空格的目录里构建 PHP，安装路径则链接到该目录。构建目录是 `builds/<校验和>`，位于下列基础目录中第一个已设置且不含空格的那个之下：`$XDG_DATA_HOME/vfox-php`，然后是 `~/.local/share/vfox-php`，最后是 `/var/tmp/vfox-php-<uid>`。校验和由安装路径算出，所以两个 `VFOX_HOME` 不会共用同一个目录。`vfox uninstall` 会删除链接，连同构建目录一起删除。这需要 vfox 0.4.0 或更新版本，它把安装路径传给 `PreUninstall` 钩子。更旧的 vfox 没有这个钩子，请手动删除构建目录。
+安装路径可以含有空格，例如 `/home/John Doe` 下的 `VFOX_HOME`。PHP 的 `make install` 不会给路径加引号，所以 PHP 无法直接构建或安装到这样的路径。因此插件会在不含空格的目录里构建 PHP，安装路径则链接到该目录。构建目录是 `builds/<校验和>`，位于下列基础目录中第一个已设置且不含空格的那个之下：`$XDG_DATA_HOME/vfox-php`，然后是 `~/.local/share/vfox-php`，最后是 `/var/tmp/vfox-php-<uid>`。校验和由安装路径算出，所以两个 `VFOX_HOME` 不会共用同一个目录。`vfox uninstall` 会删除链接，连同构建目录一起删除。这需要 vfox 0.4.0 或更新版本，它把安装路径传给 `PreUninstall` 钩子。更旧的 vfox 没有这个钩子，请手动删除构建目录。
 
 JPEG 和 PNG 的支持来自系统的 libgd（`libgd-dev`），因为构建使用 `--with-external-gd`。E2E 套件会检查 gd 是否报告 JPEG 支持。
 
-gmp 和 sodium 是可选的。`bin/install` 在对应的库和头文件都已安装时启用它：用 `ldconfig` 检查库，用编译器检查头文件，两者都要满足。缺少时，构建会打印 `gmp not found, not including in installation`（或 sodium 的那一行）并继续。上面列表中的 `libgmp-dev` 和 `libsodium-dev` 提供了这两者。
+gmp 和 sodium 是可选的。插件在对应的库和头文件都已安装时启用它：用 `ldconfig` 检查库，用编译器检查头文件，两者都要满足。缺少时，构建会打印 `gmp not found, not including in installation`（或 sodium 的那一行）并继续。上面列表中的 `libgmp-dev` 和 `libsodium-dev` 提供了这两者。
 
 ## macOS
 
@@ -47,7 +47,7 @@ gmp 和 sodium 是可选的。`bin/install` 在对应的库和头文件都已安
 brew install autoconf automake bison freetype gd gettext icu4c krb5 libedit libiconv libjpeg libpng libxml2 libxslt libzip openssl@3 pkg-config re2c zlib
 ```
 
-另外两个可选的 formula 会在安装后启用对应的扩展：`brew install gmp libsodium`。`bin/install` 找到它们时会传入 `--with-gmp` 和 `--with-sodium`。缺少时，构建会打印 `gmp not found, not including in installation`（或 sodium 的那一行）并继续。ImageMagick 不会启用任何扩展：`bin/install` 没有为它设置选项。
+另外两个可选的 formula 会在安装后启用对应的扩展：`brew install gmp libsodium`。插件找到它们时会传入 `--with-gmp` 和 `--with-sodium`。缺少时，构建会打印 `gmp not found, not including in installation`（或 sodium 的那一行）并继续。ImageMagick 不会启用任何扩展：插件没有为它设置选项。
 
 ### OpenSSL
 
