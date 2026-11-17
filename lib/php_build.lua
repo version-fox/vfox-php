@@ -320,8 +320,8 @@ local function darwin_platform_options(version)
 end
 
 -- The options that every build takes, for the install path that the build is made into.
--- --with-mhash builds the mhash functions, which PHP 8.1 deprecates in favour of the hash
--- functions, so it is passed only before 8.1. It keeps its place in the list.
+-- --with-mhash builds the mhash functions. PHP 8.4 warns that it is deprecated, so from 8.4 it
+-- is passed only when PHP_WITH_MHASH asks for it. It keeps its place in the list.
 local function global_options(prefix, version)
     local options = {
         "--prefix=" .. prefix,
@@ -348,7 +348,7 @@ local function global_options(prefix, version)
         "--with-fpm-group=www-data",
         "--with-fpm-user=www-data",
     }
-    if php_build.before(version, 8, 1) then
+    if php_build.before(version, 8, 4) or switch("PHP_WITH_MHASH") ~= "no" then
         table.insert(options, "--with-mhash")
     end
     extend(options, {

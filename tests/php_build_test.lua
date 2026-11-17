@@ -349,6 +349,22 @@ local LINUX_EXPECTED = {
         "--with-external-gd",
         "--with-zip",
         "--with-sodium",
+        "--with-mhash",
+    },
+    ["8.3.36"] = {
+        "--enable-mbregex",
+        "--enable-gd",
+        "--with-external-gd",
+        "--with-zip",
+        "--with-sodium",
+        "--with-mhash",
+    },
+    ["8.4.27"] = {
+        "--enable-mbregex",
+        "--enable-gd",
+        "--with-external-gd",
+        "--with-zip",
+        "--with-sodium",
     },
     ["8.5.12"] = {
         "--enable-mbregex",
@@ -532,9 +548,10 @@ assert(set["--enable-bcmath"] and set["--with-zlib"], "the global options stay")
 assert(#H.commands == 0, "the libraries are not probed when the options are given")
 print("PHP_CONFIGURE_OPTIONS replaces the platform options")
 
--- 6. PEAR, PCRE JIT and ZTS. PEAR is deprecated from PHP 7.4: the default build of PHP 7.4 and
--- later has none, and PHP_WITH_PEAR asks for it. PHP 5.x has no --without-pcre-jit, and PHP 5.x
--- and 7.x take --enable-maintainer-zts.
+-- 6. PEAR, mhash, PCRE JIT and ZTS. PEAR is deprecated from PHP 7.4: the default build of PHP 7.4
+-- and later has none, and PHP_WITH_PEAR asks for it. mhash is deprecated from PHP 8.4, and
+-- PHP_WITH_MHASH asks for it there. PHP 5.x has no --without-pcre-jit, and PHP 5.x and 7.x take
+-- --enable-maintainer-zts.
 fresh({ env = { HOME = "/home/user", PHP_WITHOUT_PEAR = "yes", PHP_WITHOUT_PCRE_JIT = "yes" } })
 set = configure_of("7.3.33")
 assert(set["--without-pear"] and not set["--with-pear"], "PHP_WITHOUT_PEAR builds PHP 7.3 without PEAR")
@@ -564,13 +581,41 @@ assert(set["--with-pear"] and not set["--without-pear"], "PHP_WITH_PEAR decides 
 fresh()
 set = configure_of("8.5.12")
 assert(not set["--with-pear"] and not set["--without-pear"], "the default build of PHP 8.5 has no PEAR option")
-assert(not set["--with-mhash"], "PHP 8.5 takes no --with-mhash")
+assert(not set["--with-mhash"], "the default build of PHP 8.5 has no mhash")
 local _, pear73 = configure_of("7.3.33")
 assert(pear73[#pear73] == "--with-pear", "the default build of PHP 7.3 is built with PEAR: " .. pear73[#pear73])
-local set81 = configure_of("8.1.34")
-assert(not set81["--with-mhash"], "PHP 8.1 takes no --with-mhash")
 local set80 = configure_of("8.0.30")
 assert(set80["--with-mhash"] and not set80["--with-pear"], "PHP 8.0 takes --with-mhash, and no PEAR option")
+-- mhash is built until PHP 8.3, and from PHP 8.4 PHP_WITH_MHASH asks for it. The flag keeps its
+-- place in the list, so the arguments match the old ones when it is set.
+set = configure_of("8.1.34")
+assert(set["--with-mhash"], "PHP 8.1 is built with mhash")
+set = configure_of("8.3.36")
+assert(set["--with-mhash"], "PHP 8.3 is built with mhash")
+set = configure_of("8.4.27")
+assert(not set["--with-mhash"], "PHP 8.4 is built without mhash")
+fresh({ env = { HOME = "/home/user", PHP_WITH_MHASH = "yes" } })
+local _, with_mhash = configure_of("8.5.12")
+local at
+for i, arg in ipairs(with_mhash) do
+    if arg == "--with-mhash" then
+        assert(at == nil, "--with-mhash is passed once")
+        at = i
+    end
+end
+assert(at ~= nil, "PHP_WITH_MHASH builds PHP 8.5 with mhash")
+assert(
+    with_mhash[at - 1] == "--with-fpm-user=www-data" and with_mhash[at + 1] == "--with-mysqli=mysqlnd",
+    "--with-mhash keeps its place in the list"
+)
+set = configure_of("8.3.36")
+assert(set["--with-mhash"], "PHP 8.3 is built with mhash when PHP_WITH_MHASH is set too")
+fresh({ env = { HOME = "/home/user", PHP_WITH_MHASH = "no" } })
+set = configure_of("8.5.12")
+assert(not set["--with-mhash"], "PHP_WITH_MHASH=no builds PHP 8.5 without mhash")
+fresh({ env = { HOME = "/home/user", PHP_WITH_MHASH = "yes", PHP_WITH_PEAR = "yes" } })
+set = configure_of("8.5.12")
+assert(set["--with-mhash"] and set["--with-pear"], "both switches build PHP 8.5 with mhash and PEAR")
 local _, nts = configure_of("8.4.5")
 assert(not mentions(nts, "zts"), "an NTS build takes no ZTS option")
 local _, zts8 = configure_of("8.4.5", true)
@@ -579,7 +624,7 @@ local _, zts7 = configure_of("7.4.33", true)
 assert(zts7[#zts7] == "--enable-maintainer-zts", "PHP 7.x takes --enable-maintainer-zts")
 local _, zts5 = configure_of("5.6.40", true)
 assert(zts5[#zts5] == "--enable-maintainer-zts", "PHP 5.x takes --enable-maintainer-zts")
-print("PEAR, PCRE JIT and ZTS follow the switches and the version")
+print("PEAR, mhash, PCRE JIT and ZTS follow the switches and the version")
 
 -- 7. Libraries that are missing are reported, and their options are left out.
 fresh({ libraries = "libsodium.so.23 => /lib/libsodium.so.23\n", headers = set_of({ "sodium.h" }) })

@@ -9,6 +9,7 @@ On Linux and macOS, the plugin compiles PHP when `vfox install` runs. It reads t
 | `PHP_CONFIGURE_OPTIONS` | Replaces the platform options, the ones for the system libraries (OpenSSL, curl, readline and so on). The global options are still added after them. |
 | `PHP_WITHOUT_PEAR` | PHP 5.3 to 7.3 only. Any value other than `no` builds without PEAR (`--without-pear`). Unset or `no` builds with PEAR (`--with-pear`). |
 | `PHP_WITH_PEAR` | PHP 7.4 and later only. Any value other than `no` builds with PEAR (`--with-pear`), which installs `pear` and `pecl`. PHP 7.4 deprecates `--with-pear`, so configure prints a warning for it. Unset or `no` builds without PEAR. |
+| `PHP_WITH_MHASH` | PHP 8.4 and later only. Any value other than `no` builds with the mhash functions (`--with-mhash`). PHP 8.4 deprecates `--with-mhash`, so configure prints a warning for it. Unset or `no` builds without them; the `hash_*` functions are there either way. Before PHP 8.4 the mhash functions are always built, so the variable has no effect there. |
 | `PHP_WITHOUT_PCRE_JIT` | Any value other than `no` builds without PCRE JIT (`--without-pcre-jit`). PHP 5.x has no such option, so the variable has no effect there. Unset or `no` keeps PHP's default, PCRE JIT on. |
 | `MAKEFLAGS` | Passed to `make`, which compiles PHP, for example `MAKEFLAGS=-j8`. |
 

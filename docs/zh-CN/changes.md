@@ -7,7 +7,7 @@
 ## Unreleased
 
 - Linux 和 macOS：插件只传入所构建的 PHP 版本所接受的 configure 选项，覆盖 PHP 5.3 到 8.5。此前每个版本都会传入全部选项。configure 会忽略它不认识的选项，但会发出警告，因此 PHP 8 的构建会打印 PHP 8 已不再有的选项的警告，例如 `--enable-wddx`、`--with-xmlrpc` 和 `--with-mysql`。构建得到的扩展不变。
-- Linux 和 macOS：构建不再传入 PHP 已弃用的选项：PHP 7.4 起不再传入 `--with-pear`，PHP 8.1 起不再传入 `--with-mhash`。因此 PHP 7.4 及以后的版本默认不带 PEAR，不会安装 `pear` 和 `pecl`，除非设置 `PHP_WITH_PEAR`；PHP 8.1 及以后的版本没有 mhash 函数，可改用 `hash_*` 函数（PHP 始终内置）。`PHP_WITHOUT_PEAR` 仅对 PHP 5.3 到 7.3 有效，`PHP_WITH_PEAR` 仅对 PHP 7.4 及以后的版本有效。
+- Linux 和 macOS：构建不再传入 configure 会发出警告的选项：PHP 7.4 起不再传入 `--with-pear`，PHP 8.4 起不再传入 `--with-mhash`。因此 PHP 7.4 及以后的版本默认不带 PEAR，不会安装 `pear` 和 `pecl`，除非设置 `PHP_WITH_PEAR`；PHP 8.4 及以后的版本默认没有 mhash 函数，除非设置 `PHP_WITH_MHASH`；`hash_*` 函数（PHP 始终内置）不受影响。`PHP_WITHOUT_PEAR` 仅对 PHP 5.3 到 7.3 有效，`PHP_WITH_PEAR` 仅对 PHP 7.4 及以后的版本有效，`PHP_WITH_MHASH` 仅对 PHP 8.4 及以后的版本有效。
 - Linux 和 macOS：构建 PHP 的代码改用 Lua 编写（`lib/php_build.lua`），shell 脚本 `bin/install` 已删除。选项、依赖检查、构建和 Composer 的行为与之前一致。原来 `bin/install` 的 Go 测试改为 Lua 测试：`tests/php_build_test.lua` 在假机器上运行，`tests/php_build_brew_test.lua` 在 macOS 上对照 Homebrew 检查选项。
 - macOS：PHP 7.4 及以后的版本改为传入不带目录的 `--with-libedit`，因为 configure 通过 pkg-config 查找 libedit，而 PHP 7.4 到 8.5 对带目录的参数都会发出警告。PHP 5.3 到 7.3 仍然传入目录，因为 configure 要在那个目录里查找 libedit。
 - Windows：Visual C++ 运行库安装器的退出码改为从安装过程写出的文件中读取，因为 vfox 的 `os.execute` 只报告成功或失败。要求重启的安装（退出码 3010）不再导致安装失败；未签名的安装器、Windows 没有启动的安装器，以及 PowerShell 失败的专门提示也会重新显示。

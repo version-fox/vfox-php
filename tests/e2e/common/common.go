@@ -67,7 +67,7 @@ var DefaultPHPVersions = []string{"latest", "8.3"}
 const ZTSSpec = "8.3.12-zts"
 
 // PassThroughEnvs are copied from the host into every Linux container when set.
-var PassThroughEnvs = []string{"MAKEFLAGS", "PHP_WITH_PEAR"}
+var PassThroughEnvs = []string{"MAKEFLAGS", "PHP_WITH_PEAR", "PHP_WITH_MHASH"}
 
 // LinuxModules are the modules a Linux build provides. The build turns each
 // one on through its platform options or its global options.
